@@ -1,0 +1,27 @@
+== Compilation ==
+
+  cabal configure
+  cabal build
+
+The htom binary is generated in dist/build/hgom/
+
+== Installation ==
+
+  cabal install
+
+== Generate developer documentation ==
+
+  cabal haddock --executables \
+  --html-location='http://hackage.haskell.org/packages/archive/$pkg/latest/doc/html' \
+  --hyperlink-source 
+
+(add --internal for unexported symbols documentation)
+
+The documentation index is then dist/doc/html/hgom/hgom/index.html
+
+== Test ==
+
+  hgom test/test.gom
+  hgom test/simple.gom
+  hgom test/big.gom
+  ...

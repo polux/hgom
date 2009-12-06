@@ -1,0 +1,9 @@
+module Foo
+imports int String
+
+abstract syntax
+
+T = f(x:A,y:int) | g(z:B) | f(A*) | f(x:B,y:int) | g(x:A,y:String) | f(x:A,y:int) | f(x:A,y:int)  | h(x:A,x:A)
+String = a() | b(w:A) | c(w:B,z:A,w:B,z:A) | Emptyf() | Emptyl()
+T = a() | t() | l(A*) | Consf()
+

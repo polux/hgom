@@ -1,0 +1,42 @@
+name:           hgom
+version:        0.1
+author:         Paul Brauner
+maintainer:     Paul Brauner <paul.brauner@loria.fr>
+copyright:      © 2009 INRIA
+homepage:       http://www.loria.fr/~brauner
+synopsis:       An haskell port of the java version of gom 
+description:
+  The executable hgom takes a module consisting of several abstract datatypes
+  declarations as an input and ouputs java classes. It is meant to mimic
+  the java version of gom (http:\/\/tom.loria.fr).
+category:          Compilers
+license:           GPL
+license-file:      COPYING
+cabal-version:     >= 1.6.0
+build-type:        Simple
+tested-with:       GHC == 6.10
+data-files:        test/big.gom
+                   test/verybig.gom
+                   test/test.gom
+                   test/example.gom
+                   test/simple.gom
+                   README
+
+executable hgom
+  main-is:       Gom.hs
+  other-modules: Gom.Sig,
+                 Gom.Parser,
+                 Gom.Pretty,
+                 Gom.Checker
+                 Gom.SymbolTable
+                 Gom.CodeGen
+                 Gom.Java
+                 Gom.Constants
+  build-depends: base >= 4 && < 5, containers >= 0.2,
+                 parsec >= 3.0.0, wl-pprint >= 1.0,
+                 mtl >= 1.1.0.2, directory >= 1.0.0.2,
+                 filepath >= 1.1.0.2, parallel >= 1.1.0.1
+  extensions:          
+  ghc-options:   -Wall -fno-warn-orphans
+--  ghc-options:   -Wall -fno-warn-orphans -prof -auto-all -caf-all
+--  ghc-options:   -Wall -fno-warn-orphans -fhpc

@@ -1,0 +1,302 @@
+module Gom.Java (
+  -- * File hierarchies
+  FileHierarchy(..),
+  generateFileHierarchy,
+  generateFileHierarchyIn,
+  -- * Java pretty-printing
+  -- ** Generic
+  ibraces, sbraces, encloseCommas, rBody,
+  -- ** Comments
+  rComment,
+  -- ** Java keywords
+  abstract, public, protected, private, this,
+  jreturn, throw, new, void, instanceof, jif,
+  for, jelse, jtrue, jfalse, final,
+  -- ** Java Types
+  jint, jString, stringBuilder, jboolean,
+  jObject,
+  -- ** Classes
+  rClass, rFullClass,
+  -- ** Methods
+  rMethodDef, rMethodCall,
+  -- ** Control structures
+  rIfThen, rIfThenElse, rFromTo,
+  -- * Tom pretty-printing
+  -- ** Mappings
+  rOp, rOpList, rTypeterm,
+  rIsFsym, rMake, rGetSlot,
+  -- ** Other
+  inline
+) where
+
+import Text.PrettyPrint.Leijen
+import Data.Tree
+import Data.List(intercalate)
+
+import System.FilePath
+import System.Directory
+import System.IO
+
+-- | Represents a hierarchy of Java packages, Java classes and .tom files.
+-- Constructors and field names speak for themselves.
+data FileHierarchy
+  = Package { 
+    packageName    :: String,
+    packageContent :: [FileHierarchy]
+  }
+  | Class {
+    className    :: String,
+    classContent :: Doc
+  }
+  | Tom {
+    fileName    :: String, -- ^ without the extension
+    fileContent :: Doc 
+  }
+
+-- | Actually generates files on disk.
+generateFileHierarchy :: FileHierarchy -> IO ()
+generateFileHierarchy h = do cur <- getCurrentDirectory
+                             generateFileHierarchyIn cur [] h
+
+-- | @generateFileHierarchyIn dir [pack]@ generates the files in directory
+-- @dir@ in package @pack@. Adds proper @package ...@ on top of java files.
+--
+-- Common usage : @generateFileHierarchyIn dir []@
+generateFileHierarchyIn :: FilePath -> [String] -> FileHierarchy -> IO ()
+generateFileHierarchyIn dir pac h = go h
+  where go (Package n hs) = let ndir = dir `combine` n
+                                npac = pac ++ [n]       
+                            in do createDirectoryIfMissing False ndir
+                                  mapM_ (generateFileHierarchyIn ndir npac) hs
+        go (Class n b)    = let fn = dir `combine` (n `addExtension` "java")
+                                fb = rFullClass pac b
+                            in renderInFile fn fb
+        go (Tom n b)      = let fn = dir `combine` (n `addExtension` "tom")
+                            in renderInFile fn b
+        renderInFile n b  = do hdl <- openFile n WriteMode
+                               hPutDoc hdl b
+                               hClose hdl
+
+-- | Converts a @'FileHierarchy'@ into a @'Tree'@ @'String'@ in
+-- order to pretty-print it
+toTree :: FileHierarchy -> Tree String
+toTree (Package n c) = Node n (toForest c)
+toTree (Class n b)   = Node (n ++ ".java\n" ++ show b) []
+toTree (Tom   n _)   = Node (n ++ ".tom") []
+
+-- | Converts a @['FileHierarchy']@ into a @'Forest' 'String'@ in
+-- order to pretty-print it
+toForest :: [FileHierarchy] -> Forest String
+toForest = map toTree
+
+instance Show FileHierarchy where
+  show = drawTree . toTree
+
+-- | Encloses a document into { } and indents the body.
+ibraces :: Doc -> Doc
+ibraces d = group $ nest 2 (lbrace <$> d) <$> rbrace
+
+-- | Encloses a document into { }
+sbraces :: Doc -> Doc
+sbraces d = lbrace <+> d <+> rbrace
+
+abstract,public,protected,private :: Doc
+this,jreturn,throw,new,void,final :: Doc
+instanceof,jif,for,jelse,jtrue,jfalse :: Doc
+
+abstract   = text "abstract"
+public     = text "public"
+protected  = text "protected"
+private    = text "private"
+this       = text "this"
+jreturn    = text "return"
+throw      = text "throw"
+new        = text "new"
+void       = text "void"
+instanceof = text "instanceof"
+jif        = text "if"
+for        = text "for"
+jelse      = text "else"
+jtrue      = text "true"
+jfalse     = text "false"
+final      = text "final"
+
+jint,jString,stringBuilder,jboolean,jObject :: Doc
+jint          = text "int"
+jString       = text "String"
+jboolean      = text "boolean"
+stringBuilder = text "java.lang.StringBuilder"
+jObject       = text "Object"
+
+-- | Renders the list enclosed in parenthesis and
+-- separated by commas.
+encloseCommas :: [Doc] -> Doc
+encloseCommas l = parens . align . sep $ punctuate comma l
+
+-- | Renders the list punctuated by semicolons
+rBody :: [Doc] -> Doc
+rBody [] = empty
+rBody l = align $ (sep $ punctuate semi l) <> semi
+
+-- | Renders @modifier class name { body }@.
+rClass
+ :: Doc   -- ^ modifier (public, private..)
+ -> Doc   -- ^ class name
+ -> Maybe Doc   -- ^ extends
+ -> Maybe [Doc] -- ^ implements
+ -> Doc   -- ^ body
+ -> Doc
+rClass md cn ex im body = 
+  md <+> text "class" <+> cn <+> r1 ex <+> r2 im <+> ibraces body
+  where r1 Nothing  = empty
+        r1 (Just d) = text "extends" <+> d
+        r2 Nothing  = empty
+        r2 (Just l) = text "implements" <+> hsep (punctuate comma l)
+
+-- | Adds package name at the top of a class declaration.
+rFullClass
+  :: [String] -- ^ package
+  -> Doc      -- ^ class content
+  -> Doc
+rFullClass [] bd = bd
+rFullClass pk bd = text "package" <+> text (intercalate "." pk) <>
+                   semi <> linebreak <$> bd
+
+-- | Renders @modifier type name(arg_1,...,arg_n) { body }@.
+rMethodDef
+ :: Doc   -- ^ modifier
+ -> Doc   -- ^ return type
+ -> Doc   -- ^ method name
+ -> [Doc] -- ^ arguments
+ -> Doc   -- ^ body
+ -> Doc
+rMethodDef md ty mn args body = 
+  md <+> ty <+> mn <> encloseCommas args <+> ibraces body
+
+-- | Renders @object.method(arg_1,...,arg_n)@.
+rMethodCall
+ :: Doc   -- ^ object
+ -> Doc   -- ^ method name
+ -> [Doc] -- ^ arguments
+ -> Doc
+rMethodCall o f args = 
+  o <> dot <> f <> encloseCommas args
+
+-- | Renders the string between @\/* \*/@ on one or several lines.
+rComment :: String -> Doc
+rComment s = text "/*" <+> fillSep (map text $ words s) <+> text "*/"
+
+-- | Renders @if(cond) { then body }@.
+rIfThen 
+  :: Doc -- ^ condition
+  -> Doc -- ^ then body
+  -> Doc
+rIfThen c b = 
+  group $ jif <+> parens c <+> ibraces b
+
+-- | Renders @if(cond) { then body } else { else body}@.
+rIfThenElse 
+  :: Doc -- ^ condition
+  -> Doc -- ^ then body
+  -> Doc -- ^ else body
+  -> Doc
+rIfThenElse c b1 b2 = 
+  group $ jif <+> parens c <+> ibraces b1 <+> jelse <+> ibraces b2
+
+-- | Renders @if(int var = from; var<to; var++) { body }@.
+rFromTo 
+  :: Doc -- ^ var
+  -> Doc -- ^ from
+  -> Doc -- ^ to
+  -> Doc -- ^ body
+  -> Doc
+rFromTo i f t b = group $ for <+> parens cond <+> ibraces b
+  where cond = align . cat $ 
+                 punctuate semi [jint <+> i <+> equals <+> f,
+                                 i <+> text "<" <+> t,
+                                 i <> text "++"]
+
+-- | @rTypeterm s qs@ renders
+--
+-- > %typeterm s {
+-- >   implement { qs }
+-- >   is_sort(t) { ($t instanceof qs) }
+-- >   equals(t1,t2) { ($t1.equals($t2)) }
+-- > }
+rTypeterm
+  :: Doc -- ^ sort
+  -> Doc -- ^ qualified sort
+  -> Doc
+rTypeterm s qs =
+  text "%typeterm" <+> s <+> ibraces (vcat
+    [text "implement" <+> sbraces qs,
+     text "is_sort(t) { ($t instanceof" <+> qs <> text ") }",
+     text "equals(t1,t2) { ($t1.equals($t2)) }"])
+
+-- | Renders @is_fsym(t) { ($t instanceof sort) }@.
+rIsFsym
+  :: Doc -- ^ sort 
+  -> Doc
+rIsFsym s = 
+  text "is_fsym(t) { ($t instanceof" <+> s <> text ") }"
+
+-- | Renders @make(arg1,..,argn) { (new m.types.co.C($arg1,..,$argn)) }@.
+rMake
+ :: Doc   -- ^ qualified constructor
+ -> [Doc] -- ^ body
+ -> Doc
+rMake qc as =
+  text "make" <> args <+> (sbraces . parens) (new <+> qc <> iargs)
+  where gen   = parens . hcat . punctuate comma
+        args  = gen as
+        iargs = gen (map inline as)
+
+
+-- | Renders @get_slot(slot,t) { $t.getslot() }@.
+rGetSlot
+ :: Doc -- ^ slot
+ -> Doc
+rGetSlot x =
+  text "get_slot(" <> x <> text ",t) { $t.get" <> x <> text "() }"
+
+-- | Renders @%op sort c(field1,..,field2) { body }@.
+rOp :: Doc   -- ^ sort
+    -> Doc   -- ^ constructor
+    -> [(Doc,Doc)] -- ^ fields
+    -> Doc   -- ^ body
+    -> Doc
+rOp s c fs b = 
+   text "%op" <+> s <+> c <> 
+   (parens . hsep . punctuate comma $ map f fs) <+> ibraces b
+  where f (x,t) = x <> colon <> t
+
+-- | @rOpList c co dom cons empty@ renders
+--
+-- > %oplist co VC(dom*) {
+-- >   is_fsym(t) { (($t instanceof cons) || ($t instanceof empty)) }
+-- >   make_empty() { new empty() }
+-- >   make_insert(e,l) { new cons($e,$l) }
+-- >   get_head(l) { $l.getHeadc() }
+-- >   get_tail(l) { $l.getTailc() }
+-- >   is_empty(l) { $l.isEmptyc() }
+-- > }
+rOpList 
+  :: Doc -- ^ the constructor
+  -> Doc -- ^ codomain of the constructor
+  -> Doc -- ^ domain of the constructor
+  -> Doc -- ^ qualified Cons
+  -> Doc -- ^ qualified Empty
+  -> Doc
+rOpList c co dom consc emptyc =
+  text "%oplist" <+> co <+> c <> parens (dom <> text "*") <+> 
+   ibraces (vcat
+     [text "is_fsym(t) { (($t instanceof" <+> consc <> text ") || ($t instanceof" <+> emptyc <> text ")) }",
+      text "make_empty() { new" <+> emptyc <> text "() }",
+      text "make_insert(e,l) { new" <+> consc <> text "($e,$l) }",
+      text "get_head(l) { $l.getHead" <> c <> text "() }",
+      text "get_tail(l) { $l.getTail" <> c <> text "() }",
+      text "is_empty(l) { $l.isEmpty" <> c <> text "() }"])
+
+-- | @inline d@ renders @$d@.
+inline :: Doc -> Doc
+inline d = text "$" <> d
