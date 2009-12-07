@@ -226,14 +226,15 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                        let body = vcat [mem,ctor,get,set,tos,eqs,isc]
                        cls  <- wrap body
                        return $ Class (show c) cls
- where wrap b = do gen <- askSt (flip isGenerated c)
-                   let rcls d = rClass public (pretty c) (Just d) Nothing b
-                   case gen of Nothing -> do co  <- askSt (flip codomainOf c)
-                                             qco <- qualifiedSort co
-                                             return $ rcls qco
-                               Just bc -> do qbc <- qualifiedCtor bc
-                                             return $ rcls qbc
-             
+ where wrap b = do
+         gen <- askSt (flip isGenerated c)                                     
+         let rcls d = rClass public (pretty c) (Just d) Nothing b              
+         case gen of Nothing -> do co  <- askSt (flip codomainOf c)            
+                                   qco <- qualifiedSort co                     
+                                   return $ rcls qco                           
+                     Just bc -> do qbc <- qualifiedCtor bc                     
+                                   return $ rcls qbc                        
+
 -- | Helper fonction that iters over the fields of
 -- a constructor and combines them.
 iterOverFields 
@@ -293,9 +294,9 @@ compEqualsConstructor c = do rcalls <- iterOverFields rcall id c
                                (public <+> final) jboolean (text "equals")
                                [jObject <+> text "o"] (complete rcalls)
   where cdoc = pretty c
-        complete b  = rIfThenElse cond (branch1 b) (jreturn <+> jfalse <> semi) 
-        cond        = text "o" <+> instanceof <+> cdoc
-        branch1 b   = rBody [l1,l2 (jtrue:b)]
+        complete b = rIfThenElse cond (branch1 b) (jreturn <+> jfalse <> semi) 
+        cond       = text "o" <+> instanceof <+> cdoc
+        branch1 b  = rBody [l1,l2 (jtrue:b)]
         l1 = cdoc <+> text "typed_o" <+> equals <+> parens cdoc <+> text "o"
         l2 b = jreturn <+> (align . fillSep $ intersperse (text "&&") b)
         rcall (x,s) = let lhs = this <> dot <> pretty x
