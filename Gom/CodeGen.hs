@@ -4,6 +4,7 @@ import Gom.Sig
 import Gom.SymbolTable
 import Gom.Java
 import Gom.Constants
+import Gom.Config
 
 import Text.PrettyPrint.Leijen
 import Control.Monad.Reader
@@ -12,58 +13,81 @@ import Data.Char(toLower)
 import Data.List(nub, intersperse)
 
 -- | Compiles a symbol table into a Java hierarchy
-st2java :: SymbolTable -> FileHierarchy
-st2java = runReader compSt
+st2java :: SymbolTable -> Config -> FileHierarchy
+st2java st c = runReader compSt (st,c)
 
 -- | Turns a 'String' into lowercase.
 lower :: String -> String
 lower = map toLower
 
+-- | Returns the package prefix ended by a dot.
+--
+-- As an example, returns @aa.bb.cc.foo@ for the module @Foo@,
+-- provided the user toggled @-p aa.bb.cc@.
+packagePrefix :: Gen Doc
+packagePrefix = do m <- lower `liftM` askSt modName
+                   go (pretty m) `liftM` askConf package
+  where go dm Nothing  = dm
+        go dm (Just l) = hcat . intersperse dot $ (map text l)++[dm]
+
 -- | Given a sort @S@, returns @module.types.S@
 qualifiedSort :: SortId -> Gen Doc
 qualifiedSort s 
   | isBuiltin s = return $ pretty s
-  | otherwise   = do m <- lower `liftM` asks modName
-                     return $ text m <> dot <> text "types" <> dot <> pretty s
+  | otherwise   = do p <- packagePrefix
+                     return $ p <> dot <> text "types" <> dot <> pretty s
 
 -- | Given a constructor @C@ of codomain @S@, returns
 -- @module.types.s.C@
 qualifiedCtor :: CtorId -> Gen Doc
 qualifiedCtor c = 
-  do m <- lower `liftM` asks modName
-     lows <- lowerSortId `liftM` asks (flip codomainOf c)
-     return $ text m <> dot <> text "types" <> dot <> 
+  do p <- packagePrefix
+     lows <- lowerSortId `liftM` askSt (flip codomainOf c)
+     return $ p <> dot <> text "types" <> dot <> 
               pretty lows <> dot <> pretty c
 
 -- | Generates @mAbstractType@ for the current module @m@.
 abstractType :: Gen String
-abstractType = do mn <- asks modName
+abstractType = do mn <- askSt modName
                   return $ mn ++ "AbstractType"
 
 -- | Generates @m.mAbstractType@ for the current module @m@.
 qualifiedAbstractType :: Gen Doc
 qualifiedAbstractType = do at <- abstractType
-                           m  <- asks modName
-                           return $ text (lower m) <> dot <> (text at)
+                           pr <- packagePrefix 
+                           return $ pr <> dot <> (text at)
 
 -- | A computation inside a context containing a read-only symbol table.
-type Gen a = Reader SymbolTable a
+type Gen a = Reader (SymbolTable,Config) a
+
+-- | Query symbol table.
+askSt :: (SymbolTable -> a) -> Gen a
+askSt f = asks (f . fst)
+
+-- | Query configuration.
+askConf :: (Config -> a) -> Gen a
+askConf f = asks (f . snd)
 
 -- | Generates @%include { x.tom }@ for every imported sort @x@
 compIncludes :: Gen Doc
-compIncludes = do is <- asks importedSorts
+compIncludes = do is <- askSt importedSorts
                   return $ vcat (map rdr is)
   where rdr s = text "%include" <+> sbraces (pretty s <> text ".tom")
 
 -- | Generates the whole file hierarchy of the \"global\" symbol table.
 compSt :: Gen FileHierarchy
-compSt = do mn <- asks modName
-            ds <- asks definedSortsIds
+compSt = do mn <- lower `liftM` askSt modName
+            ds <- askSt definedSortsIds
             hs <- mapM compSort ds
             ac <- compAbstract
             tf <- compTomFile
-            return $ Package (lower mn) 
-                             [ac,tf,Package "types" (concat hs)]
+            pr <- askConf package
+            return . wrap pr $ Package mn [ac,tf,Package "types" (concat hs)]
+  where -- wraps the package in the user-provided prefix hierarchy (-p option)
+        wrap Nothing  h = h
+        wrap (Just l) h = foldr w h l
+        w p h = Package p [h]
+         
 
 -- | Generates the @ModAbstractType@ abstract java class for module @Mod@.
 compAbstract :: Gen FileHierarchy
@@ -74,10 +98,10 @@ compAbstract = do at <- abstractType
 
 -- | Generates the @Mod.tom@ tom mappings file for module @Mod@
 compTomFile :: Gen FileHierarchy
-compTomFile = do mn    <- asks modName
-                 srts  <- asks definedSortsIds
-                 ctrs  <- asks simpleConstructorsIds
-                 vctrs <- asks variadicConstructorsIds
+compTomFile = do mn    <- askSt modName
+                 srts  <- askSt definedSortsIds
+                 ctrs  <- askSt simpleConstructorsIds
+                 vctrs <- askSt variadicConstructorsIds
                  incls <- compIncludes
                  tyts  <- mapM compTypeTerm srts
                  ops   <- mapM compOp ctrs
@@ -95,8 +119,8 @@ compTomFile = do mn    <- asks modName
 --     @Sort@
 compSort :: SortId -> Gen [FileHierarchy]
 compSort s = do ac    <- compAbstractSort s
-                vctrs <- asks (flip vCtorsOf s)
-                ctrs  <- asks (flip sCtorsOf s)
+                vctrs <- askSt (flip vCtorsOf s)
+                ctrs  <- askSt (flip sCtorsOf s)
                 avs   <- mapM compAbstractVariadic vctrs
                 ccs   <- mapM compConstructor ctrs
                 return $ [ac, Package (show $ lowerSortId s) (avs ++ ccs)] 
@@ -110,12 +134,12 @@ iterOverSortFields
   -> ([a] -> b) -- ^ combinator of results
   -> SortId     -- ^ subject sort
   -> Gen b
-iterOverSortFields f g s = do cs <- asks (flip sCtorsOf s)
+iterOverSortFields f g s = do cs <- askSt (flip sCtorsOf s)
                               fs <- (nub . concat) `liftM` mapM combine cs
                               ms <- mapM (\(co,(fi,ty)) -> f co fi ty) fs
                               return $ g ms
-   where combine c = do fis <- asks (flip fieldsOf c)
-                        co  <- asks (flip codomainOf c)
+   where combine c = do fis <- askSt (flip fieldsOf c)
+                        co  <- askSt (flip codomainOf c)
                         return $ map ((,) co) fis
 
 -- | @hasNotError s f@ renders 
@@ -162,7 +186,7 @@ compEmptySettersOfSort = iterOverSortFields setter vcat
 --
 -- for each of its fields @x@
 compEmptyIsX :: SortId -> Gen Doc
-compEmptyIsX s = do cs  <- asks (flip sCtorsOf s) 
+compEmptyIsX s = do cs  <- askSt (flip sCtorsOf s) 
                     return . vcat $ map isx cs
   where isx f = let fun = text "is" <> pretty f
                     b   = rBody [jreturn <+> jfalse]
@@ -184,7 +208,7 @@ compAbstractSort s = do eg <- compEmptyGettersOfSort s
 compAbstractVariadic :: CtorId -> Gen FileHierarchy
 compAbstractVariadic vc = do cl <- body
                              return $ Class (show vc) cl
-  where body = do co  <- asks (flip codomainOf vc)
+  where body = do co  <- askSt (flip codomainOf vc)
                   qto <- qualifiedSort co
                   return $ rClass (public <+> abstract)
                                   (pretty vc) (Just qto)
@@ -202,9 +226,9 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                        let body = vcat [mem,ctor,get,set,tos,eqs,isc]
                        cls  <- wrap body
                        return $ Class (show c) cls
- where wrap b = do gen <- asks (flip isGenerated c)
+ where wrap b = do gen <- askSt (flip isGenerated c)
                    let rcls d = rClass public (pretty c) (Just d) Nothing b
-                   case gen of Nothing -> do co  <- asks (flip codomainOf c)
+                   case gen of Nothing -> do co  <- askSt (flip codomainOf c)
                                              qco <- qualifiedSort co
                                              return $ rcls qco
                                Just bc -> do qbc <- qualifiedCtor bc
@@ -217,7 +241,7 @@ iterOverFields
   -> ([a] -> b)                  -- ^ the combinator
   -> CtorId                      -- ^ the constructor
   -> Gen b
-iterOverFields f g c = do fis  <- asks (flip fieldsOf c)
+iterOverFields f g c = do fis  <- askSt (flip fieldsOf c)
                           fis' <- mapM f fis
                           return $ g fis'
 
@@ -305,7 +329,7 @@ compMembersOfConstructor = iterOverFields rdr rBody
 -- > }
 compCtorOfConstructor :: CtorId -> Gen Doc
 compCtorOfConstructor c = 
-  do fis <- asks (flip fieldsOf c)
+  do fis <- askSt (flip fieldsOf c)
      a <- mapM rdr1 fis
      let b = rBody $ map rdr2 fis
      return $ rMethodDef public empty (pretty c) a b
@@ -367,8 +391,8 @@ compTypeTerm s = do qs <- qualifiedSort s
 compOp :: CtorId -> Gen Doc
 compOp c = do isfsym <- compIsFsym
               slots  <- iterOverFields compSlot vcat c
-              s      <- asks (flip codomainOf c)
-              fis    <- asks (flip fieldsOf c)
+              s      <- askSt (flip codomainOf c)
+              fis    <- askSt (flip fieldsOf c)
               let pfis = map (pretty *** pretty) fis
               make   <- compMake (map fst pfis)
               return $ rOp (pretty s) (pretty c) pfis
@@ -392,8 +416,8 @@ compOp c = do isfsym <- compIsFsym
 -- >   is_empty(l) { $l.isEmptyVC() }
 -- > }
 compOpList :: CtorId -> Gen Doc
-compOpList c = do co     <- asks (flip codomainOf c)
-                  dom    <- asks (flip fieldOf c)
+compOpList c = do co     <- askSt (flip codomainOf c)
+                  dom    <- askSt (flip fieldOf c)
                   consc  <- qualifiedCtor (prependCons c)
                   emptyc <- qualifiedCtor (prependEmpty c)
                   return $ rOpList (pretty c) (pretty co) 
