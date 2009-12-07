@@ -5,4 +5,5 @@ abstract syntax
 T1 = f(x:T1,y:T2) | a(x:T1)
 T2 = g(x:T2,y:T1) | b()
 
-// List = List(T1*)
+List = List(T1*)
+IList = iList(int*)

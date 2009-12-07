@@ -194,7 +194,7 @@ rIfThen
 rIfThen c b = 
   group $ jif <+> parens c <+> ibraces b
 
--- | Renders @if(cond) { then body } else { else body}@.
+-- | Renders @if(cond) { then body } else { else body }@.
 rIfThenElse 
   :: Doc -- ^ condition
   -> Doc -- ^ then body
@@ -243,7 +243,7 @@ rIsFsym s =
 -- | Renders @make(arg1,..,argn) { (new m.types.co.C($arg1,..,$argn)) }@.
 rMake
  :: Doc   -- ^ qualified constructor
- -> [Doc] -- ^ body
+ -> [Doc] -- ^ arguments
  -> Doc
 rMake qc as =
   text "make" <> args <+> (sbraces . parens) (new <+> qc <> iargs)
