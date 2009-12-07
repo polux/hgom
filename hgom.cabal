@@ -35,7 +35,7 @@ executable hgom
   build-depends: base >= 4 && < 5, containers >= 0.2,
                  parsec >= 3.0.0, wl-pprint >= 1.0,
                  mtl >= 1.1.0.2, directory >= 1.0.0.2,
-                 filepath >= 1.1.0.2, parallel >= 1.1.0.1
+                 filepath >= 1.1.0.2
   extensions:          
   ghc-options:   -Wall -fno-warn-orphans
 --  ghc-options:   -Wall -fno-warn-orphans -prof -auto-all -caf-all
