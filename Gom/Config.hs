@@ -41,7 +41,7 @@ options =
   [Option []    ["help"]    (NoArg chelp)                   "show this message",
    Option ['V'] ["version"] (NoArg cversion)                "show version number",
    Option ['p'] ["package"] (ReqArg cpackage "packageName") "specify package name"]
-  where chelp      c = c { help = True }
+  where chelp      c = c { help    = True }
         cversion   c = c { version = True }
         cpackage p c = c { package = Just (split '.' p) }
 

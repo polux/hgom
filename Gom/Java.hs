@@ -14,13 +14,13 @@ module Gom.Java (
   for, jelse, jtrue, jfalse, final,
   -- ** Java Types
   jint, jString, stringBuilder, jboolean,
-  jObject,
+  jObject, jVisitable,
   -- ** Classes
   rClass, rFullClass,
   -- ** Methods
-  rMethodDef, rMethodCall,
+  rMethodDef, rMethodCall, rWrapBuiltin,
   -- ** Control structures
-  rIfThen, rIfThenElse, rFromTo,
+  rIfThen, rIfThenElse, rFromTo, rSwitch,
   -- * Tom pretty-printing
   -- ** Mappings
   rOp, rOpList, rTypeterm,
@@ -121,12 +121,13 @@ jtrue      = text "true"
 jfalse     = text "false"
 final      = text "final"
 
-jint,jString,stringBuilder,jboolean,jObject :: Doc
+jint,jString,stringBuilder,jboolean,jObject,jVisitable :: Doc
 jint          = text "int"
 jString       = text "String"
 jboolean      = text "boolean"
 stringBuilder = text "java.lang.StringBuilder"
 jObject       = text "Object"
+jVisitable    = text "tom.library.sl.Visitable"
 
 -- | Renders the list enclosed in parenthesis and
 -- separated by commas.
@@ -182,6 +183,19 @@ rMethodCall
 rMethodCall o f args = 
   o <> dot <> f <> encloseCommas args
 
+-- | @rWrapBuiltin qt x@ renders
+--
+-- > new tom.library.sl.VisitableBuiltin<t>(x)
+--
+-- where @qt@ is the qualified type for builtin @t@.
+rWrapBuiltin
+  :: Doc -- ^ qualified type
+  -> Doc -- ^ argument
+  -> Doc
+rWrapBuiltin qt x =
+  new <+> text "tom.library.sl.VisitableBuiltin" <>
+  angles qt <> parens x
+
 -- | Renders the string between @\/* \*/@ on one or several lines.
 rComment :: String -> Doc
 rComment s = text "/*" <+> fillSep (map text $ words s) <+> text "*/"
@@ -215,6 +229,23 @@ rFromTo i f t b = group $ for <+> parens cond <+> ibraces b
                  punctuate semi [jint <+> i <+> equals <+> f,
                                  i <+> text "<" <+> t,
                                  i <> text "++"]
+
+-- | @rSwitch s [(l1,r1),..,(ln,rn)] d@ renders
+--
+-- > switch (s) {
+-- >   l1: r1
+-- >   ...
+-- >   l2: r2
+-- >   default: d
+-- > }
+rSwitch
+ :: Doc -- ^ subject
+ -> [(Doc,Doc)] -- ^ lhs, rhs
+ -> Doc -- ^ default case
+ -> Doc
+rSwitch s l d = text "switch" <+> parens s <+> ibraces body
+  where body    = (vcat $ map f l) <$> (text "default:" <+> align d)
+        f (x,y) = text "case" <+> x <> colon <+> align y
 
 -- | @rTypeterm s qs@ renders
 --

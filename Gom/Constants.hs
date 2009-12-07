@@ -21,3 +21,12 @@ builtins = map makeSortId ["int","String"]
 
 isBuiltin :: SortId -> Bool
 isBuiltin s = s `elem` builtins
+
+qbuiltins :: [(SortId,Doc)]
+qbuiltins = 
+  zip builtins (map text qts)
+  where qts = ["java.lang.Integer",
+               "java.lang.Char"] 
+
+qualifiedBuiltin :: SortId -> Doc
+qualifiedBuiltin s = maybe (pretty s) id (s `lookup` qbuiltins)

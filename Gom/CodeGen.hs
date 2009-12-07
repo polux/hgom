@@ -93,7 +93,8 @@ compSt = do mn <- lower `liftM` askSt modName
 compAbstract :: Gen FileHierarchy
 compAbstract = do at <- abstractType
                   return $ Class at (cl at)
-  where cl at = rClass (public <+> abstract) (text at) Nothing Nothing body
+  where cl at = rClass (public <+> abstract) (text at) 
+                       Nothing (Just [jVisitable]) body
         body = toStringBody <$> abstractToStringBuilder
 
 -- | Generates the @Mod.tom@ tom mappings file for module @Mod@
@@ -222,8 +223,11 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                        set  <- compSettersOfConstructor c
                        tos  <- compToStringBuilder c
                        eqs  <- compEqualsConstructor c
+                       gcc  <- compGetChildCount c
+                       gca  <- compGetChildAt c
                        let isc = compIsX c
-                       let body = vcat [mem,ctor,get,set,tos,eqs,isc]
+                       let body = vcat [mem,ctor,get,set,tos,
+                                        eqs,isc,gcc,gca]
                        cls  <- wrap body
                        return $ Class (show c) cls
  where wrap b = do
@@ -304,6 +308,41 @@ compEqualsConstructor c = do rcalls <- iterOverFields rcall id c
                       in return $ if isBuiltin s
                                     then lhs <+> text "==" <+> rhs
                                     else rMethodCall lhs (text "equals") [rhs]
+
+-- | Given a constructor @c@ of arity @n@, generates
+--
+-- > public int getChildCount() {
+-- >   return n;
+-- > }
+compGetChildCount :: CtorId -> Gen Doc
+compGetChildCount c = do ar <- length `liftM` askSt (flip fieldsOf c)
+                         return $ wrap ar
+  where wrap n = rMethodDef public jint (text "getChildCount") 
+                            [] (jreturn <+> int n <> semi)
+
+-- | Given a constructor @c@ of fields @x1,..,xn@ generates
+--
+-- > public tom.library.sl.Visitable getChildAt(int n) {
+-- >   switch(n) {
+-- >     case 0: return this.x1;
+-- >     ...
+-- >     case n-1: return this.xn;
+-- >     default: throw new IndexOutOfBoundsException();
+-- >   }
+-- > }
+compGetChildAt :: CtorId -> Gen Doc
+compGetChildAt c = do fis <- askSt (flip fieldsOf c)
+                      let cs  = zip (map int [0..]) (map cook fis)
+                      let arg = text "n"
+                      return $ rMethodDef 
+                                 public jVisitable (text "getChildAt")
+                                 [jint <+> arg] (body arg cs)
+  where cook (f,s)  = jreturn <+> wrap (this <> dot <> pretty f) s <> semi 
+        body n cs   = rSwitch n cs outOfBounds
+        outOfBounds = text "throw new IndexOutOfBoundsException();"
+        wrap f s | isBuiltin s = rWrapBuiltin (qualifiedBuiltin s) f
+                 | otherwise   = f
+
 
 -- | Given a constructor C, generates
 --
