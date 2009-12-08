@@ -269,12 +269,12 @@ compConstructor c = do mem  <- compMembersOfConstructor c
 -- | Helper fonction that iters over the fields of
 -- a constructor and combines them.
 iterOverFields 
-  :: ((FieldId,SortId) -> Gen a) -- ^ the function to iter
-  -> ([a] -> b)                  -- ^ the combinator
-  -> CtorId                      -- ^ the constructor
+  :: (FieldId -> SortId -> Gen a) -- ^ the function to iter
+  -> ([a] -> b)                   -- ^ the combinator
+  -> CtorId                       -- ^ the constructor
   -> Gen b
 iterOverFields f g c = do fis  <- askSt (flip fieldsOf c)
-                          fis' <- mapM f fis
+                          fis' <- mapM (uncurry f) fis
                           return $ g fis'
 
 -- | @renderBuiltin s f b@ generates what is necessary to put
@@ -306,12 +306,12 @@ compToStringBuilder c = do rcalls <- iterOverFields rcall id c
                            return $ rMethodDef 
                              public void (text "toStringBuilder")
                              [stringBuilder <+> text "buf"] (complete rcalls)
-  where complete b  = rBody $ open:(intersperse apcomma b)++[close]
-        bapp arg    = text "buf.append" <> parens arg
-        apcomma     = bapp $ dquotes comma
-        open        = bapp $ dquotes (pretty c <> lparen)
-        close       = bapp $ dquotes rparen
-        rcall (x,s) = return $
+  where complete b = rBody $ open:(intersperse apcomma b)++[close]
+        bapp arg   = text "buf.append" <> parens arg
+        apcomma    = bapp $ dquotes comma
+        open       = bapp $ dquotes (pretty c <> lparen)
+        close      = bapp $ dquotes rparen
+        rcall x s  = return $
           if isBuiltin s then renderBuiltin s x (text "buf")
                          else rMethodCall (this <> dot <> pretty x)
                                           (text "toStringBuilder") 
@@ -341,7 +341,7 @@ compToHaskellBuilder c = do rcalls <- iterOverFields rcall id c
         addspaces l = foldr (\x r -> apspace:x:r) [] l
         open        = bapp $ dquotes (lparen <> pretty c)
         close       = bapp $ dquotes rparen
-        rcall (x,s) = return $
+        rcall x s   = return $
           if isBuiltin s then renderBuiltin s x (text "buf")
                          else rMethodCall (this <> dot <> pretty x)
                                           (text "toHaskellBuilder") 
@@ -372,11 +372,11 @@ compEqualsConstructor c = do rcalls <- iterOverFields rcall id c
         branch1 b  = rBody [l1,l2 (jtrue:b)]
         l1 = cdoc <+> text "typed_o" <+> equals <+> parens cdoc <+> text "o"
         l2 b = jreturn <+> (align . fillSep $ intersperse (text "&&") b)
-        rcall (x,s) = let lhs = this <> dot <> pretty x
-                          rhs = text "typed_o.get" <> pretty x <> text "()"
-                      in return $ if isBuiltin s
-                                    then lhs <+> text "==" <+> rhs
-                                    else rMethodCall lhs (text "equals") [rhs]
+        rcall x s = let lhs = this <> dot <> pretty x
+                        rhs = text "typed_o.get" <> pretty x <> text "()"
+                    in return $ if isBuiltin s
+                                  then lhs <+> text "==" <+> rhs
+                                  else rMethodCall lhs (text "equals") [rhs]
 
 -- | Given a constructor @c@ of arity @n@, generates
 --
@@ -542,8 +542,8 @@ compSymbolName c =
 -- generates @m.types.T1 x1; ...; m.types.Tn xn;@
 compMembersOfConstructor :: CtorId -> Gen Doc
 compMembersOfConstructor = iterOverFields rdr rBody
-  where rdr (f,s) = do qs <- qualifiedSort s
-                       return $ private <+> qs <+> pretty f
+  where rdr f s = do qs <- qualifiedSort s
+                     return $ private <+> qs <+> pretty f
 
 -- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@,
 -- generates the constructor:
@@ -571,10 +571,10 @@ compCtorOfConstructor c =
 -- > public m.types.Tn getxn() { return xn; }
 compGettersOfConstructor :: CtorId -> Gen Doc
 compGettersOfConstructor = iterOverFields getter vcat
-  where getter (f,s) = do qs <- qualifiedSort s
-                          let fun = text "get" <> pretty f
-                          let b = rBody [jreturn <+> pretty f]
-                          return $ rMethodDef public qs fun [] b 
+  where getter f s = do qs <- qualifiedSort s
+                        let fun = text "get" <> pretty f
+                        let b = rBody [jreturn <+> pretty f]
+                        return $ rMethodDef public qs fun [] b 
 
 -- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@,
 -- generates the methods: 
@@ -586,12 +586,12 @@ compGettersOfConstructor = iterOverFields getter vcat
 -- >   { this.xn = xn; }
 compSettersOfConstructor :: CtorId -> Gen Doc
 compSettersOfConstructor = iterOverFields setter vcat
-  where setter (f,s) = do qs <- qualifiedSort s
-                          let fun = text "set" <> pretty f
-                          let a = [pretty qs <+> pretty f]
-                          let b = rBody [this <> dot <> pretty f 
-                                         <+> equals <+> pretty f]
-                          return $ rMethodDef public void fun a b 
+  where setter f s = do qs <- qualifiedSort s
+                        let fun = text "set" <> pretty f
+                        let a = [pretty qs <+> pretty f]
+                        let b = rBody [this <> dot <> pretty f 
+                                       <+> equals <+> pretty f]
+                        return $ rMethodDef public void fun a b 
 
 -- | Given a sort @S@, generates
 --
@@ -623,11 +623,11 @@ compOp c = do isfsym <- compIsFsym
               make   <- compMake (map fst pfis)
               return $ rOp (pretty s) (pretty c) pfis
                            (vcat [isfsym,slots,make])
-  where compIsFsym     = do qc <- qualifiedCtor c
-                            return $ rIsFsym qc
-        compSlot (x,_) = return $ rGetSlot (pretty x)
-        compMake xs    = do qc <- qualifiedCtor c
-                            return $ rMake qc xs 
+  where compIsFsym   = do qc <- qualifiedCtor c
+                          return $ rIsFsym qc
+        compSlot x _ = return $ rGetSlot (pretty x)
+        compMake xs  = do qc <- qualifiedCtor c
+                          return $ rMake qc xs 
 
 -- | Given a variadic constructor @VC(T*)@
 -- of codomain @Co@, generates
