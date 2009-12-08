@@ -1,10 +1,14 @@
 module Gom.Constants (
   toStringBody,
   abstractToStringBuilder,
+  toHaskellBody,
+  abstractToHaskellBuilder,
   abstractSymbolName,
   builtins,
   isBuiltin,
-  qualifiedBuiltin
+  qualifiedBuiltin,
+  builtinImport,
+  renderStringMethod,
 ) where
 
 import Text.PrettyPrint.Leijen
@@ -25,6 +29,20 @@ abstractToStringBuilder :: Doc
 abstractToStringBuilder = 
   text "public abstract void toStringBuilder(java.lang.StringBuilder buf);"
 
+-- | Full text of the toHaskell method of @moduleAbstractType@.
+toHaskellBody :: Doc
+toHaskellBody =
+ text "public String toHaskell()" <+>
+ (ibraces . rBody . map text)
+    ["java.lang.StringBuilder buf = new java.lang.StringBuilder()",
+     "toHaskellBuilder(buf)",
+     "return buf.toString()"]
+
+-- | Full prototype of the abstract method of @moduleAbstractType@.
+abstractToHaskellBuilder :: Doc
+abstractToHaskellBuilder = 
+  text "public abstract void toHaskellBuilder(java.lang.StringBuilder buf);"
+
 -- | Full prototype of the abstract methode of @moduleAbstractType@.
 abstractSymbolName :: Doc
 abstractSymbolName =
@@ -32,18 +50,112 @@ abstractSymbolName =
 
 -- | List of supported java builtins
 builtins :: [SortId]
-builtins = map makeSortId ["int","String"]
+builtins = map makeSortId ["int","char","String"]
 
 -- | Check if some sort is a builtin.
 isBuiltin :: SortId -> Bool
 isBuiltin s = s `elem` builtins
 
 qbuiltins :: [(SortId,Doc)]
-qbuiltins = 
-  zip builtins (map text qts)
+qbuiltins = zip builtins (map text qts)
   where qts = ["java.lang.Integer",
-               "java.lang.Char"] 
+               "java.lang.Character"] 
 
 -- | Returns the qualified java type for builtin boxing.
 qualifiedBuiltin :: SortId -> Doc
 qualifiedBuiltin s = maybe (pretty s) id (s `lookup` qbuiltins)
+
+ibuiltins :: [(SortId,Doc)]
+ibuiltins = zip builtins (map text toms)
+  where toms = ["int.tom","char.tom","string.tom"] 
+
+-- | Returns the right .tom filename associated to a builtin.
+builtinImport :: SortId -> Doc
+builtinImport s = maybe (pretty s) id (s `lookup` ibuiltins)
+
+renderStringMethod :: Doc
+renderStringMethod = vcat $ map text
+  ["public void renderString(java.lang.StringBuilder buf, String x) {",
+   "  buf.append('\"');",
+   "  for (int i = 0; i < x.length(); i++) {",
+   "    char c = x.charAt(i);",
+   "    switch (c) {",
+   "      case '\\n':",
+   "        buf.append('\\\\');",
+   "        buf.append('n');",
+   "        break;",
+   "      case '\\t':",
+   "        buf.append('\\\\');",
+   "        buf.append('t');",
+   "        break;",
+   "      case '\\b':",
+   "        buf.append('\\\\');",
+   "        buf.append('b');",
+   "        break;",
+   "      case '\\r':",
+   "        buf.append('\\\\');",
+   "        buf.append('r');",
+   "        break;",
+   "      case '\\f':",
+   "        buf.append('\\\\');",
+   "        buf.append('f');",
+   "        break;",
+   "      case '\\\\':",
+   "        buf.append('\\\\');",
+   "        buf.append('\\\\');",
+   "        break;",
+   "      case '\\'':",
+   "        buf.append('\\\\');",
+   "        buf.append('\\'');",
+   "        break;",
+   "      case '\\\"':",
+   "        buf.append('\\\\');",
+   "        buf.append('\\\"');",
+   "        break;",
+   "      case '!':",
+   "      case '@':",
+   "      case '#':",
+   "      case '$':",
+   "      case '%':",
+   "      case '^':",
+   "      case '&':",
+   "      case '*':",
+   "      case '(':",
+   "      case ')':",
+   "      case '-':",
+   "      case '_':",
+   "      case '+':",
+   "      case '=':",
+   "      case '|':",
+   "      case '~':",
+   "      case '{':",
+   "      case '}':",
+   "      case '[':",
+   "      case ']':",
+   "      case ';':",
+   "      case ':':",
+   "      case '<':",
+   "      case '>':",
+   "      case ',':",
+   "      case '.':",
+   "      case '?':",
+   "      case ' ':",
+   "      case '/':",
+   "        buf.append(c);",
+   "        break;",
+   "  ",
+   "      default:",
+   "        if (java.lang.Character.isLetterOrDigit(c)) {",
+   "          buf.append(c);",
+   "        } else {",
+   "          buf.append('\\\\');",
+   "          buf.append((char) ('0' + c / 64));",
+   "          c = (char) (c % 64);",
+   "          buf.append((char) ('0' + c / 8));",
+   "          c = (char) (c % 8);",
+   "          buf.append((char) ('0' + c));",
+   "        }",
+   "    }",
+   "  }",
+   "  buf.append('\"');",
+   "}"]

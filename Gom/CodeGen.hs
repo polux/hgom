@@ -72,7 +72,8 @@ askConf f = asks (f . snd)
 compIncludes :: Gen Doc
 compIncludes = do is <- askSt importedSorts
                   return $ vcat (map rdr is)
-  where rdr s = text "%include" <+> sbraces (pretty s <> text ".tom")
+  where rdr s = text "%include" <+> 
+                sbraces (builtinImport s)
 
 -- | Generates the whole file hierarchy of the \"global\" symbol table.
 compSt :: Gen FileHierarchy
@@ -95,9 +96,11 @@ compAbstract = do at <- abstractType
                   return $ Class at (cl at)
   where cl at = rClass (public <+> abstract) (text at) 
                        Nothing (Just [jVisitable]) body
-        body = vcat [toStringBody,
-                     abstractSymbolName,
-                     abstractToStringBuilder]
+        body = vcat [abstractSymbolName,
+                     toStringBody,
+                     toHaskellBody, 
+                     abstractToStringBuilder,
+                     abstractToHaskellBuilder]
 
 -- | Generates the @Mod.tom@ tom mappings file for module @Mod@
 compTomFile :: Gen FileHierarchy
@@ -200,7 +203,7 @@ compAbstractSort :: SortId -> Gen FileHierarchy
 compAbstractSort s = do eg <- compEmptyGettersOfSort s
                         es <- compEmptySettersOfSort s
                         ei <- compEmptyIsX s
-                        cl <- wrap $ eg <$> es <$> ei
+                        cl <- wrap $ vcat [renderStringMethod,eg,es,ei]
                         return $ Class (show s) cl
   where wrap body = do qat <- qualifiedAbstractType
                        return $ rClass (public <+> abstract) 
@@ -224,6 +227,7 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                        get  <- compGettersOfConstructor c
                        set  <- compSettersOfConstructor c
                        tos  <- compToStringBuilder c
+                       toh  <- compToHaskellBuilder c
                        eqs  <- compEqualsConstructor c
                        gcc  <- compGetChildCount c
                        gca  <- compGetChildAt c
@@ -232,7 +236,7 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                        scs  <- compSetChildren c
                        let isc = compIsX c
                        let syn = compSymbolName c
-                       let body = vcat [mem,ctor,syn,get,set,tos,
+                       let body = vcat [mem,ctor,syn,get,set,tos,toh,
                                         eqs,isc,gcc,gca,gcs,sca,scs]
                        cls  <- wrap body
                        return $ Class (show c) cls
@@ -256,16 +260,28 @@ iterOverFields f g c = do fis  <- askSt (flip fieldsOf c)
                           fis' <- mapM f fis
                           return $ g fis'
 
+-- | @renderBuiltin s f b@ generates what is necessary to put
+-- the representation of @f@ (field of sort @s@) in the buffer @b@.
+renderBuiltin 
+  :: SortId -> FieldId -> Doc -> Doc
+renderBuiltin s f b =
+  if s == makeSortId "String" 
+    then text "renderString" <> parens (b <> comma <> pretty f)
+    else if s == makeSortId "char"
+           then rMethodCall b (text "append") [fMinus0]
+           else rMethodCall b (text "append") [pretty f]
+  where fMinus0 = text "(int)" <> pretty f <> text " - (int)'0'"
+
 -- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@,
 -- generates 
 --
--- > public String toStringBuilder(java.lang.StringBuilder buffer) {
+-- > public String toStringBuilder(java.lang.StringBuilder buf) {
 -- >   buffer.append("C(");
--- >   x1.toStringBuilder(buffer);
+-- >   x1.toStringBuilder(buf);
 -- >   buffer.append(",");
 -- >   ...
 -- >   buffer.append(",");
--- >   xn.toStringBuilder(buffer);
+-- >   xn.toStringBuilder(buf);
 -- >   buffer.append(")");
 -- > }
 compToStringBuilder :: CtorId -> Gen Doc
@@ -279,9 +295,39 @@ compToStringBuilder c = do rcalls <- iterOverFields rcall id c
         open        = bapp $ dquotes (pretty c <> lparen)
         close       = bapp $ dquotes rparen
         rcall (x,s) = return $
-          if isBuiltin s then bapp (pretty x)
+          if isBuiltin s then renderBuiltin s x (text "buf")
                          else rMethodCall (this <> dot <> pretty x)
                                           (text "toStringBuilder") 
+                                          [text "buf"]
+
+-- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@,
+-- generates 
+--
+-- > public String toHaskellBuilder(java.lang.StringBuilder buf) {
+-- >   buffer.append("(C");
+-- >   buffer.append(" ");
+-- >   x1.toStringBuilder(buf);
+-- >   buffer.append(" ");
+-- >   ...
+-- >   buffer.append(" ");
+-- >   xn.toStringBuilder(buf);
+-- >   buffer.append(")");
+-- > }
+compToHaskellBuilder :: CtorId -> Gen Doc
+compToHaskellBuilder c = do rcalls <- iterOverFields rcall id c
+                            return $ rMethodDef 
+                              public void (text "toHaskellBuilder")
+                              [stringBuilder <+> text "buf"] (complete rcalls)
+  where complete b  = rBody $ open:(addspaces b)++[close]
+        bapp arg    = text "buf.append" <> parens arg
+        apspace     = bapp $ dquotes space
+        addspaces l = foldr (\x r -> apspace:x:r) [] l
+        open        = bapp $ dquotes (lparen <> pretty c)
+        close       = bapp $ dquotes rparen
+        rcall (x,s) = return $
+          if isBuiltin s then renderBuiltin s x (text "buf")
+                         else rMethodCall (this <> dot <> pretty x)
+                                          (text "toHaskellBuilder") 
                                           [text "buf"]
 
 -- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@,

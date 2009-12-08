@@ -50,6 +50,7 @@ data Module = Module {
   moduleName :: String,    -- ^ module name
   imports    :: [SortId],  -- ^ list of imported sorts
   sortDefs   :: [SortDef]  -- ^ sort definitions
+--  hooks      :: [Hook]     -- ^ hooks
 }
 
 -- | Represents a sort definition, 
