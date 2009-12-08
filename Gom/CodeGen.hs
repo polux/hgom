@@ -227,9 +227,10 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                        gca  <- compGetChildAt c
                        gcs  <- compGetChildren c
                        sca  <- compSetChildAt c
+                       scs  <- compSetChildren c
                        let isc = compIsX c
                        let body = vcat [mem,ctor,get,set,tos,
-                                        eqs,isc,gcc,gca,gcs,sca]
+                                        eqs,isc,gcc,gca,gcs,sca,scs]
                        cls  <- wrap body
                        return $ Class (show c) cls
  where wrap b = do
@@ -399,15 +400,57 @@ compSetChildAt c = do fis  <- askSt (flip fieldsOf c)
                 let args = encloseCommas $ dxs1++[dx]++dxs2
                 return $ jreturn <+> new <+> pretty c <> args <> semi
         parts l = go [] l where go _  []     = []
-                                go xs [x]    = [(reverse xs,x,[])]
-                                go xs (x:ys) = (reverse xs,x,ys):(go (x:xs) ys)
+                                go xs [x]    = [(xs,x,[])]
+                                go xs (x:ys) = (xs,x,ys):(go (xs++[x]) ys)
         cast t = if isBuiltin t 
                    then let qbt = rWrapBuiltin (qualifiedBuiltin t)
                             cas = parens (parens qbt <+> text "v")
                         in return $ rMethodCall cas (text "getBuiltin") []
                    else do qt <- qualifiedSort t
                            return $ parens qt <+> text "v"
- 
+
+-- | Given a constructor @c@ of fields @x1,..,xn@ generates
+--
+-- > public tom.library.sl.Visitable 
+-- >   setChildren(tom.library.sl.Visitable[] cs) {
+-- >   if (cs.length == n-1 && 
+-- >       cs[0] instanceof T0 &&
+-- >       ..
+-- >       cs[n] instanceof Tn) {
+-- >        return new c(cs[0],..,cs[n])
+-- >   } else {
+-- >     throw new IndexOutOfBoundsException();
+-- >   }
+-- > }
+--
+-- Builtins are unboxed from @tom.library.sl.VisitableBuiltin@.
+compSetChildren :: CtorId -> Gen Doc 
+compSetChildren c = do cs  <- askSt (flip fieldsOf c)
+                       csn <- mapM cook (zip [0..] cs)
+                       let cd  = cond csn
+                       let bd  = body csn
+                       let ite = rIfThenElse cd bd er
+                       return $ rMethodDef 
+                                  public jVisitable (text "setChildren")
+                                  [jVisitableArray <+> text "cs"] ite
+  where cond csn = let cl = checkLen (length csn)
+                       ci = map checkInstance csn
+                   in align . fillSep $ intersperse (text "&&") (cl:ci)
+        checkLen n = text "cs.length ==" <+> int n
+        checkInstance (n,t,qt) = nth n <+> instanceof <+> td
+          where td = if isBuiltin t 
+                       then text "tom.library.sl.VisitableBuiltin"
+                       else pretty qt
+        body csn = jreturn <+> new <+> pretty c <+> 
+                   encloseCommas (map r csn) <> semi
+          where r (n,t,qt) | isBuiltin t = rMethodCall cas (text "getBuiltin") []
+                           | otherwise   = parens (pretty qt) <+> nth n 
+                  where wqt = rWrapBuiltin (qualifiedBuiltin t)
+                        cas = parens (parens wqt <+> nth n)
+        er = text "throw new IndexOutOfBoundsException();"
+        nth n = text "cs" <+> brackets (int n)
+        cook (n,(_,t)) = do qt <- qualifiedSort t
+                            return (n,t,qt)
 
 -- | Given a constructor C, generates
 --

@@ -33,7 +33,7 @@ import Text.PrettyPrint.Leijen
 import Data.Tree
 import Data.List(intercalate)
 
-import System.FilePath
+import System.FilePath hiding ((</>))
 import System.Directory
 import System.IO
 
