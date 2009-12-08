@@ -225,9 +225,10 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                        eqs  <- compEqualsConstructor c
                        gcc  <- compGetChildCount c
                        gca  <- compGetChildAt c
+                       sca  <- compSetChildAt c
                        let isc = compIsX c
                        let body = vcat [mem,ctor,get,set,tos,
-                                        eqs,isc,gcc,gca]
+                                        eqs,isc,gcc,gca,sca]
                        cls  <- wrap body
                        return $ Class (show c) cls
  where wrap b = do
@@ -340,9 +341,47 @@ compGetChildAt c = do fis <- askSt (flip fieldsOf c)
   where cook (f,s)  = jreturn <+> wrap (this <> dot <> pretty f) s <> semi 
         body n cs   = rSwitch n cs outOfBounds
         outOfBounds = text "throw new IndexOutOfBoundsException();"
-        wrap f s | isBuiltin s = rWrapBuiltin (qualifiedBuiltin s) f
+        wrap f s | isBuiltin s = 
+                     new <+> rWrapBuiltin (qualifiedBuiltin s) <> parens f
                  | otherwise   = f
 
+-- | Given a constructor @c@ of fields @x1,..,xn@ generates
+--
+-- > public tom.library.sl.Visitable setChildAt(tom.library.sl.Visitable v) {
+-- >   switch(n) {
+-- >     case 0: return new c((m.foo.T1) x1,this.x2,..,this.xn);
+-- >     ...
+-- >     case n-1: return new c(this.x1,...,(m.foo.Tn) this.xn);
+-- >     default: throw new IndexOutOfBoundsException();
+-- >   }
+-- > }
+compSetChildAt :: CtorId -> Gen Doc
+compSetChildAt c = do fis  <- askSt (flip fieldsOf c)
+                      fis' <- mapM set (parts fis)
+                      let cs  = zip (map int [0..]) fis'
+                      return $ rMethodDef 
+                                 public jVisitable (text "setChildAt")
+                                 [jint <+> text "n", jVisitable <+> text "v"] 
+                                 (body cs)
+  where body cs     = rSwitch (text "n") cs outOfBounds
+        outOfBounds = text "throw new IndexOutOfBoundsException();"
+        set (xs1,(_,t),xs2) = 
+          let f (x,_) = this <> dot <> pretty x
+              dxs1    = map f xs1
+              dxs2    = map f xs2
+          in do dx <- cast t
+                let args = encloseCommas $ dxs1++[dx]++dxs2
+                return $ jreturn <+> new <+> pretty c <> args <> semi
+        parts l = go [] l where go _  []     = []
+                                go xs [x]    = [(reverse xs,x,[])]
+                                go xs (x:ys) = (reverse xs,x,ys):(go (x:xs) ys)
+        cast t = if isBuiltin t 
+                   then let qbt = rWrapBuiltin (qualifiedBuiltin t)
+                            cas = parens (parens qbt <+> text "v")
+                        in return $ rMethodCall cas (text "getBuiltin") []
+                   else do qt <- qualifiedSort t
+                           return $ parens qt <+> text "v"
+ 
 
 -- | Given a constructor C, generates
 --

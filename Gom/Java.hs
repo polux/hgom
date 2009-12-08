@@ -183,18 +183,14 @@ rMethodCall
 rMethodCall o f args = 
   o <> dot <> f <> encloseCommas args
 
--- | @rWrapBuiltin qt x@ renders
+-- | @rWrapBuiltin qt@ renders
 --
--- > new tom.library.sl.VisitableBuiltin<t>(x)
---
--- where @qt@ is the qualified type for builtin @t@.
+-- > tom.library.sl.VisitableBuiltin<qt>
 rWrapBuiltin
   :: Doc -- ^ qualified type
-  -> Doc -- ^ argument
   -> Doc
-rWrapBuiltin qt x =
-  new <+> text "tom.library.sl.VisitableBuiltin" <>
-  angles qt <> parens x
+rWrapBuiltin qt =
+  text "tom.library.sl.VisitableBuiltin" <> angles qt
 
 -- | Renders the string between @\/* \*/@ on one or several lines.
 rComment :: String -> Doc
@@ -245,7 +241,7 @@ rSwitch
  -> Doc
 rSwitch s l d = text "switch" <+> parens s <+> ibraces body
   where body    = (vcat $ map f l) <$> (text "default:" <+> align d)
-        f (x,y) = text "case" <+> x <> colon <+> align y
+        f (x,y) = text "case" <+> x <> colon <> nest 2 (softline <> y)
 
 -- | @rTypeterm s qs@ renders
 --
