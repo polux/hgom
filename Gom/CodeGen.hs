@@ -426,7 +426,7 @@ compSetChildAt c = do fis  <- askSt (flip fieldsOf c)
 -- Builtins are unboxed from @tom.library.sl.VisitableBuiltin@.
 compSetChildren :: CtorId -> Gen Doc 
 compSetChildren c = do cs  <- askSt (flip fieldsOf c)
-                       csn <- mapM cook (zip [0..] cs)
+                       csn <- zipWithM cook [0..] cs
                        let cd  = cond csn
                        let bd  = body csn
                        let ite = rIfThenElse cd bd er
@@ -449,8 +449,8 @@ compSetChildren c = do cs  <- askSt (flip fieldsOf c)
                         cas = parens (parens wqt <+> nth n)
         er = text "throw new IndexOutOfBoundsException();"
         nth n = text "cs" <+> brackets (int n)
-        cook (n,(_,t)) = do qt <- qualifiedSort t
-                            return (n,t,qt)
+        cook n (_,t) = do qt <- qualifiedSort t
+                          return (n,t,qt)
 
 -- | Given a constructor C, generates
 --
