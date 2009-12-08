@@ -74,7 +74,8 @@ generateFileHierarchyIn dir pac h = go h
         go (Tom n b)      = let fn = dir `combine` (n `addExtension` "tom")
                             in renderInFile fn b
         renderInFile n b  = do hdl <- openFile n WriteMode
-                               hPutDoc hdl b
+                               --hPutDoc hdl b
+                               displayIO hdl (renderPretty 0.8 80 b)
                                hClose hdl
 
 -- | Converts a @'FileHierarchy'@ into a @'Tree'@ @'String'@ in
@@ -132,7 +133,8 @@ jVisitable    = text "tom.library.sl.Visitable"
 -- | Renders the list enclosed in parenthesis and
 -- separated by commas.
 encloseCommas :: [Doc] -> Doc
-encloseCommas l = parens . align . sep $ punctuate comma l
+encloseCommas [] = text "()"
+encloseCommas l = parens . nest 2 . (softbreak <>) . align . sep $ punctuate comma l
 
 -- | Renders the list punctuated by semicolons
 rBody :: [Doc] -> Doc
@@ -241,7 +243,7 @@ rSwitch
  -> Doc
 rSwitch s l d = text "switch" <+> parens s <+> ibraces body
   where body    = (vcat $ map f l) <$> (text "default:" <+> align d)
-        f (x,y) = text "case" <+> x <> colon <> nest 2 (softline <> y)
+        f (x,y) = text "case" <+> x <> colon <+> align y
 
 -- | @rTypeterm s qs@ renders
 --
