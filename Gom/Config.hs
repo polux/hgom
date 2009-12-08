@@ -14,7 +14,8 @@ data Config =
   Config {
     help    :: Bool, -- ^ display help message ?
     version :: Bool, -- ^ display version information ?
-    package :: Maybe [String] -- ^ optional package prefix
+    package :: Maybe [String], -- ^ optional package prefix
+    prprint :: Bool  -- ^ pretty-print module and exit ?
   } 
 
 -- | Default configuration.
@@ -23,7 +24,8 @@ defaultConfig =
   Config {
     help    = False,
     version = False,
-    package = Nothing
+    package = Nothing,
+    prprint = False
   }
 
 -- | Pyhton-like split function.
@@ -40,10 +42,12 @@ options :: [OptDescr (Config -> Config)]
 options =
   [Option []    ["help"]    (NoArg chelp)                   "show this message",
    Option ['V'] ["version"] (NoArg cversion)                "show version number",
-   Option ['p'] ["package"] (ReqArg cpackage "packageName") "specify package name"]
+   Option ['p'] ["package"] (ReqArg cpackage "packageName") "specify package name",
+   Option ['r'] ["pretty"]  (NoArg cpretty)                 "pretty-print the module and exit"]
   where chelp      c = c { help    = True }
         cversion   c = c { version = True }
         cpackage p c = c { package = Just (split '.' p) }
+        cpretty    c = c { prprint = True }
 
 -- | Usage info message header : @Usage: hgom [OPTION...] file@.
 header :: String
