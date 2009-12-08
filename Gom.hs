@@ -18,7 +18,7 @@ main = do (c,n) <- getArgs >>= gomOpts
           if help c 
             then putStrLn usage
             else if version c
-              then putStrLn "Version 0.2.1 - December 2009 - Copyrigth (c) INRIA"
+              then putStrLn "Version 0.3 - December 2009 - Copyrigth (c) INRIA"
               else case n of
                 [f] -> go f c 
                 []  -> paramsError "No input file specified.\n"

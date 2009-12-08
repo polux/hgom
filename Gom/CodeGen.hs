@@ -227,7 +227,12 @@ compAbstractVariadic vc = do cl <- body
                                   (pretty vc) (Just qto)
                                   Nothing empty 
 
--- | @switch f d e@ is @return d@ if @not (f config)@, else @e@.
+-- | @switch f d e@ is @e@ if @f config@ holds, else @return d@ .
+--
+-- Example usage: 
+--
+-- > do hs <- switch haskell [] compSomeMethods
+-- >    return rClass ... (vcat $ defaultMethods ++ hs)
 switch :: (Config -> Bool) -> a -> Gen a -> Gen a
 switch f d e = do cond <- askConf f
                   if cond then e else return d

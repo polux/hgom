@@ -1,5 +1,5 @@
 name:           hgom
-version:        0.2.1
+version:        0.3
 author:         Paul Brauner
 maintainer:     Paul Brauner <paul.brauner@loria.fr>
 copyright:      © 2009 INRIA
@@ -8,7 +8,7 @@ synopsis:       An haskell port of the java version of gom
 description:
   The executable hgom takes a module consisting of several abstract datatypes
   declarations as an input and ouputs java classes. It is meant to mimic
-  the java version of gom (http:\/\/tom.loria.fr).
+  the java version of gom (http:\/\/tom.loria.fr\/wiki\/index.php5\/Documentation:Gom).
 category:          Compilers
 license:           GPL
 license-file:      COPYING
