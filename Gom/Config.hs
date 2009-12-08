@@ -74,5 +74,5 @@ gomOpts argv =
 
 -- | Report an error concerning user args.
 paramsError :: String -> IO a
-paramsError err = ioError (userError (err ++ usageInfo header options))
+paramsError err = error (err ++ usageInfo header options)
 
