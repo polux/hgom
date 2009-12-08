@@ -28,7 +28,7 @@ The documentation index is then dist/doc/html/hgom/hgom/index.html
 
 == Code Coverage ==
 
-  compile hgom with -fhpc (uncomment in hgom.cabal)
+  compile hgom with -fhpc (cabal configure -fcoverage)
   cd tests/coverage
   ./coverage.sh
 
