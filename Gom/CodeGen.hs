@@ -332,6 +332,8 @@ compGetChildCount c = do ar <- length `liftM` askSt (flip fieldsOf c)
 -- >     default: throw new IndexOutOfBoundsException();
 -- >   }
 -- > }
+--
+-- Builtins are boxed in @tom.library.sl.VisitableBuiltin@.
 compGetChildAt :: CtorId -> Gen Doc
 compGetChildAt c = do fis <- askSt (flip fieldsOf c)
                       let cs  = zip (map int [0..]) (map cook fis)
@@ -346,7 +348,15 @@ compGetChildAt c = do fis <- askSt (flip fieldsOf c)
                  | otherwise   = f
           where qs = qualifiedBuiltin s
 
-
+-- | Given a constructor @c@ of fields @x1,..,xn@ generates
+--
+-- > public tom.library.sl.Visitable[] getChildren() {
+-- >   return new tom.library.sl.Visitable[] {
+-- >     this.x1, ..., this.xn
+-- >   };
+-- > }
+--
+-- Builtins are boxed in @tom.library.sl.VisitableBuiltin@.
 compGetChildren :: CtorId -> Gen Doc
 compGetChildren c = do fis <- askSt (flip fieldsOf c)
                        return $ rMethodDef public jVisitableArray
@@ -369,6 +379,8 @@ compGetChildren c = do fis <- askSt (flip fieldsOf c)
 -- >     default: throw new IndexOutOfBoundsException();
 -- >   }
 -- > }
+--
+-- Builtins are unboxed from @tom.library.sl.VisitableBuiltin@.
 compSetChildAt :: CtorId -> Gen Doc
 compSetChildAt c = do fis  <- askSt (flip fieldsOf c)
                       fis' <- mapM set (parts fis)
