@@ -16,7 +16,8 @@ data Config =
     version :: Bool, -- ^ display version information ?
     package :: Maybe [String], -- ^ optional package prefix
     prprint :: Bool,  -- ^ pretty-print module and exit ?
-    haskell :: Bool -- ^ generate toHaskell methods ?
+    haskell :: Bool, -- ^ generate toHaskell methods ?
+    visit   :: Bool -- ^ implement visitable ? 
   } 
 
 -- | Default configuration.
@@ -27,7 +28,8 @@ defaultConfig =
     version = False,
     package = Nothing,
     prprint = False,
-    haskell = False
+    haskell = False,
+    visit   = True
   }
 
 -- | Pyhton-like split function.
@@ -42,16 +44,18 @@ split c (x:xs)
 -- | Options description for 'getOpt'.
 options :: [OptDescr (Config -> Config)]
 options =
-  [Option []    ["help"]    (NoArg chelp)                   "show this message",
-   Option ['V'] ["version"] (NoArg cversion)                "show version number",
-   Option ['r'] ["pretty"]  (NoArg cpretty)                 "pretty-print the module and exit",
-   Option ['p'] ["package"] (ReqArg cpackage "packageName") "specify package name",
-   Option ['h'] ["haskell"] (NoArg chaskell)                "generate 'toHaskell' methods"]
-  where chelp      c = c { help    = True }
+  [Option []    ["help"]       (NoArg chelp)                   "show this message",
+   Option ['V'] ["version"]    (NoArg cversion)                "show version number",
+   Option ['r'] ["pretty"]     (NoArg cpretty)                 "pretty-print the module and exit",
+   Option ['p'] ["package"]    (ReqArg cpackage "packageName") "specify package name",
+   Option ['h'] ["haskell"]    (NoArg chaskell)                "generate 'toHaskell' methods",
+   Option ['v'] ["noVisitable"](NoArg cvisit)                  "don't implement Visitable"]
+  where chelp      c = c { help = True }
         cversion   c = c { version = True }
         cpackage p c = c { package = Just (split '.' p) }
         cpretty    c = c { prprint = True }
         chaskell   c = c { haskell = True }
+        cvisit     c = c { visit = False }
 
 -- | Usage info message header : @Usage: hgom [OPTION...] file@.
 header :: String

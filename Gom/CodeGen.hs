@@ -93,13 +93,21 @@ compSt = do mn <- lower `liftM` askSt modName
 -- | Generates the @ModAbstractType@ abstract java class for module @Mod@.
 compAbstract :: Gen FileHierarchy
 compAbstract = do at <- abstractType
+                  -- if haskell option is enabled, generate toHaskell
                   hs <- switch haskell [] (return hask)
-                  return $ Class at (cl at hs)
-  where cl at e = rClass (public <+> abstract) (text at) 
-                         Nothing (Just [jVisitable]) (body e)
-        body e  = vcat $ always ++ e
-        always  = [abstractSymbolName,toStringBody,abstractToStringBuilder]
-        hask    = [toHaskellBody,abstractToHaskellBuilder]
+                  -- if visit option is enabled, implement visitable 
+                  iv <- switch visit Nothing (return $ Just [jVisitable])
+                  -- if String is imported we generate renderString
+                  im <- askSt importsString
+                  let rs = if im then str else []
+                  -- build the class
+                  return $ Class at (cl at (hs++rs) iv)
+  where cl at e i = rClass (public <+> abstract) (text at) 
+                         Nothing i (body e)
+        body e    = vcat $ always ++ e
+        always    = [abstractSymbolName,toStringBody,abstractToStringBuilder]
+        hask      = [toHaskellBody,abstractToHaskellBuilder]
+        str       = [renderStringMethod] 
 
 -- | Generates the @Mod.tom@ tom mappings file for module @Mod@
 compTomFile :: Gen FileHierarchy
@@ -202,7 +210,7 @@ compAbstractSort :: SortId -> Gen FileHierarchy
 compAbstractSort s = do eg <- compEmptyGettersOfSort s
                         es <- compEmptySettersOfSort s
                         ei <- compEmptyIsX s
-                        cl <- wrap $ vcat [renderStringMethod,eg,es,ei]
+                        cl <- wrap $ vcat [eg,es,ei]
                         return $ Class (show s) cl
   where wrap body = do qat <- qualifiedAbstractType
                        return $ rClass (public <+> abstract) 
@@ -233,11 +241,11 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                        tos  <- compToStringBuilder c
                        toh  <- switch haskell empty (compToHaskellBuilder c)
                        eqs  <- compEqualsConstructor c
-                       gcc  <- compGetChildCount c
-                       gca  <- compGetChildAt c
-                       gcs  <- compGetChildren c
-                       sca  <- compSetChildAt c
-                       scs  <- compSetChildren c
+                       gcc  <- switch visit empty (compGetChildCount c)
+                       gca  <- switch visit empty (compGetChildAt c)
+                       gcs  <- switch visit empty (compGetChildren c)
+                       sca  <- switch visit empty (compSetChildAt c)
+                       scs  <- switch visit empty (compSetChildren c)
                        let isc = compIsX c
                        let syn = compSymbolName c
                        let body = vcat [mem,ctor,syn,get,set,tos,toh,
