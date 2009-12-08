@@ -14,7 +14,7 @@ module Gom.Java (
   for, jelse, jtrue, jfalse, final,
   -- ** Java Types
   jint, jString, stringBuilder, jboolean,
-  jObject, jVisitable,
+  jObject, jVisitable, jVisitableArray,
   -- ** Classes
   rClass, rFullClass,
   -- ** Methods
@@ -75,7 +75,7 @@ generateFileHierarchyIn dir pac h = go h
                             in renderInFile fn b
         renderInFile n b  = do hdl <- openFile n WriteMode
                                --hPutDoc hdl b
-                               displayIO hdl (renderPretty 0.8 80 b)
+                               displayIO hdl (renderPretty 0.6 80 b)
                                hClose hdl
 
 -- | Converts a @'FileHierarchy'@ into a @'Tree'@ @'String'@ in
@@ -122,19 +122,21 @@ jtrue      = text "true"
 jfalse     = text "false"
 final      = text "final"
 
-jint,jString,stringBuilder,jboolean,jObject,jVisitable :: Doc
-jint          = text "int"
-jString       = text "String"
-jboolean      = text "boolean"
-stringBuilder = text "java.lang.StringBuilder"
-jObject       = text "Object"
-jVisitable    = text "tom.library.sl.Visitable"
+jint,jString,stringBuilder,jboolean,jObject :: Doc
+jVisitable,jVisitableArray :: Doc
+jint            = text "int"
+jString         = text "String"
+jboolean        = text "boolean"
+stringBuilder   = text "java.lang.StringBuilder"
+jObject         = text "Object"
+jVisitable      = text "tom.library.sl.Visitable"
+jVisitableArray = jVisitable <> text "[]"
 
 -- | Renders the list enclosed in parenthesis and
 -- separated by commas.
 encloseCommas :: [Doc] -> Doc
 encloseCommas [] = text "()"
-encloseCommas l = parens . nest 2 . (softbreak <>) . align . sep $ punctuate comma l
+encloseCommas l = parens $ nest 2 (softbreak <> (fillSep $ punctuate comma l))
 
 -- | Renders the list punctuated by semicolons
 rBody :: [Doc] -> Doc

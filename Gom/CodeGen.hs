@@ -225,10 +225,11 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                        eqs  <- compEqualsConstructor c
                        gcc  <- compGetChildCount c
                        gca  <- compGetChildAt c
+                       gcs  <- compGetChildren c
                        sca  <- compSetChildAt c
                        let isc = compIsX c
                        let body = vcat [mem,ctor,get,set,tos,
-                                        eqs,isc,gcc,gca,sca]
+                                        eqs,isc,gcc,gca,gcs,sca]
                        cls  <- wrap body
                        return $ Class (show c) cls
  where wrap b = do
@@ -341,9 +342,22 @@ compGetChildAt c = do fis <- askSt (flip fieldsOf c)
   where cook (f,s)  = jreturn <+> wrap (this <> dot <> pretty f) s <> semi 
         body n cs   = rSwitch n cs outOfBounds
         outOfBounds = text "throw new IndexOutOfBoundsException();"
-        wrap f s | isBuiltin s = 
-                     new <+> rWrapBuiltin (qualifiedBuiltin s) <> parens f
+        wrap f s | isBuiltin s = new <+> rWrapBuiltin qs <> parens f
                  | otherwise   = f
+          where qs = qualifiedBuiltin s
+
+
+compGetChildren :: CtorId -> Gen Doc
+compGetChildren c = do fis <- askSt (flip fieldsOf c)
+                       return $ rMethodDef public jVisitableArray
+                                           (text "getChildren")
+                                           [] (body fis)
+  where body fs = let cs = align . sep . punctuate comma $ map child fs
+                  in jreturn <+> new <+> jVisitableArray <+> ibraces cs <> semi
+        child (f,s) =
+          if isBuiltin s then new <+> rWrapBuiltin qs <> parens df else df
+            where qs = qualifiedBuiltin s
+                  df = this <> dot <> pretty f
 
 -- | Given a constructor @c@ of fields @x1,..,xn@ generates
 --
