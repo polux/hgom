@@ -15,11 +15,9 @@ license-file:      COPYING
 cabal-version:     >= 1.6.0
 build-type:        Simple
 tested-with:       GHC == 6.10
-data-files:        test/big.gom
-                   test/verybig.gom
-                   test/test.gom
-                   test/example.gom
-                   test/simple.gom
+data-files:        tests/*.gom
+                   tests/coverage/coverage.sh
+                   tests/coverage/*.gom
                    README
 
 executable hgom

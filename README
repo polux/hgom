@@ -21,7 +21,15 @@ The documentation index is then dist/doc/html/hgom/hgom/index.html
 
 == Test ==
 
-  hgom test/test.gom
-  hgom test/simple.gom
-  hgom test/big.gom
+  hgom tests/test.gom
+  hgom tests/simple.gom
+  hgom tests/big.gom
   ...
+
+== Code Coverage ==
+
+  compile hgom with -fhpc (uncomment in hgom.cabal)
+  cd tests/coverage
+  ./coverage.sh
+
+The documentation is generated in tests/coverage/html
