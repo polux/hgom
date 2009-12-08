@@ -463,7 +463,7 @@ compIsX c = let fun = text "is" <> pretty c
                 b   = rBody [jreturn <+> jtrue]
             in rMethodDef public jboolean fun [] b 
 
--- | @compSymbolName c$ renders 
+-- | @compSymbolName c@ renders 
 --
 -- > public String symbolName() {
 -- >   return "c";
