@@ -93,14 +93,13 @@ compSt = do mn <- lower `liftM` askSt modName
 -- | Generates the @ModAbstractType@ abstract java class for module @Mod@.
 compAbstract :: Gen FileHierarchy
 compAbstract = do at <- abstractType
-                  return $ Class at (cl at)
-  where cl at = rClass (public <+> abstract) (text at) 
-                       Nothing (Just [jVisitable]) body
-        body = vcat [abstractSymbolName,
-                     toStringBody,
-                     toHaskellBody, 
-                     abstractToStringBuilder,
-                     abstractToHaskellBuilder]
+                  hs <- switch haskell [] (return hask)
+                  return $ Class at (cl at hs)
+  where cl at e = rClass (public <+> abstract) (text at) 
+                         Nothing (Just [jVisitable]) (body e)
+        body e  = vcat $ always ++ e
+        always  = [abstractSymbolName,toStringBody,abstractToStringBuilder]
+        hask    = [toHaskellBody,abstractToHaskellBuilder]
 
 -- | Generates the @Mod.tom@ tom mappings file for module @Mod@
 compTomFile :: Gen FileHierarchy
@@ -220,6 +219,11 @@ compAbstractVariadic vc = do cl <- body
                                   (pretty vc) (Just qto)
                                   Nothing empty 
 
+-- | @switch f d e@ is @return d@ if @not (f config)@, else @e@.
+switch :: (Config -> Bool) -> a -> Gen a -> Gen a
+switch f d e = do cond <- askConf f
+                  if cond then e else return d
+
 -- | Given a non-variadic constructor @C@, generates a concrete class @C.java@.
 compConstructor :: CtorId -> Gen FileHierarchy
 compConstructor c = do mem  <- compMembersOfConstructor c
@@ -227,7 +231,7 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                        get  <- compGettersOfConstructor c
                        set  <- compSettersOfConstructor c
                        tos  <- compToStringBuilder c
-                       toh  <- compToHaskellBuilder c
+                       toh  <- switch haskell empty (compToHaskellBuilder c)
                        eqs  <- compEqualsConstructor c
                        gcc  <- compGetChildCount c
                        gca  <- compGetChildAt c

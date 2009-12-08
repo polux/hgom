@@ -15,7 +15,8 @@ data Config =
     help    :: Bool, -- ^ display help message ?
     version :: Bool, -- ^ display version information ?
     package :: Maybe [String], -- ^ optional package prefix
-    prprint :: Bool  -- ^ pretty-print module and exit ?
+    prprint :: Bool,  -- ^ pretty-print module and exit ?
+    haskell :: Bool -- ^ generate toHaskell methods ?
   } 
 
 -- | Default configuration.
@@ -25,7 +26,8 @@ defaultConfig =
     help    = False,
     version = False,
     package = Nothing,
-    prprint = False
+    prprint = False,
+    haskell = False
   }
 
 -- | Pyhton-like split function.
@@ -42,12 +44,14 @@ options :: [OptDescr (Config -> Config)]
 options =
   [Option []    ["help"]    (NoArg chelp)                   "show this message",
    Option ['V'] ["version"] (NoArg cversion)                "show version number",
+   Option ['r'] ["pretty"]  (NoArg cpretty)                 "pretty-print the module and exit",
    Option ['p'] ["package"] (ReqArg cpackage "packageName") "specify package name",
-   Option ['r'] ["pretty"]  (NoArg cpretty)                 "pretty-print the module and exit"]
+   Option ['h'] ["haskell"] (NoArg chaskell)                "generate 'toHaskell' methods"]
   where chelp      c = c { help    = True }
         cversion   c = c { version = True }
         cpackage p c = c { package = Just (split '.' p) }
         cpretty    c = c { prprint = True }
+        chaskell   c = c { haskell = True }
 
 -- | Usage info message header : @Usage: hgom [OPTION...] file@.
 header :: String
