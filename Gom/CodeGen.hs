@@ -95,7 +95,9 @@ compAbstract = do at <- abstractType
                   return $ Class at (cl at)
   where cl at = rClass (public <+> abstract) (text at) 
                        Nothing (Just [jVisitable]) body
-        body = toStringBody <$> abstractToStringBuilder
+        body = vcat [toStringBody,
+                     abstractSymbolName,
+                     abstractToStringBuilder]
 
 -- | Generates the @Mod.tom@ tom mappings file for module @Mod@
 compTomFile :: Gen FileHierarchy
@@ -229,7 +231,8 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                        sca  <- compSetChildAt c
                        scs  <- compSetChildren c
                        let isc = compIsX c
-                       let body = vcat [mem,ctor,get,set,tos,
+                       let syn = compSymbolName c
+                       let body = vcat [mem,ctor,syn,get,set,tos,
                                         eqs,isc,gcc,gca,gcs,sca,scs]
                        cls  <- wrap body
                        return $ Class (show c) cls
@@ -459,6 +462,18 @@ compIsX :: CtorId -> Doc
 compIsX c = let fun = text "is" <> pretty c
                 b   = rBody [jreturn <+> jtrue]
             in rMethodDef public jboolean fun [] b 
+
+-- | @compSymbolName c$ renders 
+--
+-- > public String symbolName() {
+-- >   return "c";
+-- > }
+compSymbolName 
+  :: CtorId -- ^ constructor name
+  -> Doc
+compSymbolName c =
+  text "public String symbolName()" <> 
+  ibraces (rBody [jreturn <+> dquotes (pretty c)])
 
 -- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@,
 -- generates @m.types.T1 x1; ...; m.types.Tn xn;@

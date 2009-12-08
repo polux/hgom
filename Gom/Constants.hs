@@ -1,6 +1,7 @@
 module Gom.Constants (
   toStringBody,
   abstractToStringBuilder,
+  abstractSymbolName,
   builtins,
   isBuiltin,
   qualifiedBuiltin
@@ -10,7 +11,7 @@ import Text.PrettyPrint.Leijen
 import Gom.Java
 import Gom.Sig
 
--- | Full text of the toString method of moduleAbstractType.
+-- | Full text of the toString method of @moduleAbstractType@.
 toStringBody :: Doc
 toStringBody =
  text "public String toString()" <+>
@@ -19,10 +20,15 @@ toStringBody =
      "toStringBuilder(buf)",
      "return buf.toString()"]
 
--- | Full prototype of the abstract method of moduleAbstractType.
+-- | Full prototype of the abstract method of @moduleAbstractType@.
 abstractToStringBuilder :: Doc
 abstractToStringBuilder = 
   text "public abstract void toStringBuilder(java.lang.StringBuilder buf);"
+
+-- | Full prototype of the abstract methode of @moduleAbstractType@.
+abstractSymbolName :: Doc
+abstractSymbolName =
+  text "public abstract String symbolName();"
 
 -- | List of supported java builtins
 builtins :: [SortId]
