@@ -14,7 +14,12 @@ $HGOM t9.gom
 
 $HGOM --help
 $HGOM -r t1.gom 
-$HGOM -h -v t1.gom 
+$HGOM -c no t1.gom 
+$HGOM -c sep t1.gom 
+$HGOM -c same t1.gom 
+$HGOM -c foo t1.gom 
+$HGOM -h t1.gom 
+$HGOM --noVisitable t1.gom
 $HGOM -p aa.bb.cc t1.gom 
 $HGOM -V
 $HGOM aa -p 

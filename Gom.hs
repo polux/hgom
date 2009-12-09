@@ -30,7 +30,7 @@ go f c = do sig <- parseModule `liftM` readFile f
               then print $ pretty sig
               else case checkEverything sig of
                      Nothing -> chain sig c
-                     Just d  -> error (show d)
+                     Just d  -> error (f ++ " contains errors:\n" ++ show d)
 
   where chain :: Module -> Config -> IO ()
         chain m conf = generateFileHierarchy . flip st2java conf . completeVariadics . ast2st $ m
