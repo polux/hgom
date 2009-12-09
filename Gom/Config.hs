@@ -40,7 +40,7 @@ defaultConfig =
 data CongrOpt = NoCongr | SameFile | SeparateFile
 
 -- | Pyhton-like split function.
--- @splitAt \'x\' \"aaxbbxcc\" = [\"aa\",\"bb\",\"cc\"]@
+-- @split \'x\' \"aaxbbxcc\" = [\"aa\",\"bb\",\"cc\"]@
 split :: Char -> String -> [String]
 split _ [] = []
 split c (x:xs) 
