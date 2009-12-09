@@ -42,7 +42,7 @@ qualifiedSort s
 qualifiedCtor :: CtorId -> Gen Doc
 qualifiedCtor c = 
   do p <- packagePrefix
-     lows <- lowerSortId `liftM` askSt (flip codomainOf c)
+     lows <- lowerSortId `liftM` askSt (codomainOf c)
      return $ p <> dot <> text "types" <> dot <> 
               pretty lows <> dot <> pretty c
 
@@ -67,6 +67,25 @@ askSt f = asks (f . fst)
 -- | Query configuration.
 askConf :: (Config -> a) -> Gen a
 askConf f = asks (f . snd)
+
+-- | @switch f d e@ is @e@ if @f config@ holds, else @return d@ .
+--
+-- Example usage: 
+--
+-- > do hs <- switch haskell [] [rMethod ...]
+-- >    return rClass ... (vcat $ defaultMethods ++ hs)
+switch :: (Config -> Bool) -> a -> a -> Gen a
+switch f d e = mswitch f d (return e) 
+
+-- | @mswitch f d e@ is @return e@ if @f config@ holds, else @return d@ .
+--
+-- Example usage: 
+--
+-- > do hs <- switch haskell [] compSomeMethods
+-- >    return rClass ... (vcat $ defaultMethods ++ hs)
+mswitch :: (Config -> Bool) -> a -> Gen a -> Gen a
+mswitch f d e = do cond <- askConf f
+                   if cond then e else return d
 
 -- | Generates @%include { x.tom }@ for every imported sort @x@
 compIncludes :: Gen Doc
@@ -94,9 +113,9 @@ compSt = do mn <- lower `liftM` askSt modName
 compAbstract :: Gen FileHierarchy
 compAbstract = do at <- abstractType
                   -- if haskell option is enabled, generate toHaskell
-                  hs <- switch haskell [] (return hask)
+                  hs <- switch haskell [] hask
                   -- if visit option is enabled, implement visitable 
-                  iv <- switch visit Nothing (return $ Just [jVisitable])
+                  iv <- switch visit Nothing (Just [jVisitable])
                   -- if String is imported we generate renderString
                   im <- askSt importsString
                   let rs = if im then str else []
@@ -132,8 +151,8 @@ compTomFile = do mn    <- askSt modName
 --     @Sort@
 compSort :: SortId -> Gen [FileHierarchy]
 compSort s = do ac    <- compAbstractSort s
-                vctrs <- askSt (flip vCtorsOf s)
-                ctrs  <- askSt (flip sCtorsOf s)
+                vctrs <- askSt (vCtorsOf s)
+                ctrs  <- askSt (sCtorsOf s)
                 avs   <- mapM compAbstractVariadic vctrs
                 ccs   <- mapM compConstructor ctrs
                 return $ [ac, Package (show $ lowerSortId s) (avs ++ ccs)] 
@@ -147,12 +166,12 @@ iterOverSortFields
   -> ([a] -> b) -- ^ combinator of results
   -> SortId     -- ^ subject sort
   -> Gen b
-iterOverSortFields f g s = do cs <- askSt (flip sCtorsOf s)
+iterOverSortFields f g s = do cs <- askSt (sCtorsOf s)
                               fs <- (nub . concat) `liftM` mapM combine cs
                               ms <- mapM (\(co,(fi,ty)) -> f co fi ty) fs
                               return $ g ms
-   where combine c = do fis <- askSt (flip fieldsOf c)
-                        co  <- askSt (flip codomainOf c)
+   where combine c = do fis <- askSt (fieldsOf c)
+                        co  <- askSt (codomainOf c)
                         return $ map ((,) co) fis
 
 -- | @hasNotError s f@ renders 
@@ -199,7 +218,7 @@ compEmptySettersOfSort = iterOverSortFields setter vcat
 --
 -- for each of its fields @x@
 compEmptyIsX :: SortId -> Gen Doc
-compEmptyIsX s = do cs  <- askSt (flip sCtorsOf s) 
+compEmptyIsX s = do cs  <- askSt (sCtorsOf s) 
                     return . vcat $ map isx cs
   where isx f = let fun = text "is" <> pretty f
                     b   = rBody [jreturn <+> jfalse]
@@ -221,21 +240,11 @@ compAbstractSort s = do eg <- compEmptyGettersOfSort s
 compAbstractVariadic :: CtorId -> Gen FileHierarchy
 compAbstractVariadic vc = do cl <- body
                              return $ Class (show vc) cl
-  where body = do co  <- askSt (flip codomainOf vc)
+  where body = do co  <- askSt (codomainOf vc)
                   qto <- qualifiedSort co
                   return $ rClass (public <+> abstract)
                                   (pretty vc) (Just qto)
                                   Nothing empty 
-
--- | @switch f d e@ is @e@ if @f config@ holds, else @return d@ .
---
--- Example usage: 
---
--- > do hs <- switch haskell [] compSomeMethods
--- >    return rClass ... (vcat $ defaultMethods ++ hs)
-switch :: (Config -> Bool) -> a -> Gen a -> Gen a
-switch f d e = do cond <- askConf f
-                  if cond then e else return d
 
 -- | Given a non-variadic constructor @C@, generates a concrete class @C.java@.
 compConstructor :: CtorId -> Gen FileHierarchy
@@ -244,27 +253,28 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                        get  <- compGettersOfConstructor c
                        set  <- compSettersOfConstructor c
                        tos  <- compToStringBuilder c
-                       toh  <- switch haskell empty (compToHaskellBuilder c)
+                       toh  <- mswitch haskell empty (compToHaskellBuilder c)
                        eqs  <- compEqualsConstructor c
-                       gcc  <- switch visit empty (compGetChildCount c)
-                       gca  <- switch visit empty (compGetChildAt c)
-                       gcs  <- switch visit empty (compGetChildren c)
-                       sca  <- switch visit empty (compSetChildAt c)
-                       scs  <- switch visit empty (compSetChildren c)
+                       gcc  <- ifv $ compGetChildCount c
+                       gca  <- ifv $ compGetChildAt c
+                       gcs  <- ifv $ compGetChildren c
+                       sca  <- ifv $ compSetChildAt c
+                       scs  <- ifv $ compSetChildren c
                        let isc = compIsX c
                        let syn = compSymbolName c
                        let body = vcat [mem,ctor,syn,get,set,tos,toh,
                                         eqs,isc,gcc,gca,gcs,sca,scs]
                        cls  <- wrap body
                        return $ Class (show c) cls
- where wrap b = do
-         gen <- askSt (flip isGenerated c)                                     
-         let rcls d = rClass public (pretty c) (Just d) Nothing b              
-         case gen of Nothing -> do co  <- askSt (flip codomainOf c)            
-                                   qco <- qualifiedSort co                     
-                                   return $ rcls qco                           
-                     Just bc -> do qbc <- qualifiedCtor bc                     
-                                   return $ rcls qbc                        
+  where wrap b = do
+          gen <- askSt (isGenerated c)                                     
+          let rcls d = rClass public (pretty c) (Just d) Nothing b              
+          case gen of Nothing -> do co  <- askSt (codomainOf c)            
+                                    qco <- qualifiedSort co                     
+                                    return $ rcls qco                           
+                      Just bc -> do qbc <- qualifiedCtor bc                     
+                                    return $ rcls qbc                        
+        ifv = mswitch visit empty
 
 -- | Helper fonction that iters over the fields of
 -- a constructor and combines them.
@@ -273,7 +283,7 @@ iterOverFields
   -> ([a] -> b)                   -- ^ the combinator
   -> CtorId                       -- ^ the constructor
   -> Gen b
-iterOverFields f g c = do fis  <- askSt (flip fieldsOf c)
+iterOverFields f g c = do fis  <- askSt (fieldsOf c)
                           fis' <- mapM (uncurry f) fis
                           return $ g fis'
 
@@ -384,7 +394,7 @@ compEqualsConstructor c = do rcalls <- iterOverFields rcall id c
 -- >   return n;
 -- > }
 compGetChildCount :: CtorId -> Gen Doc
-compGetChildCount c = do ar <- length `liftM` askSt (flip fieldsOf c)
+compGetChildCount c = do ar <- length `liftM` askSt (fieldsOf c)
                          return $ wrap ar
   where wrap n = rMethodDef public jint (text "getChildCount") 
                             [] (jreturn <+> int n <> semi)
@@ -402,7 +412,7 @@ compGetChildCount c = do ar <- length `liftM` askSt (flip fieldsOf c)
 --
 -- Builtins are boxed in @tom.library.sl.VisitableBuiltin@.
 compGetChildAt :: CtorId -> Gen Doc
-compGetChildAt c = do fis <- askSt (flip fieldsOf c)
+compGetChildAt c = do fis <- askSt (fieldsOf c)
                       let cs  = zip (map int [0..]) (map cook fis)
                       let arg = text "n"
                       return $ rMethodDef 
@@ -425,7 +435,7 @@ compGetChildAt c = do fis <- askSt (flip fieldsOf c)
 --
 -- Builtins are boxed in @tom.library.sl.VisitableBuiltin@.
 compGetChildren :: CtorId -> Gen Doc
-compGetChildren c = do fis <- askSt (flip fieldsOf c)
+compGetChildren c = do fis <- askSt (fieldsOf c)
                        return $ rMethodDef public jVisitableArray
                                            (text "getChildren")
                                            [] (body fis)
@@ -449,7 +459,7 @@ compGetChildren c = do fis <- askSt (flip fieldsOf c)
 --
 -- Builtins are unboxed from @tom.library.sl.VisitableBuiltin@.
 compSetChildAt :: CtorId -> Gen Doc
-compSetChildAt c = do fis  <- askSt (flip fieldsOf c)
+compSetChildAt c = do fis  <- askSt (fieldsOf c)
                       fis' <- mapM set (parts fis)
                       let cs  = zip (map int [0..]) fis'
                       return $ rMethodDef 
@@ -491,7 +501,7 @@ compSetChildAt c = do fis  <- askSt (flip fieldsOf c)
 --
 -- Builtins are unboxed from @tom.library.sl.VisitableBuiltin@.
 compSetChildren :: CtorId -> Gen Doc 
-compSetChildren c = do cs  <- askSt (flip fieldsOf c)
+compSetChildren c = do cs  <- askSt (fieldsOf c)
                        csn <- zipWithM cook [0..] cs
                        let cd  = cond csn
                        let bd  = body csn
@@ -555,7 +565,7 @@ compMembersOfConstructor = iterOverFields rdr rBody
 -- > }
 compCtorOfConstructor :: CtorId -> Gen Doc
 compCtorOfConstructor c = 
-  do fis <- askSt (flip fieldsOf c)
+  do fis <- askSt (fieldsOf c)
      a <- mapM rdr1 fis
      let b = rBody $ map rdr2 fis
      return $ rMethodDef public empty (pretty c) a b
@@ -617,8 +627,8 @@ compTypeTerm s = do qs <- qualifiedSort s
 compOp :: CtorId -> Gen Doc
 compOp c = do isfsym <- compIsFsym
               slots  <- iterOverFields compSlot vcat c
-              s      <- askSt (flip codomainOf c)
-              fis    <- askSt (flip fieldsOf c)
+              s      <- askSt (codomainOf c)
+              fis    <- askSt (fieldsOf c)
               let pfis = map (pretty *** pretty) fis
               make   <- compMake (map fst pfis)
               return $ rOp (pretty s) (pretty c) pfis
@@ -642,8 +652,8 @@ compOp c = do isfsym <- compIsFsym
 -- >   is_empty(l) { $l.isEmptyVC() }
 -- > }
 compOpList :: CtorId -> Gen Doc
-compOpList c = do co     <- askSt (flip codomainOf c)
-                  dom    <- askSt (flip fieldOf c)
+compOpList c = do co     <- askSt (codomainOf c)
+                  dom    <- askSt (fieldOf c)
                   consc  <- qualifiedCtor (prependCons c)
                   emptyc <- qualifiedCtor (prependEmpty c)
                   return $ rOpList (pretty c) (pretty co) 

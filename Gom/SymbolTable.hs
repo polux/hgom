@@ -60,44 +60,44 @@ importedSorts :: SymbolTable -> [SortId]
 importedSorts = imported
 
 -- | Non-variadic constructors associated to a sort.
-sCtorsOf :: SymbolTable -> SortId -> [CtorId]
-sCtorsOf st s = 
+sCtorsOf :: SortId -> SymbolTable -> [CtorId]
+sCtorsOf s st = 
   case s `M.lookup` sctors st of
     Just l  -> l
     Nothing -> error $ "sort" ++ show s ++ "not declared"
 
 -- | Variadic constructors associated to a sort.
-vCtorsOf :: SymbolTable -> SortId -> [CtorId]
-vCtorsOf st s = 
+vCtorsOf :: SortId -> SymbolTable -> [CtorId]
+vCtorsOf s st = 
   case s `M.lookup` vctors st of
     Just l  -> l
     Nothing -> error $ "sort" ++ show s ++ "not declared" 
 
 -- | Fields associated to a non-variadic constructor.
-fieldsOf :: SymbolTable -> CtorId -> [(FieldId,SortId)]
-fieldsOf st c = 
+fieldsOf :: CtorId -> SymbolTable -> [(FieldId,SortId)]
+fieldsOf c st = 
   case c `M.lookup` sfields st of
     Just l  -> l
     Nothing -> error $ "non-variadic constructor" ++ show c ++ "not declared" 
 
 -- | Sort of the unique field of a variadic constructor.
-fieldOf :: SymbolTable -> CtorId -> SortId
-fieldOf st c =
+fieldOf :: CtorId -> SymbolTable -> SortId
+fieldOf c st =
   case c `M.lookup` vfield st of
     Just s  -> s
     Nothing -> error $ "variadic constructor" ++ show c ++ "not declared" 
 
 -- | Codomain of the constructor.
-codomainOf :: SymbolTable -> CtorId -> SortId
-codomainOf st c =
+codomainOf :: CtorId -> SymbolTable -> SortId
+codomainOf c st =
   case c `M.lookup` codom st of
     Just s  -> s
     Nothing -> error $ "constructor" ++ show c ++ "not declared" 
 
 -- | If the field has been generated (e.g. @ConsC@) returns @'Just' C@,
 -- @'Nothing'@ otherwise.
-isGenerated :: SymbolTable -> CtorId -> Maybe CtorId
-isGenerated st c = M.lookup c (baseCtor st)
+isGenerated :: CtorId -> SymbolTable -> Maybe CtorId
+isGenerated c st = M.lookup c (baseCtor st)
 
 -- | Returns @True@ if @String@ is imported.
 importsString :: SymbolTable -> Bool
@@ -221,8 +221,8 @@ completeVariadics :: SymbolTable -> SymbolTable
 completeVariadics st = foldl' add st res
   where res = map conv vcs
         vcs = variadicConstructorsIds st
-        conv ci = let co  = codomainOf st ci
-                      dom = fieldOf st ci
+        conv ci = let co  = codomainOf ci st
+                      dom = fieldOf ci st
                   in (co, ci, [toNil ci, toCons ci co dom])
         add st' (co,ci,l) = 
           (insertGeneratedCtors (map ctorName l) ci . addCtors co l) st'
