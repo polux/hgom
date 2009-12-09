@@ -1,0 +1,11 @@
+module Foo
+imports int String char
+abstract syntax
+
+f(x:T2,y:T1) | a(x:T2)
+T2 = g(x:T1,y:T2) | b()
+T3 = S(x:String)
+T4 = T(x:char)
+
+List = List(T1*)
+IList = iList(int*)

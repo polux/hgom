@@ -3,24 +3,24 @@
 HGOM=../../dist/build/hgom/hgom
 
 $HGOM t1.gom 
-mv hgom.tix hgom1.tix 
 $HGOM t2.gom 
-mv hgom.tix hgom2.tix 
 $HGOM t3.gom 
-mv hgom.tix hgom3.tix 
-$HGOM --help
-mv hgom.tix hgom4.tix 
-$HGOM -r t1.gom 
-mv hgom.tix hgom5.tix 
-$HGOM -h -v t1.gom 
-mv hgom.tix hgom6.tix 
-$HGOM -p aa.bb.cc t1.gom 
-mv hgom.tix hgom7.tix
-$HGOM -V
-mv hgom.tix hgom8.tix
-$HGOM aa -p 
-mv hgom.tix hgom9.tix
-hpc sum hgom*.tix > hgom_sum.tix
-hpc markup --srcdir=../.. --destdir=html hgom_sum.tix 
+$HGOM t4.gom 
+$HGOM t5.gom 
+$HGOM t6.gom 
+$HGOM t7.gom 
+$HGOM t8.gom 
+$HGOM t9.gom 
 
-rm -rf *.tix foo aa
+$HGOM --help
+$HGOM -r t1.gom 
+$HGOM -h -v t1.gom 
+$HGOM -p aa.bb.cc t1.gom 
+$HGOM -V
+$HGOM aa -p 
+$HGOM
+$HGOM aa bb
+
+hpc markup --srcdir=../.. --destdir=html hgom.tix 
+
+rm -rf hgom.tix foo aa

@@ -30,7 +30,6 @@ module Gom.Java (
 ) where
 
 import Text.PrettyPrint.Leijen
-import Data.Tree
 import Data.List(intercalate)
 
 import System.FilePath hiding ((</>))
@@ -77,21 +76,6 @@ generateFileHierarchyIn dir pac h = go h
                                --hPutDoc hdl b
                                displayIO hdl (renderPretty 0.6 80 b)
                                hClose hdl
-
--- | Converts a @'FileHierarchy'@ into a @'Tree'@ @'String'@ in
--- order to pretty-print it
-toTree :: FileHierarchy -> Tree String
-toTree (Package n c) = Node n (toForest c)
-toTree (Class n b)   = Node (n ++ ".java\n" ++ show b) []
-toTree (Tom   n _)   = Node (n ++ ".tom") []
-
--- | Converts a @['FileHierarchy']@ into a @'Forest' 'String'@ in
--- order to pretty-print it
-toForest :: [FileHierarchy] -> Forest String
-toForest = map toTree
-
-instance Show FileHierarchy where
-  show = drawTree . toTree
 
 -- | Encloses a document into { } and indents the body.
 ibraces :: Doc -> Doc

@@ -49,7 +49,7 @@ data SymbolTable =
     codom :: M.Map CtorId SortId,
     -- | maps generated constructors to original ones (redundant info)
     baseCtor :: M.Map CtorId CtorId
-  } deriving (Show)
+  }
 
 -- | Name of the module encoded by the symbol table.
 modName :: SymbolTable -> String
@@ -64,7 +64,7 @@ sCtorsOf :: SymbolTable -> SortId -> [CtorId]
 sCtorsOf st s = 
   case s `M.lookup` sctors st of
     Just l  -> l
-    Nothing -> error $ "sort" ++ show s ++ "not declared" 
+    Nothing -> error $ "sort" ++ show s ++ "not declared"
 
 -- | Variadic constructors associated to a sort.
 vCtorsOf :: SymbolTable -> SortId -> [CtorId]

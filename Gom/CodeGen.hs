@@ -535,7 +535,7 @@ compSymbolName
   :: CtorId -- ^ constructor name
   -> Doc
 compSymbolName c =
-  text "public String symbolName()" <> 
+  text "public String symbolName()" <+> 
   ibraces (rBody [jreturn <+> dquotes (pretty c)])
 
 -- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@,
