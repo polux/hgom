@@ -93,7 +93,7 @@ usage = usageInfo header options
 gomOpts :: [String] -> IO (Config, [String])
 gomOpts argv = 
   case getOpt Permute options argv of
-    (o,n,[]  ) -> do conf <- foldlM (flip id) defaultConfig o
+    (o,n,[]  ) -> do conf <- foldlM (\c f -> f c) defaultConfig o
                      return (conf,n)
     (_,_,errs) -> paramsError (concat errs)
 
