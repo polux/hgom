@@ -21,9 +21,9 @@ The documentation index is then dist/doc/html/hgom/hgom/index.html
 
 == Test ==
 
-  hgom tests/test.gom
-  hgom tests/simple.gom
-  hgom tests/big.gom
+  hgom tests/examples/test.gom
+  hgom tests/examples/simple.gom
+  hgom tests/examples/big.gom
   ...
 
 == Code Coverage ==
