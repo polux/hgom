@@ -524,7 +524,7 @@ compSetChildren c = do cs  <- askSt (fieldsOf c)
                   where wqt = rWrapBuiltin (qualifiedBuiltin t)
                         cas = parens (parens wqt <+> nth n)
         er = text "throw new IndexOutOfBoundsException();"
-        nth n = text "cs" <+> brackets (int n)
+        nth n = text "cs" <> brackets (int n)
         cook n (_,t) = do qt <- qualifiedSort t
                           return (n,t,qt)
 
