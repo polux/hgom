@@ -20,6 +20,7 @@ data Config =
     prprint :: Bool,  -- ^ pretty-print module and exit ?
     haskell :: Bool, -- ^ generate toHaskell methods ?
     visit   :: Bool, -- ^ implement visitable ? 
+    checker :: Bool, -- ^ perform checks ?
     congr   :: CongrOpt
   } 
 
@@ -33,6 +34,7 @@ defaultConfig =
     prprint = False,
     haskell = False,
     visit   = True,
+    checker = True,
     congr   = NoCongr
   }
 
@@ -65,8 +67,10 @@ options =
           (unlines ["generate congruence strategies",
                     "in the same or in a separate .tom",
                     "file (defaults to no)"])
-  ,Option [] ["noVisitable"] (NoArg  cvisit)
-          "don't implement Visitable"]
+  ,Option [] ["noVisitable"] (NoArg cvisit)
+          "don't implement Visitable"
+  ,Option [] ["noCheck"] (NoArg ccheck)
+          "don't perform consistency checks"]
 
   where chelp      c = return $ c { help = True }
         cversion   c = return $ c { version = True }
@@ -74,6 +78,7 @@ options =
         cpretty    c = return $ c { prprint = True }
         chaskell   c = return $ c { haskell = True }
         cvisit     c = return $ c { visit = False }
+        ccheck     c = return $ c { checker = False }
 
         ccongr "no"   c = return $ c { congr = NoCongr } 
         ccongr "same" c = return $ c { congr = SameFile }

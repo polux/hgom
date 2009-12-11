@@ -28,9 +28,11 @@ go :: String -> Config -> IO ()
 go f c = do sig <- parseModule `liftM` readFile f
             if prprint c 
               then print $ pretty sig
-              else case checkEverything sig of
-                     Nothing -> chain sig c
-                     Just d  -> error (f ++ " contains errors:\n" ++ show d)
+              else if checker c 
+                then case checkEverything sig of
+                  Nothing -> chain sig c
+                  Just d  -> error (f ++ " contains errors:\n" ++ show d)
+                else chain sig c
 
   where chain :: Module -> Config -> IO ()
         chain m conf = generateFileHierarchy . flip st2java conf . completeVariadics . ast2st $ m
