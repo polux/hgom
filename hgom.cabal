@@ -15,9 +15,12 @@ license-file:      COPYING
 cabal-version:     >= 1.6.0
 build-type:        Simple
 tested-with:       GHC == 6.10
-data-files:        tests/*.gom
+data-files:        tests/examples/*.gom
                    tests/coverage/coverage.sh
                    tests/coverage/*.gom
+                   tests/bench/bench.sh 
+                   tests/bench/Gen.hs
+                   tests/bench/Makefile
                    README
 
 Flag coverage

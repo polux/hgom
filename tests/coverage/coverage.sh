@@ -2,15 +2,9 @@
 
 HGOM=../../dist/build/hgom/hgom
 
-$HGOM t1.gom 
-$HGOM t2.gom 
-$HGOM t3.gom 
-$HGOM t4.gom 
-$HGOM t5.gom 
-$HGOM t6.gom 
-$HGOM t7.gom 
-$HGOM t8.gom 
-$HGOM t9.gom 
+for i in t*.gom; do
+  $HGOM $i
+done 
 
 $HGOM --help
 $HGOM -r t1.gom 
