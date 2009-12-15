@@ -141,7 +141,8 @@ rClass md cn ex im body =
   md <+> text "class" <+> cn <+> r1 ex <+> r2 im <+> ibraces body
   where r1 Nothing  = empty
         r1 (Just d) = text "extends" <+> d
-        r2 l = text "implements" <+> hsep (punctuate comma l)
+        r2 [] = empty
+        r2 l  = text "implements" <+> hsep (punctuate comma l)
 
 -- | Adds package name at the top of a class declaration.
 rFullClass
