@@ -112,8 +112,11 @@ compSt = do mn <- lower `liftM` askSt modName
 -- | Generates the @ModAbstractType@ abstract java class for module @Mod@.
 compAbstract :: Gen FileHierarchy
 compAbstract = do at <- abstractType
-                  -- if haskell option is enabled, generate toHaskell
+                  -- if haskell option is enabled, generate abstract toHaskell
                   hs <- switch haskell [] hask
+                  -- if sharing option is enabled, generate afferent abstract
+                  -- methods
+                  ss <- switch sharing [] share
                   -- if visit option is enabled, implement visitable 
                   iv <- switch visit   [] [jVisitable]
                   -- if sharing option is enabled, implement shared
@@ -122,12 +125,13 @@ compAbstract = do at <- abstractType
                   im <- askSt importsString
                   let rs = if im then str else []
                   -- build the class
-                  return $ Class at (cl at (hs++rs) (iv++is))
+                  return $ Class at (cl at (hs++ss++rs) (iv++is))
   where cl at e i = rClass (public <+> abstract) (text at) 
                          Nothing i (body e)
         body e    = vcat $ always ++ e
         always    = [abstractSymbolName,toStringBody,abstractToStringBuilder]
         hask      = [toHaskellBody,abstractToHaskellBuilder]
+        share     = [abstractSharing]
         str       = [renderStringMethod] 
 
 -- | Generates the @Mod.tom@ tom mappings file for module @Mod@

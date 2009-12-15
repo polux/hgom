@@ -161,7 +161,8 @@ renderStringMethod = vcat $ map text
    "  buf.append('\"');",
    "}"]
 
--- | declaration of sharing related methods and fields for the abstract class
+-- | declaration of sharing related methods and fields for the
+-- modNameAbstractType class
 abstractSharing :: Doc
 abstractSharing = vcat $ map text
   ["protected static final shared.SharedObjectFactory factory =",
