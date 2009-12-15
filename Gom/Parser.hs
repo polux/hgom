@@ -2,8 +2,6 @@
 
 module Gom.Parser(parseModule) where
 
-import Data.List
-
 import Text.Parsec
 import Text.Parsec.String(Parser)
 import Text.Parsec.Language
