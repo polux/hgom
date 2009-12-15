@@ -68,24 +68,24 @@ askSt f = asks (f . fst)
 askConf :: (Config -> a) -> Gen a
 askConf f = asks (f . snd)
 
--- | @switch f d e@ is @e@ if @f config@ holds, else @return d@ .
+-- | @ifConf f e d@ is @return e@ if @f config@ holds, else @return d@ .
 --
 -- Example usage: 
 --
--- > do hs <- switch haskell [] [rMethod ...]
+-- > do hs <- ifConf haskell [rMethod ...] []
 -- >    return rClass ... (vcat $ defaultMethods ++ hs)
-switch :: (Config -> Bool) -> a -> a -> Gen a
-switch f d e = mswitch f d (return e) 
+ifConf :: (Config -> Bool) -> a -> a -> Gen a
+ifConf f e d = ifConfM f (return e) (return d) 
 
--- | @mswitch f d e@ is @return e@ if @f config@ holds, else @return d@ .
+-- | @ifConfM f e d@ is @e@ if @f config@ holds, else @d@ .
 --
 -- Example usage: 
 --
--- > do hs <- switch haskell [] compSomeMethods
+-- > do hs <- ifConfM haskell compSomeMethods (return [])
 -- >    return rClass ... (vcat $ defaultMethods ++ hs)
-mswitch :: (Config -> Bool) -> a -> Gen a -> Gen a
-mswitch f d e = do cond <- askConf f
-                   if cond then e else return d
+ifConfM :: (Config -> Bool) -> Gen a -> Gen a -> Gen a
+ifConfM f e d = do cond <- askConf f
+                   if cond then e else d
 
 -- | Generates @%include { x.tom }@ for every imported sort @x@
 compIncludes :: Gen Doc
@@ -113,14 +113,14 @@ compSt = do mn <- lower `liftM` askSt modName
 compAbstract :: Gen FileHierarchy
 compAbstract = do at <- abstractType
                   -- if haskell option is enabled, generate abstract toHaskell
-                  hs <- switch haskell [] hask
+                  hs <- ifConf haskell hask []
                   -- if sharing option is enabled, generate afferent abstract
                   -- methods
-                  ss <- switch sharing [] share
+                  ss <- ifConf sharing share []
                   -- if visit option is enabled, implement visitable 
-                  iv <- switch visit   [] [jVisitable]
+                  iv <- ifConf visit [jVisitable] []
                   -- if sharing option is enabled, implement shared
-                  is <- switch sharing [] [jShared] 
+                  is <- ifConf sharing [jShared] []
                   -- if String is imported we generate renderString
                   im <- askSt importsString
                   let rs = if im then str else []
@@ -259,13 +259,13 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                        get  <- compGettersOfConstructor c
                        set  <- compSettersOfConstructor c
                        tos  <- compToStringBuilder c
-                       toh  <- mswitch haskell empty (compToHaskellBuilder c)
-                       eqs  <- compEqualsConstructor c
-                       gcc  <- ifv $ compGetChildCount c
-                       gca  <- ifv $ compGetChildAt c
-                       gcs  <- ifv $ compGetChildren c
-                       sca  <- ifv $ compSetChildAt c
-                       scs  <- ifv $ compSetChildren c
+                       toh  <- ifConfM haskell (compToHaskellBuilder c) rempty
+                       eqs  <- ifConfM sharing rempty (compEqualsConstructor c)
+                       gcc  <- ifV $ compGetChildCount c
+                       gca  <- ifV $ compGetChildAt c
+                       gcs  <- ifV $ compGetChildren c
+                       sca  <- ifV $ compSetChildAt c
+                       scs  <- ifV $ compSetChildren c
                        let isc = compIsX c
                        let syn = compSymbolName c
                        let body = vcat [mem,ctor,syn,get,set,tos,toh,
@@ -280,7 +280,8 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                                     return $ rcls qco                           
                       Just bc -> do qbc <- qualifiedCtor bc                     
                                     return $ rcls qbc                        
-        ifv = mswitch visit empty
+        ifV = flip (ifConfM visit) rempty
+        rempty = return empty
 
 -- | Helper fonction that iters over the fields of
 -- a constructor and combines them.
@@ -557,9 +558,12 @@ compSymbolName c =
 -- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@,
 -- generates @m.types.T1 x1; ...; m.types.Tn xn;@
 compMembersOfConstructor :: CtorId -> Gen Doc
-compMembersOfConstructor = iterOverFields rdr rBody
-  where rdr f s = do qs <- qualifiedSort s
-                     return $ private <+> qs <+> pretty f
+compMembersOfConstructor c = do
+  hash <- ifConf sharing (text "private int hashCode;") empty
+  fis  <- iterOverFields rdr rBody c
+  return $ hash <$> fis
+    where rdr f s = do qs <- qualifiedSort s
+                       return $ private <+> qs <+> pretty f
 
 -- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@,
 -- generates the constructor:
@@ -618,7 +622,8 @@ compSettersOfConstructor = iterOverFields setter vcat
 -- > }
 compTypeTerm :: SortId -> Gen Doc
 compTypeTerm s = do qs <- qualifiedSort s
-                    return $ rTypeterm (pretty s) qs
+                    sh <- askConf sharing 
+                    return $ rTypeterm (pretty s) qs (not sh)
 
 -- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@
 -- of codomain @Co@, generates
