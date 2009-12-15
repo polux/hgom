@@ -11,7 +11,7 @@ module Gom.Java (
   -- ** Java keywords
   abstract, public, protected, private, this,
   jreturn, throw, new, void, instanceof, jif,
-  for, jelse, jtrue, jfalse, final,
+  for, jelse, jtrue, jfalse, final, static,
   -- ** Java Types
   jint, jString, stringBuilder, jboolean,
   jObject, jVisitable, jShared,
@@ -87,7 +87,7 @@ sbraces :: Doc -> Doc
 sbraces d = lbrace <+> d <+> rbrace
 
 abstract,public,protected,private :: Doc
-this,jreturn,throw,new,void,final :: Doc
+this,jreturn,throw,new,void,final,static :: Doc
 instanceof,jif,for,jelse,jtrue,jfalse :: Doc
 
 abstract   = text "abstract"
@@ -106,6 +106,7 @@ jelse      = text "else"
 jtrue      = text "true"
 jfalse     = text "false"
 final      = text "final"
+static     = text "static"
 
 jint,jString,stringBuilder,jboolean,jObject :: Doc
 jVisitable,jShared,jVisitableArray :: Doc
@@ -260,13 +261,13 @@ rIsFsym
 rIsFsym s = 
   text "is_fsym(t) { ($t instanceof" <+> s <> text ") }"
 
--- | Renders @make(arg1,..,argn) { (new m.types.co.C($arg1,..,$argn)) }@.
+-- | Renders @make(arg1,..,argn) { (m.types.co.make($arg1,..,$argn)) }@.
 rMake
  :: Doc   -- ^ qualified constructor
  -> [Doc] -- ^ arguments
  -> Doc
 rMake qc as =
-  text "make" <> args <+> (sbraces . parens) (new <+> qc <> iargs)
+  text "make" <> args <+> (sbraces . parens) (qc <> text ".make" <> iargs)
   where gen   = parens . hcat . punctuate comma
         args  = gen as
         iargs = gen (map inline as)

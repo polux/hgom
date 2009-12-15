@@ -256,6 +256,7 @@ compAbstractVariadic vc = do cl <- body
 compConstructor :: CtorId -> Gen FileHierarchy
 compConstructor c = do mem  <- compMembersOfConstructor c
                        ctor <- compCtorOfConstructor c
+                       mak  <- compMakeOfConstructor c
                        get  <- compGettersOfConstructor c
                        set  <- compSettersOfConstructor c
                        tos  <- compToStringBuilder c
@@ -268,8 +269,8 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                        scs  <- ifV $ compSetChildren c
                        let isc = compIsX c
                        let syn = compSymbolName c
-                       let body = vcat [mem,ctor,syn,get,set,tos,toh,
-                                        eqs,isc,gcc,gca,gcs,sca,scs]
+                       let body = vcat [mem,ctor,mak,syn,get,set,tos,
+                                        toh,eqs,isc,gcc,gca,gcs,sca,scs]
                        cls  <- wrap body
                        return $ Class (show c) cls
   where wrap b = do
@@ -568,7 +569,7 @@ compMembersOfConstructor c = do
 -- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@,
 -- generates the constructor:
 --
--- > public C(m.types.T1 x1, ..., m.types.Tn xn) {
+-- > private C(m.types.T1 x1, ..., m.types.Tn xn) {
 -- >   this.x1 = x1;
 -- >   ...
 -- >   this.xn = xn;
@@ -578,10 +579,28 @@ compCtorOfConstructor c =
   do fis <- askSt (fieldsOf c)
      a <- mapM rdr1 fis
      let b = rBody $ map rdr2 fis
-     return $ rMethodDef public empty (pretty c) a b
+     return $ rMethodDef private empty (pretty c) a b
   where rdr1 (f,s) = do qs <- qualifiedSort s
                         return $ qs <+> (text .show) f
         rdr2 (f,_) = this <> dot <> pretty f <+> equals <+> pretty f
+
+-- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@,
+-- generates the make method:
+--
+-- > public C make(m.types.T1 x1, ..., m.types.Tn xn) {
+-- >   return new C(x1, ..., xn);
+-- > }
+compMakeOfConstructor :: CtorId -> Gen Doc
+compMakeOfConstructor c = 
+  do fis <- askSt (fieldsOf c)
+     a <- mapM rdr fis
+     let b = newC fis <> semi
+     return $ rMethodDef (public <+> static) (pretty c) (text "make") a b
+  where rdr (f,s) = do qs <- qualifiedSort s
+                       return $ qs <+> (text .show) f
+        newC fis  = jreturn <+> new <+> pretty c <> 
+                    encloseCommas (map (pretty . fst) fis)
+
 
 -- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@,
 -- generates the methods: 
