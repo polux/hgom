@@ -163,13 +163,13 @@ renderStringMethod = vcat $ map text
 
 -- | declaration of sharing related methods and fields for the abstract class
 abstractSharing :: Doc
-abstractSharing = text 
-  "protected static final shared.SharedObjectFactory factory =\
-  \   shared.SingletonSharedObjectFactory.getInstance();\
-  \private int uniqueID;\
-  \public int getUniqueIdentifier() {\
-  \  return uniqueID;\
-  \}\
-  \public void setUniqueIdentifier(int uniqueID) {\
-  \  this.uniqueID = uniqueID;\
-  \}"
+abstractSharing = vcat $ map text
+  ["protected static final shared.SharedObjectFactory factory =",
+   "   shared.SingletonSharedObjectFactory.getInstance();",
+   "private int uniqueID;",
+   "public int getUniqueIdentifier() {",
+   "  return uniqueID;",
+   "}",
+   "public void setUniqueIdentifier(int uniqueID) {",
+   "  this.uniqueID = uniqueID;",
+   "}"]
