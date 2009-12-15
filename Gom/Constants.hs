@@ -4,6 +4,7 @@ module Gom.Constants (
   toHaskellBody,
   abstractToHaskellBuilder,
   abstractSymbolName,
+  abstractSharing,
   builtins,
   isBuiltin,
   qualifiedBuiltin,
@@ -159,3 +160,16 @@ renderStringMethod = vcat $ map text
    "  }",
    "  buf.append('\"');",
    "}"]
+
+-- | declaration of sharing related methods and fields for the abstract class
+abstractSharing :: Doc
+abstractSharing = text 
+  "protected static final shared.SharedObjectFactory factory =\
+  \   shared.SingletonSharedObjectFactory.getInstance();\
+  \private int uniqueID;\
+  \public int getUniqueIdentifier() {\
+  \  return uniqueID;\
+  \}\
+  \public void setUniqueIdentifier(int uniqueID) {\
+  \  this.uniqueID = uniqueID;\
+  \}"

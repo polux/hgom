@@ -115,12 +115,14 @@ compAbstract = do at <- abstractType
                   -- if haskell option is enabled, generate toHaskell
                   hs <- switch haskell [] hask
                   -- if visit option is enabled, implement visitable 
-                  iv <- switch visit Nothing (Just [jVisitable])
+                  iv <- switch visit   [] [jVisitable]
+                  -- if sharing option is enabled, implement shared
+                  is <- switch sharing [] [jShared] 
                   -- if String is imported we generate renderString
                   im <- askSt importsString
                   let rs = if im then str else []
                   -- build the class
-                  return $ Class at (cl at (hs++rs) iv)
+                  return $ Class at (cl at (hs++rs) (iv++is))
   where cl at e i = rClass (public <+> abstract) (text at) 
                          Nothing i (body e)
         body e    = vcat $ always ++ e
@@ -234,7 +236,7 @@ compAbstractSort s = do eg <- compEmptyGettersOfSort s
   where wrap body = do qat <- qualifiedAbstractType
                        return $ rClass (public <+> abstract) 
                                        (pretty s) (Just qat)  
-                                       Nothing body
+                                       [] body
 
 -- | Given a variadic constructor @VC@, generates an abstract class @VC.java@.
 compAbstractVariadic :: CtorId -> Gen FileHierarchy
@@ -244,7 +246,7 @@ compAbstractVariadic vc = do cl <- body
                   qto <- qualifiedSort co
                   return $ rClass (public <+> abstract)
                                   (pretty vc) (Just qto)
-                                  Nothing empty 
+                                  [] empty 
 
 -- | Given a non-variadic constructor @C@, generates a concrete class @C.java@.
 compConstructor :: CtorId -> Gen FileHierarchy
@@ -268,7 +270,7 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                        return $ Class (show c) cls
   where wrap b = do
           gen <- askSt (isGenerated c)                                     
-          let rcls d = rClass public (pretty c) (Just d) Nothing b              
+          let rcls d = rClass public (pretty c) (Just d) [] b              
           case gen of Nothing -> do co  <- askSt (codomainOf c)            
                                     qco <- qualifiedSort co                     
                                     return $ rcls qco                           

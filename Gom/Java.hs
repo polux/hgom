@@ -14,7 +14,8 @@ module Gom.Java (
   for, jelse, jtrue, jfalse, final,
   -- ** Java Types
   jint, jString, stringBuilder, jboolean,
-  jObject, jVisitable, jVisitableArray,
+  jObject, jVisitable, jShared,
+  jVisitableArray,
   -- ** Classes
   rClass, rFullClass,
   -- ** Methods
@@ -107,13 +108,14 @@ jfalse     = text "false"
 final      = text "final"
 
 jint,jString,stringBuilder,jboolean,jObject :: Doc
-jVisitable,jVisitableArray :: Doc
+jVisitable,jShared,jVisitableArray :: Doc
 jint            = text "int"
 jString         = text "String"
 jboolean        = text "boolean"
 stringBuilder   = text "java.lang.StringBuilder"
 jObject         = text "Object"
 jVisitable      = text "tom.library.sl.Visitable"
+jShared         = text "shared.SharedObjectWithID"
 jVisitableArray = jVisitable <> text "[]"
 
 -- | Renders the list enclosed in parenthesis and
@@ -132,15 +134,14 @@ rClass
  :: Doc   -- ^ modifier (public, private..)
  -> Doc   -- ^ class name
  -> Maybe Doc   -- ^ extends
- -> Maybe [Doc] -- ^ implements
+ -> [Doc] -- ^ implements
  -> Doc   -- ^ body
  -> Doc
 rClass md cn ex im body = 
   md <+> text "class" <+> cn <+> r1 ex <+> r2 im <+> ibraces body
   where r1 Nothing  = empty
         r1 (Just d) = text "extends" <+> d
-        r2 Nothing  = empty
-        r2 (Just l) = text "implements" <+> hsep (punctuate comma l)
+        r2 l = text "implements" <+> hsep (punctuate comma l)
 
 -- | Adds package name at the top of a class declaration.
 rFullClass
