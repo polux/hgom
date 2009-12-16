@@ -14,7 +14,8 @@ $HGOM -c same t1.gom
 $HGOM -c foo t1.gom 
 $HGOM -h t1.gom 
 $HGOM --noVisitable t1.gom
-$HGOM --noSahring t1.gom
+$HGOM --noSharing t1.gom
+$HGOM --noCheck t1.gom
 $HGOM -p aa.bb.cc t1.gom 
 $HGOM -V
 $HGOM aa -p 
