@@ -13,7 +13,7 @@ module Gom.Java (
   jreturn, throw, new, void, instanceof, jif,
   for, jelse, jtrue, jfalse, final, static,
   -- ** Java Types
-  jint, jstringBuilder, jboolean,
+  jint, jString, stringBuilder, jboolean,
   jObject, jVisitable, jShared,
   jVisitableArray,
   -- ** Classes
