@@ -243,7 +243,7 @@ rSwitch s l d = text "switch" <+> parens s <+> ibraces body
 -- > }
 --
 -- where @eq = $t1 == $t2@ if @shr@,
--- @t1.equals($t2)@ otherwise.
+-- @$t1.equals($t2)@ otherwise.
 rTypeterm
   :: Doc -- ^ sort
   -> Doc -- ^ qualified sort

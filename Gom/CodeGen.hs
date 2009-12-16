@@ -589,9 +589,9 @@ compCtorOfConstructor c = ifConfM sharing ctorShr ctorNoShr
 -- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@,
 -- generates the make method:
 --
--- public static C make(m.types.T1 x1, ..., m.types.Tn xn) {
---  return null;
--- }
+-- > public static C make(m.types.T1 x1, ..., m.types.Tn xn) {
+-- >  return null;
+-- > }
 --
 -- or the following if @--noSharing@ has been toggled:
 --
