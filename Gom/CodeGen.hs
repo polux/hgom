@@ -458,9 +458,9 @@ compGetChildren c = do fis <- askSt (fieldsOf c)
 --
 -- > public tom.library.sl.Visitable setChildAt(tom.library.sl.Visitable v) {
 -- >   switch(n) {
--- >     case 0: return new c((m.foo.T1) x1,this.x2,..,this.xn);
+-- >     case 0: return c.make((m.foo.T1) x1,this.x2,..,this.xn);
 -- >     ...
--- >     case n-1: return new c(this.x1,...,(m.foo.Tn) this.xn);
+-- >     case n-1: return c.make(this.x1,...,(m.foo.Tn) this.xn);
 -- >     default: throw new IndexOutOfBoundsException();
 -- >   }
 -- > }
@@ -481,8 +481,9 @@ compSetChildAt c = do fis  <- askSt (fieldsOf c)
               dxs1    = map f xs1
               dxs2    = map f xs2
           in do dx <- cast t
-                let args = encloseCommas $ dxs1++[dx]++dxs2
-                return $ jreturn <+> new <+> pretty c <> args <> semi
+                let args = dxs1++[dx]++dxs2
+                let call = rMethodCall (pretty c) (text "make") args
+                return $ jreturn <+> call <> semi
         parts l = go [] l where go _  []     = []
                                 go xs [x]    = [(xs,x,[])]
                                 go xs (x:ys) = (xs,x,ys):(go (xs++[x]) ys)
@@ -501,7 +502,7 @@ compSetChildAt c = do fis  <- askSt (fieldsOf c)
 -- >       cs[0] instanceof T0 &&
 -- >       ..
 -- >       cs[n] instanceof Tn) {
--- >        return new c(cs[0],..,cs[n])
+-- >        return c.make(cs[0],..,cs[n])
 -- >   } else {
 -- >     throw new IndexOutOfBoundsException();
 -- >   }
@@ -525,8 +526,8 @@ compSetChildren c = do cs  <- askSt (fieldsOf c)
           where td = if isBuiltin t 
                        then text "tom.library.sl.VisitableBuiltin"
                        else pretty qt
-        body csn = jreturn <+> new <+> pretty c <+> 
-                   encloseCommas (map r csn) <> semi
+        body csn = let call = rMethodCall (pretty c) (text "make") (map r csn)
+                   in jreturn <+> call <> semi
           where r (n,t,qt) | isBuiltin t = rMethodCall cas (text "getBuiltin") []
                            | otherwise   = parens (pretty qt) <+> nth n 
                   where wqt = rWrapBuiltin (qualifiedBuiltin t)
@@ -575,32 +576,46 @@ compMembersOfConstructor c = do
 -- >   this.xn = xn;
 -- > }
 compCtorOfConstructor :: CtorId -> Gen Doc
-compCtorOfConstructor c = 
-  do fis <- askSt (fieldsOf c)
-     a <- mapM rdr1 fis
-     let b = rBody $ map rdr2 fis
-     return $ rMethodDef private empty (pretty c) a b
-  where rdr1 (f,s) = do qs <- qualifiedSort s
-                        return $ qs <+> (text .show) f
-        rdr2 (f,_) = this <> dot <> pretty f <+> equals <+> pretty f
+compCtorOfConstructor c = ifConfM sharing ctorShr ctorNoShr
+  where ctorShr   = return $ rMethodDef private empty (pretty c) [] empty
+        ctorNoShr = do fis <- askSt (fieldsOf c)
+                       a <- mapM rdr1 fis
+                       let b = rBody $ map rdr2 fis
+                       return $ rMethodDef private empty (pretty c) a b
+          where rdr1 (f,s) = do qs <- qualifiedSort s
+                                return $ qs <+> (text . show) f
+                rdr2 (f,_) = this <> dot <> pretty f <+> equals <+> pretty f
 
 -- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@,
 -- generates the make method:
 --
--- > public C make(m.types.T1 x1, ..., m.types.Tn xn) {
+-- public static C make(m.types.T1 x1, ..., m.types.Tn xn) {
+--  return null;
+-- }
+--
+-- or the following if @--noSharing@ has been toggled:
+--
+-- > public static C make(m.types.T1 x1, ..., m.types.Tn xn) {
 -- >   return new C(x1, ..., xn);
--- > }
+-- > } 
 compMakeOfConstructor :: CtorId -> Gen Doc
-compMakeOfConstructor c = 
-  do fis <- askSt (fieldsOf c)
-     a <- mapM rdr fis
-     let b = newC fis <> semi
-     return $ rMethodDef (public <+> static) (pretty c) (text "make") a b
-  where rdr (f,s) = do qs <- qualifiedSort s
-                       return $ qs <+> (text .show) f
-        newC fis  = jreturn <+> new <+> pretty c <> 
-                    encloseCommas (map (pretty . fst) fis)
-
+compMakeOfConstructor c = ifConfM sharing cmakes cmake
+  where -- the sharing case
+        cmakes = makeDef $ jreturn <+> text "null" <> semi
+        -- the no sharing case
+        cmake  = do cfs <- cfields
+                    let b = newC (map (pretty . fst) cfs) <> semi
+                    makeDef b
+          where newC fs = jreturn <+> new <+> pretty c <> encloseCommas fs
+        -- takes a body bd and returns public static c make(...) { bd }
+        makeDef bd = do cfs <- cfields 
+                        a <- mapM rdr cfs
+                        return $ rMethodDef (public <+> static) 
+                                 (pretty c) (text "make") a bd
+          where rdr (f,s) = do qs <- qualifiedSort s
+                               return $ qs <+> (text .show) f
+        -- the fields of c
+        cfields = askSt (fieldsOf c)
 
 -- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@,
 -- generates the methods: 
@@ -637,12 +652,15 @@ compSettersOfConstructor = iterOverFields setter vcat
 -- > %typeterm S {
 -- >   implement { m.types.S }
 -- >   is_sort(t) { ($t instanceof m.types.S) }
--- >   equals(t1,t2) { ($t1.equals($t2)) }
+-- >   equals(t1,t2) { ($t1 == $t2) }
 -- > }
+--
+-- generats @$t1.equals($t2)@ if @--noSharing@ has been
+-- toggled
 compTypeTerm :: SortId -> Gen Doc
 compTypeTerm s = do qs <- qualifiedSort s
                     sh <- askConf sharing 
-                    return $ rTypeterm (pretty s) qs (not sh)
+                    return $ rTypeterm (pretty s) qs sh
 
 -- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@
 -- of codomain @Co@, generates
@@ -652,7 +670,7 @@ compTypeTerm s = do qs <- qualifiedSort s
 -- >   get_slot(x1,t) { $t.getx1() }
 -- >   ...
 -- >   get_slot(xn,t) { $t.getxn() }
--- >   make (t1,..,tn) { (new m.types.co.c($t1,..,$tn)) }
+-- >   make (t1,..,tn) { (m.types.co.c.make($t1,..,$tn)) }
 -- > }
 compOp :: CtorId -> Gen Doc
 compOp c = do isfsym <- compIsFsym

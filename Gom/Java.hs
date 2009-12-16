@@ -234,25 +234,28 @@ rSwitch s l d = text "switch" <+> parens s <+> ibraces body
   where body    = (vcat $ map f l) <$> (text "default:" <+> align d)
         f (x,y) = text "case" <+> x <> colon <+> align y
 
--- | @rTypeterm s qs@ renders
+-- | @rTypeterm s qs shr@ renders
 --
 -- > %typeterm s {
 -- >   implement { qs }
 -- >   is_sort(t) { ($t instanceof qs) }
--- >   equals(t1,t2) { ($t1.equals($t2)) }
+-- >   equals(t1,t2) { eq }
 -- > }
+--
+-- where @eq = $t1 == $t2@ if @shr@,
+-- @t1.equals($t2)@ otherwise.
 rTypeterm
   :: Doc -- ^ sort
   -> Doc -- ^ qualified sort
-  -> Bool -- ^ deep equality ?
+  -> Bool -- ^ sharing ?
   -> Doc
 rTypeterm s qs deep =
   text "%typeterm" <+> s <+> ibraces (vcat
     [text "implement" <+> sbraces qs,
      text "is_sort(t) { ($t instanceof" <+> qs <> text ") }",
      text "equals(t1,t2) { (" <> eq <> text ") }"])
-  where eq = text $ if deep then "$t1.equals($t2)"
-                            else "$t1 == $t2"
+  where eq = text $ if deep then "$t1 == $t2"
+                            else "$t1.equals($t2)"
 
 -- | Renders @is_fsym(t) { ($t instanceof sort) }@.
 rIsFsym
