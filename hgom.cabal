@@ -21,7 +21,7 @@ data-files:        tests/examples/*.gom
                    tests/bench/bench.sh 
                    tests/bench/Gen.hs
                    tests/bench/Makefile
-                   README
+                   README.markdown
 
 Flag coverage
   Description: Enable code coverage support

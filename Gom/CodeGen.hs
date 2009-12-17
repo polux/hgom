@@ -283,7 +283,6 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                       Just bc -> do qbc <- qualifiedCtor bc                     
                                     return $ rcls qbc                        
         ifV = flip (ifConfM visit) rempty
-        ifS = flip (ifConfM sharing) rempty
         rempty = return empty
 
 -- | Helper fonction that iters over the fields of
