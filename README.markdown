@@ -67,5 +67,5 @@ lines (using [sloccount](http://www.dwheeler.com/sloccount)) and the elapsed tim
     cd tests/bench
     make
 
-It takes some time. The generated files can be plotted using `gnuplot` for
-instance.
+It takes some time. The generated files can be plotted using
+[gnuplot](http://www.gnuplot.info) for instance.
