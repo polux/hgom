@@ -9,7 +9,7 @@ Compilation
     cabal configure
     cabal build
 
-The `htom` binary is generated in `dist/build/hgom/`
+The `htom` binary is generated in `dist/build/hgom/`.
 
 Installation
 ------------
@@ -19,13 +19,16 @@ Installation
 Generate developer documentation
 --------------------------------
 
+By default, cabal generates no documentation since only the executable is exported.
+Developers still can generate the module's documentation as follows.
+
     cabal haddock --executables \
     --html-location='http://hackage.haskell.org/packages/archive/$pkg/latest/doc/html' \
     --hyperlink-source 
 
-(add `--internal` for unexported symbols documentation)
+Only exported symbols are documented. Add `--internal` for unexported symbols documentation.
 
-The documentation index is then `dist/doc/html/hgom/hgom/index.html`
+The documentation index is then `dist/doc/html/hgom/hgom/index.html`.
 
 Test
 ----
@@ -41,10 +44,12 @@ you can test the behaviour of `hgom` by running it as follows.
 Code Coverage
 -------------
 
+Code coverage can be tested as follows.
+
     cabal clean
     cabal configure -fcoverage
     cabal build
     cd tests/coverage
     ./coverage.sh
 
-The documentation is generated in `tests/coverage/html`
+The documentation is generated in `tests/coverage/html`.
