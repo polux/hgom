@@ -5,7 +5,9 @@ generator.
 
 ## Compilation ##
 
-To compile hgom, install `cabal` and type the following.
+To compile hgom, install 
+[cabal-install](http://hackage.haskell.org/trac/hackage/wiki/CabalInstall)
+and type the following.
 
     cabal configure
     cabal build
