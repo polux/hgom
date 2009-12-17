@@ -9,7 +9,7 @@ Compilation
     cabal configure
     cabal build
 
-The htom binary is generated in dist/build/hgom/
+The `htom` binary is generated in `dist/build/hgom/`
 
 Installation
 ------------
@@ -29,6 +29,9 @@ The documentation index is then `dist/doc/html/hgom/hgom/index.html`
 
 Test
 ----
+
+Run `hgom --help` to get some basic help. There is no unit tests at the moment,
+you can test the behaviour of `hgom` by running it as follows.
 
     hgom tests/examples/test.gom
     hgom tests/examples/simple.gom
