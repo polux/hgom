@@ -20,7 +20,7 @@ Generate developer documentation
 --------------------------------
 
 By default, cabal generates no documentation since only the executable is exported.
-Developers still can generate the module's documentation as follows.
+Developers still can generate the modules' documentation as follows.
 
     cabal haddock --executables \
     --html-location='http://hackage.haskell.org/packages/archive/$pkg/latest/doc/html' \
