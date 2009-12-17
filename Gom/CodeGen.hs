@@ -255,6 +255,7 @@ compAbstractVariadic vc = do cl <- body
 -- | Given a non-variadic constructor @C@, generates a concrete class @C.java@.
 compConstructor :: CtorId -> Gen FileHierarchy
 compConstructor c = do mem  <- compMembersOfConstructor c
+                       smem <- ifConf sharing (compSharingMembers c) empty
                        ctor <- compCtorOfConstructor c
                        mak  <- compMakeOfConstructor c
                        get  <- compGettersOfConstructor c
@@ -269,7 +270,7 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                        scs  <- ifV $ compSetChildren c
                        let isc = compIsX c
                        let syn = compSymbolName c
-                       let body = vcat [mem,ctor,mak,syn,get,set,tos,
+                       let body = vcat [mem,smem,ctor,mak,syn,get,set,tos,
                                         toh,eqs,isc,gcc,gca,gcs,sca,scs]
                        cls  <- wrap body
                        return $ Class (show c) cls
@@ -282,6 +283,7 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                       Just bc -> do qbc <- qualifiedCtor bc                     
                                     return $ rcls qbc                        
         ifV = flip (ifConfM visit) rempty
+        ifS = flip (ifConfM sharing) rempty
         rempty = return empty
 
 -- | Helper fonction that iters over the fields of
@@ -560,12 +562,20 @@ compSymbolName c =
 -- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@,
 -- generates @m.types.T1 x1; ...; m.types.Tn xn;@
 compMembersOfConstructor :: CtorId -> Gen Doc
-compMembersOfConstructor c = do
-  hash <- ifConf sharing (text "private int hashCode;") empty
-  fis  <- iterOverFields rdr rBody c
-  return $ hash <$> fis
-    where rdr f s = do qs <- qualifiedSort s
-                       return $ private <+> qs <+> pretty f
+compMembersOfConstructor c = iterOverFields rdr rBody c
+  where rdr f s = do qs <- qualifiedSort s
+                     return $ private <+> qs <+> pretty f
+
+-- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@,
+-- generates:
+--
+-- > private int hashCode;
+-- > private static C proto = new C();
+compSharingMembers :: CtorId -> Doc
+compSharingMembers c =
+  text "private int hashCode;" <$>
+  text "private static" <+> pretty c <+> 
+  text "proto = new" <+> pretty c <> text "();"
 
 -- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@,
 -- generates the constructor:
