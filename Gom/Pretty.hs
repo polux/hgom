@@ -18,12 +18,12 @@ instance Pretty Ctor where
 instance Pretty SortDef where
   pretty (SortDef n cs) = text (show n) <+> align (char '=' <+> prettycs)
     where prettycs = fillSep $ withPipes (map pretty cs)  
-          withPipes (x:y:xs) = x:(withPipes $ (char '|' <+> y):xs)
+          withPipes (x:y:xs) = x:withPipes ((char '|' <+> y):xs)
           withPipes l        = l
 
 instance Pretty Module where
   pretty (Module n i d) = (text "module" <+> text n) 
                           <$$> (text "imports" <+> hsep (map (text . show) i))
                           <$$> text "abstract syntax" <> lb
-                          <$$> (vcat $ punctuate lb (map pretty d))
+                          <$$> vcat (punctuate lb (map pretty d))
 

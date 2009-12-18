@@ -12,6 +12,7 @@ module Gom.Constants (
   renderStringMethod,
 ) where
 
+import Data.Maybe(fromMaybe)
 import Text.PrettyPrint.Leijen
 import Gom.Java
 import Gom.Sig
@@ -55,7 +56,7 @@ builtins = map makeSortId ["int","char","String"]
 
 -- | Check if some sort is a builtin.
 isBuiltin :: SortId -> Bool
-isBuiltin s = s `elem` builtins
+isBuiltin = (`elem` builtins)
 
 qbuiltins :: [(SortId,Doc)]
 qbuiltins = zip builtins (map text qts)
@@ -64,7 +65,7 @@ qbuiltins = zip builtins (map text qts)
 
 -- | Returns the qualified java type for builtin boxing.
 qualifiedBuiltin :: SortId -> Doc
-qualifiedBuiltin s = maybe (pretty s) id (s `lookup` qbuiltins)
+qualifiedBuiltin s = fromMaybe (pretty s) (s `lookup` qbuiltins)
 
 ibuiltins :: [(SortId,Doc)]
 ibuiltins = zip builtins (map text toms)
@@ -72,7 +73,7 @@ ibuiltins = zip builtins (map text toms)
 
 -- | Returns the right .tom filename associated to a builtin.
 builtinImport :: SortId -> Doc
-builtinImport s = maybe (pretty s) id (s `lookup` ibuiltins)
+builtinImport s = fromMaybe (pretty s) (s `lookup` ibuiltins)
 
 renderStringMethod :: Doc
 renderStringMethod = vcat $ map text

@@ -28,7 +28,7 @@ packagePrefix :: Gen Doc
 packagePrefix = do m <- lower `liftM` askSt modName
                    go (pretty m) `liftM` askConf package
   where go dm Nothing  = dm
-        go dm (Just l) = hcat . intersperse dot $ (map text l)++[dm]
+        go dm (Just l) = hcat . intersperse dot $ map text l ++ [dm]
 
 -- | Given a sort @S@, returns @module.types.S@
 qualifiedSort :: SortId -> Gen Doc
@@ -55,7 +55,7 @@ abstractType = do mn <- askSt modName
 qualifiedAbstractType :: Gen Doc
 qualifiedAbstractType = do at <- abstractType
                            pr <- packagePrefix 
-                           return $ pr <> dot <> (text at)
+                           return $ pr <> dot <> text at
 
 -- | A computation inside a context containing a read-only symbol table.
 type Gen a = Reader (SymbolTable,Config) a
@@ -120,7 +120,7 @@ compAbstract = do at <- abstractType
                   -- if visit option is enabled, implement visitable 
                   iv <- ifConf visit [jVisitable] []
                   -- if sharing option is enabled, implement shared
-                  is <- ifConf sharing [jShared] []
+                  is <- ifConf sharing [jSharedId] []
                   -- if String is imported we generate renderString
                   im <- askSt importsString
                   let rs = if im then str else []
@@ -128,7 +128,7 @@ compAbstract = do at <- abstractType
                   return $ Class at (cl at (hs++ss++rs) (iv++is))
   where cl at e i = rClass (public <+> abstract) (text at) 
                          Nothing i (body e)
-        body e    = vcat $ always ++ e
+        body      = vcat . (always ++)
         always    = [abstractSymbolName,toStringBody,abstractToStringBuilder]
         hask      = [toHaskellBody,abstractToHaskellBuilder]
         share     = [abstractSharing]
@@ -161,7 +161,7 @@ compSort s = do ac    <- compAbstractSort s
                 ctrs  <- askSt (sCtorsOf s)
                 avs   <- mapM compAbstractVariadic vctrs
                 ccs   <- mapM compConstructor ctrs
-                return $ [ac, Package (show $ lowerSortId s) (avs ++ ccs)] 
+                return [ac, Package (show $ lowerSortId s) (avs ++ ccs)] 
 
 -- | Helper fonction for 'compEmptyGettersOfSort' and 
 -- 'compEmptySettersOfSort'. Iters the first argument on the fields of the
@@ -262,7 +262,7 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                        set  <- compSettersOfConstructor c
                        tos  <- compToStringBuilder c
                        toh  <- ifConfM haskell (compToHaskellBuilder c) rempty
-                       eqs  <- ifConfM sharing rempty (compEqualsConstructor c)
+                       eqs  <- ifConfM sharing (compEquiv c) (compEquals c)
                        gcc  <- ifV $ compGetChildCount c
                        gca  <- ifV $ compGetChildAt c
                        gcs  <- ifV $ compGetChildren c
@@ -300,12 +300,11 @@ iterOverFields f g c = do fis  <- askSt (fieldsOf c)
 -- the representation of @f@ (field of sort @s@) in the buffer @b@.
 renderBuiltin 
   :: SortId -> FieldId -> Doc -> Doc
-renderBuiltin s f b =
-  if s == makeSortId "String" 
-    then text "renderString" <> parens (b <> comma <> pretty f)
-    else if s == makeSortId "char"
-           then rMethodCall b (text "append") [fMinus0]
-           else rMethodCall b (text "append") [pretty f]
+renderBuiltin s f b 
+  | s == makeSortId "String" = text "renderString" <> 
+                               parens (b <> comma <> pretty f)
+  | s == makeSortId "char"   = rMethodCall b (text "append") [fMinus0]
+  | otherwise                = rMethodCall b (text "append") [pretty f]
   where fMinus0 = text "(int)" <> pretty f <> text " - (int)'0'"
 
 -- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@,
@@ -325,7 +324,7 @@ compToStringBuilder c = do rcalls <- iterOverFields rcall id c
                            return $ rMethodDef 
                              public void (text "toStringBuilder")
                              [stringBuilder <+> text "buf"] (complete rcalls)
-  where complete b = rBody $ open:(intersperse apcomma b)++[close]
+  where complete b = rBody $ open : intersperse apcomma b ++ [close]
         bapp arg   = text "buf.append" <> parens arg
         apcomma    = bapp $ dquotes comma
         open       = bapp $ dquotes (pretty c <> lparen)
@@ -354,37 +353,39 @@ compToHaskellBuilder c = do rcalls <- iterOverFields rcall id c
                             return $ rMethodDef 
                               public void (text "toHaskellBuilder")
                               [stringBuilder <+> text "buf"] (complete rcalls)
-  where complete b  = rBody $ open:(addspaces b)++[close]
-        bapp arg    = text "buf.append" <> parens arg
-        apspace     = bapp $ dquotes space
-        addspaces l = foldr (\x r -> apspace:x:r) [] l
-        open        = bapp $ dquotes (lparen <> pretty c)
-        close       = bapp $ dquotes rparen
-        rcall x s   = return $
+  where complete b = rBody $ open : addspaces b ++ [close]
+        bapp arg   = text "buf.append" <> parens arg
+        apspace    = bapp $ dquotes space
+        addspaces  = foldr (\x r -> apspace:x:r) []
+        open       = bapp $ dquotes (lparen <> pretty c)
+        close      = bapp $ dquotes rparen
+        rcall x s  = return $
           if isBuiltin s then renderBuiltin s x (text "buf")
                          else rMethodCall (this <> dot <> pretty x)
                                           (text "toHaskellBuilder") 
                                           [text "buf"]
 
--- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@,
--- generates 
+-- | Auxiliary function for 'compEquals' and 'compEquiv'. 
+-- Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@,
+-- a method name @method@, a type name @ty@ and a combinator @comb@, 
+-- @compEqAux method comb ty C@ generates 
 --
--- > public boolean equals(java.lang.Object o) {
+-- > public boolean method(ty o) {
 -- >   if (o instanceof C) {
 -- >     C typed_o = (C) o;
 -- >     return true &&
--- >            this.x1.equals(typed_o.getx1()) &&
+-- >            this.x1 `comb` o.x1 &&
 -- >            ...
--- >            this.xn.equals(typed_o.getxn());
+-- >            this.xn `comb` o.xn;
 -- >   } else {
 -- >     return false;
 -- >   }
 -- > }
-compEqualsConstructor :: CtorId -> Gen Doc
-compEqualsConstructor c = do rcalls <- iterOverFields rcall id c
-                             return $ rMethodDef 
-                               (public <+> final) jboolean (text "equals")
-                               [jObject <+> text "o"] (complete rcalls)
+compEqAux :: Doc -> (Doc -> Doc -> Doc) -> Doc -> CtorId -> Gen Doc
+compEqAux meth comb ty c = do rcalls <- iterOverFields rcall id c
+                              return $ rMethodDef 
+                                (public <+> final) jboolean meth
+                                [ty <+> text "o"] (complete rcalls)
   where cdoc = pretty c
         complete b = rIfThenElse cond (branch1 b) (jreturn <+> jfalse <> semi) 
         cond       = text "o" <+> instanceof <+> cdoc
@@ -392,17 +393,55 @@ compEqualsConstructor c = do rcalls <- iterOverFields rcall id c
         l1 = cdoc <+> text "typed_o" <+> equals <+> parens cdoc <+> text "o"
         l2 b = jreturn <+> (align . fillSep $ intersperse (text "&&") b)
         rcall x s = let lhs = this <> dot <> pretty x
-                        rhs = text "typed_o.get" <> pretty x <> text "()"
+                        rhs = text "typed_o." <> pretty x 
                     in return $ if isBuiltin s
                                   then lhs <+> text "==" <+> rhs
-                                  else rMethodCall lhs (text "equals") [rhs]
+                                  else lhs `comb` rhs
+
+-- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@,
+-- @compEquals C@ generates 
+--
+-- > public boolean equals(java.lang.Object o) {
+-- >   if (o instanceof C) {
+-- >     C typed_o = (C) o;
+-- >     return true &&
+-- >            this.x1.equals(o.x1) &&
+-- >            ...
+-- >            this.xn.equals(o.xn);
+-- >   } else {
+-- >     return false;
+-- >   }
+-- > }
+compEquals :: CtorId -> Gen Doc
+compEquals = compEqAux meth comb jObject
+  where meth = text "equals"
+        comb lhs rhs = rMethodCall lhs meth [rhs]
+
+-- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@,
+-- @compEquiv C@ generates 
+--
+-- > public boolean equivalent(shared.SharedObject o) {
+-- >   if (o instanceof C) {
+-- >     C typed_o = (C) o;
+-- >     return true &&
+-- >            this.x1 == o.x1 &&
+-- >            ...
+-- >            this.xn == o.xn;
+-- >   } else {
+-- >     return false;
+-- >   }
+-- > }
+compEquiv :: CtorId -> Gen Doc
+compEquiv = compEqAux meth comb jShared
+  where meth = text "equivalent"
+        comb lhs rhs = lhs <+> text "==" <+> rhs
 
 -- | Given a constructor @c@ of arity @n@, generates
 --
 -- > public int getChildCount() {
 -- >   return n;
 -- > }
-compGetChildCount :: CtorId -> Gen Doc
+compGetChildCount ::  CtorId -> Gen Doc
 compGetChildCount c = do ar <- length `liftM` askSt (fieldsOf c)
                          return $ wrap ar
   where wrap n = rMethodDef public jint (text "getChildCount") 
@@ -487,7 +526,7 @@ compSetChildAt c = do fis  <- askSt (fieldsOf c)
                 return $ jreturn <+> call <> semi
         parts l = go [] l where go _  []     = []
                                 go xs [x]    = [(xs,x,[])]
-                                go xs (x:ys) = (xs,x,ys):(go (xs++[x]) ys)
+                                go xs (x:ys) = (xs,x,ys) : go (xs++[x]) ys
         cast t = if isBuiltin t 
                    then let qbt = rWrapBuiltin (qualifiedBuiltin t)
                             cas = parens (parens qbt <+> text "v")

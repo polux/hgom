@@ -14,7 +14,7 @@ module Gom.Java (
   for, jelse, jtrue, jfalse, final, static,
   -- ** Java Types
   jint, jString, stringBuilder, jboolean,
-  jObject, jVisitable, jShared,
+  jObject, jVisitable, jShared, jSharedId,
   jVisitableArray,
   -- ** Classes
   rClass, rFullClass,
@@ -109,26 +109,27 @@ final      = text "final"
 static     = text "static"
 
 jint,jString,stringBuilder,jboolean,jObject :: Doc
-jVisitable,jShared,jVisitableArray :: Doc
+jVisitable,jShared,jSharedId,jVisitableArray :: Doc
 jint            = text "int"
 jString         = text "String"
 jboolean        = text "boolean"
 stringBuilder   = text "java.lang.StringBuilder"
 jObject         = text "Object"
 jVisitable      = text "tom.library.sl.Visitable"
-jShared         = text "shared.SharedObjectWithID"
+jShared         = text "shared.SharedObject"
+jSharedId       = text "shared.SharedObjectWithID"
 jVisitableArray = jVisitable <> text "[]"
 
 -- | Renders the list enclosed in parenthesis and
 -- separated by commas.
 encloseCommas :: [Doc] -> Doc
 encloseCommas [] = text "()"
-encloseCommas l = parens $ nest 2 (softbreak <> (fillSep $ punctuate comma l))
+encloseCommas l = parens $ nest 2 (softbreak <> fillSep (punctuate comma l))
 
 -- | Renders the list punctuated by semicolons
 rBody :: [Doc] -> Doc
 rBody [] = empty
-rBody l = align $ (sep $ punctuate semi l) <> semi
+rBody l = align $ sep (punctuate semi l) <> semi
 
 -- | Renders @modifier class name { body }@.
 rClass
@@ -231,7 +232,7 @@ rSwitch
  -> Doc -- ^ default case
  -> Doc
 rSwitch s l d = text "switch" <+> parens s <+> ibraces body
-  where body    = (vcat $ map f l) <$> (text "default:" <+> align d)
+  where body    = vcat (map f l) <$> (text "default:" <+> align d)
         f (x,y) = text "case" <+> x <> colon <+> align y
 
 -- | @rTypeterm s qs shr@ renders
@@ -323,4 +324,4 @@ rOpList c co dom consc emptyc =
 
 -- | @inline d@ renders @$d@.
 inline :: Doc -> Doc
-inline d = text "$" <> d
+inline = (text "$" <>)

@@ -97,7 +97,7 @@ codomainOf c st =
 -- | If the field has been generated (e.g. @ConsC@) returns @'Just' C@,
 -- @'Nothing'@ otherwise.
 isGenerated :: CtorId -> SymbolTable -> Maybe CtorId
-isGenerated c st = M.lookup c (baseCtor st)
+isGenerated c = M.lookup c . baseCtor
 
 -- | Returns @True@ if @String@ is imported.
 importsString :: SymbolTable -> Bool
@@ -166,7 +166,7 @@ ast2st :: Module -> SymbolTable
 ast2st (Module m i defs) = execState (conv defs) (emptySt m i)
 
   where conv :: [SortDef] -> State SymbolTable ()
-        conv l = mapM_ convdef l
+        conv = mapM_ convdef 
 
         convdef :: SortDef -> State SymbolTable ()
         convdef (SortDef n cs) = do 
