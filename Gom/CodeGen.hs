@@ -263,6 +263,7 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                        tos  <- compToStringBuilder c
                        toh  <- ifConfM haskell (compToHaskellBuilder c) rempty
                        eqs  <- ifConfM sharing (compEquiv c) (compEquals c)
+                       dup  <- ifConfM sharing (compDuplicate c) rempty
                        gcc  <- ifV $ compGetChildCount c
                        gca  <- ifV $ compGetChildAt c
                        gcs  <- ifV $ compGetChildren c
@@ -271,7 +272,7 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                        let isc = compIsX c
                        let syn = compSymbolName c
                        let body = vcat [mem,smem,ctor,mak,syn,get,set,tos,
-                                        toh,eqs,isc,gcc,gca,gcs,sca,scs]
+                                        toh,eqs,dup,isc,gcc,gca,gcs,sca,scs]
                        cls  <- wrap body
                        return $ Class (show c) cls
   where wrap b = do
@@ -754,3 +755,22 @@ compOpList c = do co     <- askSt (codomainOf c)
                   emptyc <- qualifiedCtor (prependEmpty c)
                   return $ rOpList (pretty c) (pretty co) 
                                    (pretty dom) consc emptyc
+
+-- | Given a constructor @C(x1:T1,..,xn:Tn)@, generates
+--
+-- > public shared.SharedObject duplicate() {
+-- >   C clone = new C();
+-- >   clone.init(this.x1,..,this.xn,hashCode);
+-- >   return clone;
+-- > }
+compDuplicate :: CtorId -> Gen Doc
+compDuplicate c = rdr `liftM` askSt (fieldsOf c)
+  where pc = pretty c
+        cl = text "clone"
+        th = (text "this." <>) . pretty . fst
+        rdr  fis = rMethodDef public jShared (text "duplicate") [] (body fis)
+        body fis = rBody 
+          [pc <+> cl <+> equals <+> new <+> pc <> text "()",
+           rMethodCall cl (text "init") (map th fis ++ [text "hashCode"]),
+           jreturn <+> cl]
+        
