@@ -63,8 +63,9 @@ The documentation is generated in `tests/coverage/html`.
 ### Benchmark ###
 
 There is some benchmark in `tests/bench` that generates bigger and bigger gom
-files and runs `hgom` and `gom` on them, measuring the number of generated
-lines (using [sloccount](http://www.dwheeler.com/sloccount)) and the elapsed time. 
+files and runs `hgom` and `gom` on them, measuring the gom/hgom ratio
+concerning the number of generated lines (using
+[sloccount](http://www.dwheeler.com/sloccount)) and the elapsed time.
 
     cd tests/bench
     make
