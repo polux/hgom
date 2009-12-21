@@ -837,7 +837,7 @@ compInitHash c = do cfs <- askSt $ fieldsOf c
                        if isString s then pf <> text ".intern()" else pf
         lastLine  = text "this.hashCode = hashFunction()"
 
--- | Given a constructor @C(x1:T1,..,xn:Tn), generates
+-- | Given a constructor @C(x1:T1,..,xn:Tn)@, generates
 --
 -- > protected int hashFunction() {
 -- > int a, b, c;
