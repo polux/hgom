@@ -35,8 +35,8 @@ The documentation index is then `dist/doc/html/hgom/hgom/index.html`.
 ## Running HGom ##
 
 Run `hgom --help` to get some basic help. 
-You can test the behaviour of `hgom` by running it as follows. Some are valid files,
-other ones demonstrate `hgom` error messages.
+You can test the behaviour of `hgom` by running it as follows. Some examples
+are valid files, other ones demonstrate `hgom` error messages.
 
     hgom tests/examples/test.gom
     hgom tests/examples/simple.gom
