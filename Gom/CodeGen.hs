@@ -639,7 +639,8 @@ compCtorOfConstructor c = ifConfM sharing ctorShr ctorNoShr
 -- generates the make method:
 --
 -- > public static C make(m.types.T1 x1, ..., m.types.Tn xn) {
--- >  return null;
+-- >  proto.initHashCode(x1,..,xn);
+-- >  return (C) factory.build(proto);
 -- > }
 --
 -- or the following if @--noSharing@ has been toggled:
@@ -650,13 +651,19 @@ compCtorOfConstructor c = ifConfM sharing ctorShr ctorNoShr
 compMakeOfConstructor :: CtorId -> Gen Doc
 compMakeOfConstructor c = ifConfM sharing cmakes cmake
   where -- the sharing case
-        cmakes = makeDef $ jreturn <+> text "null" <> semi
+        cmakes = do cfs <- cfields 
+                    let call = rMethodCall proto inith (map (pretty.fst) cfs)
+                    let ret  = jreturn <+> parens (pretty c) <+> build
+                    makeDef $ rBody [call,ret]
+          where proto = text "proto"
+                inith = text "initHashCode"
+                build = text "factory.build(proto)"
         -- the no sharing case
         cmake  = do cfs <- cfields
                     let b = newC (map (pretty . fst) cfs) <> semi
                     makeDef b
           where newC fs = jreturn <+> new <+> pretty c <> encloseCommas fs
-        -- takes a body bd and returns public static c make(...) { bd }
+        -- takes a body bd and returns public static C make(...) { bd }
         makeDef bd = do cfs <- cfields 
                         a <- mapM rdr cfs
                         return $ rMethodDef (public <+> static) 
