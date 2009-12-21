@@ -263,8 +263,9 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                        tos  <- compToStringBuilder c
                        toh  <- ifConfM haskell (compToHaskellBuilder c) rempty
                        eqs  <- ifConfM sharing (compEquiv c) (compEquals c)
-                       dup  <- ifConfM sharing (compDuplicate c) rempty
-                       ini  <- ifConfM sharing (compInit c) rempty
+                       dup  <- ifS $ compDuplicate c
+                       ini  <- ifS $ compInit c
+                       inh  <- ifS $ compInitHash c
                        gcc  <- ifV $ compGetChildCount c
                        gca  <- ifV $ compGetChildAt c
                        gcs  <- ifV $ compGetChildren c
@@ -272,8 +273,10 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                        scs  <- ifV $ compSetChildren c
                        let isc = compIsX c
                        let syn = compSymbolName c
-                       let body = vcat [mem,smem,ctor,mak,syn,get,set,tos,toh,
-                                        eqs,dup,ini,isc,gcc,gca,gcs,sca,scs]
+                       let body = vcat [mem,smem,ctor,mak,syn,
+                                        get,set,tos,toh,eqs,dup,
+                                        ini,inh,isc,gcc,gca,gcs,
+                                        sca,scs]
                        cls  <- wrap body
                        return $ Class (show c) cls
   where wrap b = do
@@ -285,6 +288,7 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                       Just bc -> do qbc <- qualifiedCtor bc                     
                                     return $ rcls qbc                        
         ifV = flip (ifConfM visit) rempty
+        ifS = flip (ifConfM sharing) rempty
         rempty = return empty
 
 -- | Helper fonction that iters over the fields of
@@ -784,7 +788,7 @@ compDuplicate c = rdr `liftM` askSt (fieldsOf c)
 
 -- | Given a constructor @C(x1:T1,..,xn:Tn)@, generates
 --
--- > private void init(T1 x1, ..., Tn xn) {
+-- > private void init(T1 x1, ..., Tn xn, int hashCode) {
 -- >   this.x1 = x1;
 -- >   ...
 -- >   this.xn = xn;
@@ -797,9 +801,30 @@ compInit c = do cfs <- askSt $ fieldsOf c
                 let body = rBody $ (map ass cfs) ++ [lastLine]
                 return $ rMethodDef (private) void (text "init") args body
   where rdr (f,s) = do qs <- qualifiedSort s
-                       return $ qs <+> (text .show) f
+                       return $ qs <+> (text . show) f
         ass (f,s) = let pf = pretty f 
                     in this <> dot <> pf <+> equals <+> 
                        if isString s then pf <> text ".intern()" else pf
-        lastLine  = text "this.hashCode = hashCode;"
+        lastLine  = text "this.hashCode = hashCode"
+
+-- | Given a constructor @C(x1:T1,..,xn:Tn)@, generates
+--
+-- > private void initHashCode(T1 x1, ..., Tn xn) {
+-- >   this.x1 = x1;
+-- >   ...
+-- >   this.xn = xn;
+-- >   this.hashCode = hashFunction();
+-- > }
+compInitHash :: CtorId -> Gen Doc 
+compInitHash c = do cfs <- askSt $ fieldsOf c
+                    args <- mapM rdr cfs
+                    let body = rBody $ (map ass cfs) ++ [lastLine]
+                    return $ rMethodDef (private) void 
+                                        (text "initHashCode") args body
+  where rdr (f,s) = do qs <- qualifiedSort s
+                       return $ qs <+> (text . show) f
+        ass (f,s) = let pf = pretty f 
+                    in this <> dot <> pf <+> equals <+> 
+                       if isString s then pf <> text ".intern()" else pf
+        lastLine  = text "this.hashCode = hashFunction()"
 
