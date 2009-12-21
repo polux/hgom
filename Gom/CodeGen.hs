@@ -264,6 +264,7 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                        toh  <- ifConfM haskell (compToHaskellBuilder c) rempty
                        eqs  <- ifConfM sharing (compEquiv c) (compEquals c)
                        dup  <- ifConfM sharing (compDuplicate c) rempty
+                       ini  <- ifConfM sharing (compInit c) rempty
                        gcc  <- ifV $ compGetChildCount c
                        gca  <- ifV $ compGetChildAt c
                        gcs  <- ifV $ compGetChildren c
@@ -271,8 +272,8 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                        scs  <- ifV $ compSetChildren c
                        let isc = compIsX c
                        let syn = compSymbolName c
-                       let body = vcat [mem,smem,ctor,mak,syn,get,set,tos,
-                                        toh,eqs,dup,isc,gcc,gca,gcs,sca,scs]
+                       let body = vcat [mem,smem,ctor,mak,syn,get,set,tos,toh,
+                                        eqs,dup,ini,isc,gcc,gca,gcs,sca,scs]
                        cls  <- wrap body
                        return $ Class (show c) cls
   where wrap b = do
@@ -780,4 +781,25 @@ compDuplicate c = rdr `liftM` askSt (fieldsOf c)
           [pc <+> cl <+> equals <+> new <+> pc <> text "()",
            rMethodCall cl (text "init") (map th fis ++ [text "hashCode"]),
            jreturn <+> cl]
-        
+
+-- | Given a constructor @C(x1:T1,..,xn:Tn)@, generates
+--
+-- > private void init(T1 x1, ..., Tn xn) {
+-- >   this.x1 = x1;
+-- >   ...
+-- >   this.xn = xn;
+-- >   this.hashCode = hashCode;
+-- > }
+compInit :: CtorId -> Gen Doc 
+compInit c = do cfs <- askSt $ fieldsOf c
+                tfs <- mapM rdr cfs
+                let args = tfs ++ [text "int hashCode"]
+                let body = rBody $ (map ass cfs) ++ [lastLine]
+                return $ rMethodDef (private) void (text "init") args body
+  where rdr (f,s) = do qs <- qualifiedSort s
+                       return $ qs <+> (text .show) f
+        ass (f,s) = let pf = pretty f 
+                    in this <> dot <> pf <+> equals <+> 
+                       if isString s then pf <> text ".intern()" else pf
+        lastLine  = text "this.hashCode = hashCode;"
+

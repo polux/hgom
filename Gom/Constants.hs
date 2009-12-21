@@ -7,6 +7,7 @@ module Gom.Constants (
   abstractSharing,
   builtins,
   isBuiltin,
+  isString,
   qualifiedBuiltin,
   builtinImport,
   renderStringMethod,
@@ -57,6 +58,10 @@ builtins = map makeSortId ["int","char","String"]
 -- | Check if some sort is a builtin.
 isBuiltin :: SortId -> Bool
 isBuiltin = (`elem` builtins)
+
+-- | Check if some sort is a java String
+isString :: SortId -> Bool
+isString = (== makeSortId "String")
 
 qbuiltins :: [(SortId,Doc)]
 qbuiltins = zip builtins (map text qts)
