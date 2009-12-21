@@ -180,3 +180,4 @@ abstractSharing = vcat $ map text
    "public void setUniqueIdentifier(int uniqueID) {",
    "  this.uniqueID = uniqueID;",
    "}"]
+

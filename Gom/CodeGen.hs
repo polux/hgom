@@ -255,7 +255,7 @@ compAbstractVariadic vc = do cl <- body
 -- | Given a non-variadic constructor @C@, generates a concrete class @C.java@.
 compConstructor :: CtorId -> Gen FileHierarchy
 compConstructor c = do mem  <- compMembersOfConstructor c
-                       smem <- ifConf sharing (compSharingMembers c) empty
+                       smem <- ifS $ compSharingMembers c
                        ctor <- compCtorOfConstructor c
                        mak  <- compMakeOfConstructor c
                        get  <- compGettersOfConstructor c
@@ -266,6 +266,7 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                        dup  <- ifS $ compDuplicate c
                        ini  <- ifS $ compInit c
                        inh  <- ifS $ compInitHash c
+                       haf  <- ifS $ compHashFun c
                        gcc  <- ifV $ compGetChildCount c
                        gca  <- ifV $ compGetChildAt c
                        gcs  <- ifV $ compGetChildren c
@@ -275,8 +276,8 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                        let syn = compSymbolName c
                        let body = vcat [mem,smem,ctor,mak,syn,
                                         get,set,tos,toh,eqs,dup,
-                                        ini,inh,isc,gcc,gca,gcs,
-                                        sca,scs]
+                                        ini,inh,haf,isc,gcc,gca,
+                                        gcs,sca,scs]
                        cls  <- wrap body
                        return $ Class (show c) cls
   where wrap b = do
@@ -615,11 +616,19 @@ compMembersOfConstructor c = iterOverFields rdr rBody c
 --
 -- > private int hashCode;
 -- > private static C proto = new C();
-compSharingMembers :: CtorId -> Doc
-compSharingMembers c =
-  text "private int hashCode;" <$>
-  text "private static" <+> pretty c <+> 
-  text "proto = new" <+> pretty c <> text "();"
+-- > private static int nameHash = 
+-- >   shared.HashFunctions.stringHashFunction(mod.types.s.c,n);
+compSharingMembers :: CtorId -> Gen Doc
+compSharingMembers c = do
+  qc  <- qualifiedCtor c
+  len <- length `liftM` askSt (fieldsOf c) 
+  return $ rBody [text "private static int nameHash" <+> equals <+>
+                  rMethodCall (text "shared.HashFunctions")
+                              (text "stringHashFunction") 
+                              [dquotes qc, int len],
+                  text "private int hashCode;",
+                  text "private static" <+> pretty c <+> 
+                  text "proto = new" <+> pretty c <> text "();"]
 
 -- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@,
 -- generates the constructor:
@@ -828,3 +837,42 @@ compInitHash c = do cfs <- askSt $ fieldsOf c
                        if isString s then pf <> text ".intern()" else pf
         lastLine  = text "this.hashCode = hashFunction()"
 
+-- | Given a constructor @C(x1:T1,..,xn:Tn), generates
+--
+-- > protected int hashFunction() {
+-- > int a, b, c;
+-- >   a = 0x9e3779b9;
+-- >   b = nameHash << 8;
+-- >   c = n;
+-- >   TODO
+-- >   a -= b; a -= c; a ^= (c >> 13);
+-- >   b -= c; b -= a; b ^= (a << 8);
+-- >   c -= a; c -= b; c ^= (b >> 13);
+-- >   a -= b; a -= c; a ^= (c >> 12);
+-- >   b -= c; b -= a; b ^= (a << 16);
+-- >   c -= a; c -= b; c ^= (b >> 5);
+-- >   a -= b; a -= c; a ^= (c >> 3);
+-- >   b -= c; b -= a; b ^= (a << 10);                                                                          
+-- >   c -= a; c -= b; c ^= (b >> 15);
+-- >   return c;
+-- > }
+compHashFun :: CtorId -> Gen Doc
+compHashFun c = do len <- length `liftM` askSt (fieldsOf c)
+                   let modif = protected <+> if len == 0 then static else empty 
+                   return $ rMethodDef modif jint 
+                                       (text "hashFunction") [] (body len)
+  where body len = rBody (prologue ++ [middle len] ++ epilogue)
+        prologue = map text ["int a, b, c",
+                             "a = 0x9e3779b9",
+                             "b = nameHash << 8"]
+        middle l = text "c =" <+> int l <> semi 
+        epilogue = map text ["a -= b; a -= c; a ^= (c >> 13)",
+                             "b -= c; b -= a; b ^= (a << 8)" ,
+                             "c -= a; c -= b; c ^= (b >> 13)",
+                             "a -= b; a -= c; a ^= (c >> 12)",
+                             "b -= c; b -= a; b ^= (a << 16)",
+                             "c -= a; c -= b; c ^= (b >> 5)" ,
+                             "a -= b; a -= c; a ^= (c >> 3)" ,
+                             "b -= c; b -= a; b ^= (a << 10)",
+                             "c -= a; c -= b; c ^= (b >> 15)",
+                             "return c"]
