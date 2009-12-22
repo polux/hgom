@@ -285,6 +285,31 @@ compConstructor c = do mem  <- compMembersOfConstructor c
         ifV = flip (ifConfM visit) rempty
         rempty = return empty
 
+-- | Given a non-variadic constructor @C@, generates a congruence strategy class @_C.java@.
+compCongruence :: CtorId -> Gen FileHierarchy
+compCongruence c = do mem  <- compMembersOfConstructor c
+                       smem <- ifConf sharing (compSharingMembers c) empty
+                       ctor <- compCtorOfConstructor c
+                       mak  <- compMakeOfConstructor c
+                       get  <- compGettersOfConstructor c
+                       set  <- compSettersOfConstructor c
+                       tos  <- compToStringBuilder c
+                       toh  <- ifConfM haskell (compToHaskellBuilder c) rempty
+                       eqs  <- ifConfM sharing rempty (compEqualsConstructor c)
+                       gcc  <- ifV $ compGetChildCount c
+                       gca  <- ifV $ compGetChildAt c
+                       gcs  <- ifV $ compGetChildren c
+                       sca  <- ifV $ compSetChildAt c
+                       scs  <- ifV $ compSetChildren c
+                       let isc = compIsX c
+                       let syn = compSymbolName c
+                       let body = vcat [mem,smem,ctor,mak,syn,get,set,tos,
+                                        toh,eqs,isc,gcc,gca,gcs,sca,scs]
+                       cls  <- wrap body
+                       return $ Class (show c) cls
+ 
+
+
 -- | Helper fonction that iters over the fields of
 -- a constructor and combines them.
 iterOverFields 
