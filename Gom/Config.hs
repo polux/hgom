@@ -50,7 +50,7 @@ split _ [] = []
 split c (x:xs) 
   | x == c    = split c xs
   | otherwise = let (xs1,xs2) = break (== c) (x:xs)
-                in xs1:(split c xs2)
+                in xs1:split c xs2
 
 -- | Options description for 'getOpt'.
 options :: [OptDescr (Config -> IO Config)]

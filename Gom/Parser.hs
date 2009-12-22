@@ -60,7 +60,7 @@ sortP = do n <- sortidP
            <?> "sort definition"
 
 ctorP :: Parser Ctor
-ctorP = (try variadicP) <|> simpleP 
+ctorP = try variadicP <|> simpleP 
         <?> "constructor declaration"
 
 variadicP :: Parser Ctor
@@ -75,7 +75,7 @@ fieldP :: Parser (FieldId, SortId)
 fieldP = do x <- fieldidP
             resOp ":"
             ty <- sortidP
-            return $ (x,ty)
+            return (x,ty)
          <?> "field declaration"
 
 run :: Parser a -> String -> a

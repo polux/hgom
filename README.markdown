@@ -5,7 +5,9 @@ generator.
 
 ## Compilation ##
 
-To compile hgom, install `cabal` and type the following.
+To compile hgom, install 
+[cabal-install](http://hackage.haskell.org/trac/hackage/wiki/CabalInstall)
+and type the following.
 
     cabal configure
     cabal build
@@ -33,8 +35,8 @@ The documentation index is then `dist/doc/html/hgom/hgom/index.html`.
 ## Running HGom ##
 
 Run `hgom --help` to get some basic help. 
-You can test the behaviour of `hgom` by running it as follows. Some are valid files,
-other ones demonstrate `hgom` error messages.
+You can test the behaviour of `hgom` by running it as follows. Some examples
+are valid files, other ones demonstrate `hgom` error messages.
 
     hgom tests/examples/test.gom
     hgom tests/examples/simple.gom
@@ -51,8 +53,8 @@ benchmark scripts.
 Code coverage can be tested as follows.
 
     cabal clean
-    cabal configure -fcoverage
-    cabal build
+    cabal configure
+    cabal build --ghc-option -fhpc
     cd tests/coverage
     ./coverage.sh
 
@@ -61,8 +63,9 @@ The documentation is generated in `tests/coverage/html`.
 ### Benchmark ###
 
 There is some benchmark in `tests/bench` that generates bigger and bigger gom
-files and runs `hgom` and `gom` on them, measuring the number of generated
-lines (using [sloccount](http://www.dwheeler.com/sloccount)) and the elapsed time. 
+files and runs `hgom` and `gom` on them, measuring the gom/hgom ratio
+concerning the number of generated lines (using
+[sloccount](http://www.dwheeler.com/sloccount)) and the elapsed time.
 
     cd tests/bench
     make

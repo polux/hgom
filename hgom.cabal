@@ -23,14 +23,6 @@ data-files:        tests/examples/*.gom
                    tests/bench/Makefile
                    README.markdown
 
-Flag coverage
-  Description: Enable code coverage support
-  Default:     False
-
-Flag profiling
-  Description: Enable profiling support
-  Default:     False
-
 executable hgom
   main-is:       Gom.hs
   other-modules: Gom.Sig,
@@ -47,9 +39,4 @@ executable hgom
                  mtl >= 1.1.0.2, directory >= 1.0.0.2,
                  filepath >= 1.1.0.2
   extensions:
-  
   ghc-options:   -Wall -fno-warn-orphans
-  if flag(coverage)
-    ghc-options:   -fhpc
-  if flag(profiling)
-    ghc-options:   -prof -auto-all -caf-all

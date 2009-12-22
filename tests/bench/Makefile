@@ -7,4 +7,5 @@ Gen: Gen.hs
 clean:
 	rm -f Gen.hi Gen.o Gen
 	rm -rf big
+	rm -rf big.gom
 	rm -f *.data
