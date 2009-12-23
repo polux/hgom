@@ -12,7 +12,7 @@ and type the following.
     cabal configure
     cabal build
 
-The `htom` binary is generated in `dist/build/hgom/`.
+The `hgom` binary is generated in `dist/build/hgom`.
 
 ## Installation ##
 
