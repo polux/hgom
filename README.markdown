@@ -32,7 +32,7 @@ documentation.
 
 The documentation index is then `dist/doc/html/hgom/hgom/index.html`.
 
-## Running HGom ##
+## Running hgom ##
 
 Run `hgom --help` to get some basic help. 
 You can test the behaviour of `hgom` by running it as follows. Some examples
