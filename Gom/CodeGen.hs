@@ -293,15 +293,20 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                        Just bc -> do qbc <- qualifiedCtor bc                     
                                      return $ rcls qbc                        
 
--- | Given a non-variadic constructor @C@, generates a congruence strategy class @_C.java@.
+-- | Given a non-variadic constructor @C@, 
+-- generates a congruence strategy class @_C.java@.
 compCongruence :: CtorId -> Gen FileHierarchy
-compCongruence c = do body <- vcat `liftM` sequence [compCongruenceConstructor c, compVisit c, compVisitLight c]
+compCongruence c = do body <- vcat `liftM` sequence [compCongruenceConstructor c,
+                                                     compVisit c,
+                                                     compVisitLight c]
                       return $ Class (show c) (wrap body)
-                   where wrap b = rClass public (pretty c) (Just jSCombinator) [] b              
-compVisit ::  (Monad m, Pretty a) => a -> m Doc
+                   where wrap b = rClass public (pretty c) (Just jSCombinator) [] b
+-- | TODO
+compVisit :: CtorId -> Gen Doc
 compVisit c = return $ rMethodDef private empty (pretty c) [] empty
 
-compVisitLight ::  (Monad m, Pretty a) => a -> m Doc
+-- | TODO
+compVisitLight :: CtorId -> Gen Doc
 compVisitLight c = return $ rMethodDef private empty (pretty c) [] empty
 
 -- | Given a Constructor @C(x1:T1, ..., xn:Tn)@, generates
@@ -314,7 +319,8 @@ compCongruenceConstructor c = do
   fis <-  askSt (fieldsOf c)
   let typedArgs = prettyArgs fis (text "Strategy ")
   let args =  prettyArgs fis empty
-  return $ rMethodDef private empty (pretty c) typedArgs (rBody [rMethodCall this (text "initSubterm") args])
+  return $ rMethodDef private empty (pretty c) typedArgs 
+                      (rBody [rMethodCall this (text "initSubterm") args])
   where prettyArgs fis prefix = map (pre . pretty . fst) fis
           where pre x = prefix <> (text "s_") <> x
 
