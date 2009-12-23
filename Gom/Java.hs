@@ -110,6 +110,7 @@ static     = text "static"
 
 jint,jString,stringBuilder,jboolean,jObject :: Doc
 jVisitable,jShared,jSharedId,jVisitableArray :: Doc
+jSCombinator :: Doc
 jint            = text "int"
 jString         = text "String"
 jboolean        = text "boolean"

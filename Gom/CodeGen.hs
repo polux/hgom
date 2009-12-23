@@ -304,7 +304,12 @@ compVisit c = return $ rMethodDef private empty (pretty c) [] empty
 compVisitLight ::  (Monad m, Pretty a) => a -> m Doc
 compVisitLight c = return $ rMethodDef private empty (pretty c) [] empty
 
-compCongruenceConstructor :: CtorId -> Reader (SymbolTable, Config) Doc
+-- | Given a Constructor @C(x1:T1, ..., xn:Tn)@, generates
+--
+-- > private C(Strategy s_x1, ..., Strategy s_xn) {
+-- >   initSubterm(s_x1,...,s_xn);
+-- > }
+compCongruenceConstructor :: CtorId -> Gen Doc
 compCongruenceConstructor c = do
   fis <-  askSt (fieldsOf c)
   let typedArgs = prettyArgs fis (text "Strategy ")
