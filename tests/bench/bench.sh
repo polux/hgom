@@ -4,7 +4,7 @@ rm -rf big
 rm -f big.gom
 rm -f time_ratio.data space_ratio.data
 
-for i in `seq 1 100`; do
+for i in `seq 1 1000`; do
   ./Gen $i > big.gom
   t1=`/usr/bin/time -f '%e' hgom big.gom 2>&1`
   s1=`sloccount big | grep 'java:' | awk '{print $2}'`
