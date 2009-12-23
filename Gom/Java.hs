@@ -15,7 +15,7 @@ module Gom.Java (
   -- ** Java Types
   jint, jString, stringBuilder, jboolean,
   jObject, jVisitable, jShared, jSharedId,
-  jVisitableArray,
+  jVisitableArray, jSCombinator,
   -- ** Classes
   rClass, rFullClass,
   -- ** Methods
@@ -116,6 +116,7 @@ jboolean        = text "boolean"
 stringBuilder   = text "java.lang.StringBuilder"
 jObject         = text "Object"
 jVisitable      = text "tom.library.sl.Visitable"
+jSCombinator    = text "tom.library.sl.AbstractStrategyCombinator"
 jShared         = text "shared.SharedObject"
 jSharedId       = text "shared.SharedObjectWithID"
 jVisitableArray = jVisitable <> text "[]"

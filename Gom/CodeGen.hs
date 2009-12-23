@@ -280,42 +280,38 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                                         gcs,sca,scs]
                        cls  <- wrap body
                        return $ Class (show c) cls
-  where wrap b = do
-          gen <- askSt (isGenerated c)                                     
-          let rcls d = rClass public (pretty c) (Just d) [] b              
-          case gen of Nothing -> do co  <- askSt (codomainOf c)            
-                                    qco <- qualifiedSort co                     
-                                    return $ rcls qco                           
-                      Just bc -> do qbc <- qualifiedCtor bc                     
-                                    return $ rcls qbc                        
-        ifV = flip (ifConfM visit) rempty
+
+  where ifV = flip (ifConfM visit) rempty
         ifS = flip (ifConfM sharing) rempty
         rempty = return empty
+        wrap b = do
+           gen <- askSt (isGenerated c)                                     
+           let rcls d = rClass public (pretty c) (Just d) [] b              
+           case gen of Nothing -> do co  <- askSt (codomainOf c)            
+                                     qco <- qualifiedSort co                     
+                                     return $ rcls qco                           
+                       Just bc -> do qbc <- qualifiedCtor bc                     
+                                     return $ rcls qbc                        
 
 -- | Given a non-variadic constructor @C@, generates a congruence strategy class @_C.java@.
 compCongruence :: CtorId -> Gen FileHierarchy
-compCongruence c = do mem  <- compMembersOfConstructor c
-                       smem <- ifConf sharing (compSharingMembers c) empty
-                       ctor <- compCtorOfConstructor c
-                       mak  <- compMakeOfConstructor c
-                       get  <- compGettersOfConstructor c
-                       set  <- compSettersOfConstructor c
-                       tos  <- compToStringBuilder c
-                       toh  <- ifConfM haskell (compToHaskellBuilder c) rempty
-                       eqs  <- ifConfM sharing rempty (compEqualsConstructor c)
-                       gcc  <- ifV $ compGetChildCount c
-                       gca  <- ifV $ compGetChildAt c
-                       gcs  <- ifV $ compGetChildren c
-                       sca  <- ifV $ compSetChildAt c
-                       scs  <- ifV $ compSetChildren c
-                       let isc = compIsX c
-                       let syn = compSymbolName c
-                       let body = vcat [mem,smem,ctor,mak,syn,get,set,tos,
-                                        toh,eqs,isc,gcc,gca,gcs,sca,scs]
-                       cls  <- wrap body
-                       return $ Class (show c) cls
- 
+compCongruence c = do body <- vcat `liftM` sequence [compCongruenceConstructor c, compVisit c, compVisitLight c]
+                      return $ Class (show c) (wrap body)
+                   where wrap b = rClass public (pretty c) (Just jSCombinator) [] b              
+compVisit ::  (Monad m, Pretty a) => a -> m Doc
+compVisit c = return $ rMethodDef private empty (pretty c) [] empty
 
+compVisitLight ::  (Monad m, Pretty a) => a -> m Doc
+compVisitLight c = return $ rMethodDef private empty (pretty c) [] empty
+
+compCongruenceConstructor :: CtorId -> Reader (SymbolTable, Config) Doc
+compCongruenceConstructor c = do
+  fis <-  askSt (fieldsOf c)
+  let typedArgs = prettyArgs fis (text "Strategy ")
+  let args =  prettyArgs fis empty
+  return $ rMethodDef private empty (pretty c) typedArgs (rBody [rMethodCall this (text "initSubterm") args])
+  where prettyArgs fis prefix = map (pre . pretty . fst) fis
+          where pre x = prefix <> (text "s_") <> x
 
 -- | Helper fonction that iters over the fields of
 -- a constructor and combines them.
