@@ -102,11 +102,18 @@ compSt = do mn <- lower `liftM` askSt modName
             ac <- compAbstract
             tf <- compTomFile
             pr <- askConf package
-            return . wrap pr $ Package mn [ac,tf,Package "types" (concat hs)]
+            cs <- mapM compStrategy ds
+            let tp = [ac,tf,Package "types" (concat hs)] 
+            ps <- ifC (Package "strategy" cs:tp) tp 
+            return . wrap pr $ Package mn ps
   where -- wraps the package in the user-provided prefix hierarchy (-p option)
         wrap Nothing  h = h
         wrap (Just l) h = foldr w h l
         w p h = Package p [h]
+        ifC t e = do congrval <- askConf congr
+                     case congrval of
+                       NoCongr -> return e
+                       _ -> return t
          
 
 -- | Generates the @ModAbstractType@ abstract java class for module @Mod@.
@@ -162,6 +169,11 @@ compSort s = do ac    <- compAbstractSort s
                 avs   <- mapM compAbstractVariadic vctrs
                 ccs   <- mapM compConstructor ctrs
                 return [ac, Package (show $ lowerSortId s) (avs ++ ccs)] 
+
+compStrategy :: SortId -> Gen FileHierarchy
+compStrategy s = do ctrs  <- askSt (sCtorsOf s)
+                    cs <- mapM compCongruence ctrs
+                    return $ Package (show $ lowerSortId s) cs 
 
 -- | Helper fonction for 'compEmptyGettersOfSort' and 
 -- 'compEmptySettersOfSort'. Iters the first argument on the fields of the
@@ -299,7 +311,7 @@ compCongruence :: CtorId -> Gen FileHierarchy
 compCongruence c = do body <- vcat `liftM` sequence [compCongruenceConstructor c,
                                                      compVisit c,
                                                      compVisitLight c]
-                      return $ Class (show c) (wrap body)
+                      return $ Class ("_"++show c) (wrap body)
                    where wrap b = rClass public (pretty c) (Just jSCombinator) [] b
 -- | TODO
 compVisit :: CtorId -> Gen Doc
