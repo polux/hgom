@@ -870,8 +870,8 @@ compInit c = do cfs <- askSt $ fieldsOf c
 compInitHash :: CtorId -> Gen Doc 
 compInitHash c = do cfs <- askSt $ fieldsOf c
                     args <- mapM rdr cfs
-                    let body = rBody $ (map ass cfs) ++ [lastLine]
-                    return $ rMethodDef (private) void 
+                    let body = rBody $ map ass cfs ++ [lastLine]
+                    return $ rMethodDef private void 
                                         (text "initHashCode") args body
   where rdr (f,s) = do qs <- qualifiedSort s
                        return $ qs <+> (text . show) f
