@@ -86,6 +86,7 @@ It takes some time. The generated files can be plotted using
    methods (string escaping factorized for instance)
  * faster code for some generated 
    methods (less function calls, more constants)
+ * pretty-printed generated code
 
 ### Worse ###
 
@@ -94,6 +95,7 @@ It takes some time. The generated files can be plotted using
  * no ant task
  * no special treatment of variadic constructors in
    the generated `toString` methods
+ * generates no comments
 
 ### Different ###
 

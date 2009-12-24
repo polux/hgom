@@ -5,6 +5,7 @@ module Gom.Constants (
   abstractToHaskellBuilder,
   abstractSymbolName,
   abstractSharing,
+  hashCodeMethod,
   builtins,
   isBuiltin,
   isBoolean,
@@ -205,3 +206,10 @@ abstractSharing = vcat $ map text
    "  this.uniqueID = uniqueID;",
    "}"]
 
+-- | declaration of the @hashCode@ method which returns the private 
+-- @hashCode@ member of a constructor
+hashCodeMethod :: Doc
+hashCodeMethod = vcat $ map text 
+  ["public final int hashCode() {",
+   "  return hashCode;",
+   "}"]

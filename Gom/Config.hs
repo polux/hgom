@@ -22,7 +22,8 @@ data Config =
     visit   :: Bool, -- ^ implement visitable ? 
     checker :: Bool, -- ^ perform checks ?
     congr   :: CongrOpt, -- ^ generate congruence strategies ?
-    sharing :: Bool -- ^ maximally share terms ?
+    sharing :: Bool, -- ^ maximally share terms ?
+    compact :: Bool -- ^ generate compact code ?
   } 
 
 -- | Default configuration.
@@ -37,7 +38,8 @@ defaultConfig =
     visit   = True,
     checker = True,
     congr   = NoCongr,
-    sharing = True
+    sharing = True,
+    compact = False
   }
 
 -- | Represents the three options values for --withCongruenceStrategies
@@ -69,6 +71,8 @@ options =
           (unlines ["generate congruence strategies",
                     "in the same or in a separate .tom",
                     "file (defaults to no)"])
+  ,Option [] ["compact"] (NoArg ccompact)
+          "generate compact code (no indentation)"
   ,Option [] ["noSharing"] (NoArg csharing)
           "don't maximally share terms instances"
   ,Option [] ["noVisitable"] (NoArg cvisit)
@@ -84,6 +88,7 @@ options =
         cvisit     c = return $ c { visit = False }
         ccheck     c = return $ c { checker = False }
         csharing   c = return $ c { sharing = False }
+        ccompact   c = return $ c { compact = True }
 
         ccongr "no"   c = return $ c { congr = NoCongr } 
         ccongr "same" c = return $ c { congr = SameFile }

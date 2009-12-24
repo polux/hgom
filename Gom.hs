@@ -35,4 +35,7 @@ go f c = do sig <- parseModule `liftM` readFile f
                 else chain sig c
 
   where chain :: Module -> Config -> IO ()
-        chain m conf = generateFileHierarchy . flip st2java conf . completeVariadics . ast2st $ m
+        chain m conf = generateFileHierarchy (compact conf) . 
+                       flip st2java conf . 
+                       completeVariadics . 
+                       ast2st $ m

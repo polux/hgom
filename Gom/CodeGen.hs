@@ -275,6 +275,7 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                        tos  <- compToStringBuilder c
                        toh  <- ifConfM haskell (compToHaskellBuilder c) rempty
                        eqs  <- ifConfM sharing (compEquiv c) (compEquals c)
+                       hac  <- ifConf sharing hashCodeMethod empty
                        dup  <- ifS $ compDuplicate c
                        ini  <- ifS $ compInit c
                        inh  <- ifS $ compInitHash c
@@ -287,9 +288,9 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                        let isc = compIsX c
                        let syn = compSymbolName c
                        let body = vcat [mem,smem,ctor,mak,syn,
-                                        get,set,tos,toh,eqs,dup,
-                                        ini,inh,haf,isc,gcc,gca,
-                                        gcs,sca,scs]
+                                        get,set,tos,toh,eqs,hac,
+                                        dup,ini,inh,haf,isc,gcc,
+                                        gca,gcs,sca,scs]
                        cls  <- wrap body
                        return $ Class (show c) cls
 
@@ -668,9 +669,9 @@ compSharingMembers c = do
                   rMethodCall (text "shared.HashFunctions")
                               (text "stringHashFunction") 
                               [dquotes qc, int len],
-                  text "private int hashCode;",
+                  text "private int hashCode",
                   text "private static" <+> pretty c <+> 
-                  text "proto = new" <+> pretty c <> text "();"]
+                  text "proto = new" <+> pretty c <> text "()"]
 
 -- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@,
 -- generates the constructor:
@@ -931,8 +932,8 @@ hashArgs fis len = zipWith (\i (f,s) -> hashArg i f s) (desc (len -1)) fis
 -- otherwise.
 hashArg :: Int -> FieldId -> SortId -> Doc
 hashArg idx fid sid = let res d = char accum <+> text "+=" <+> parens d in
-                      if shift /= 0 then res $ go <+> text "<<" <+> int shift
-                                    else res go
+                      if shift == 0 then res go
+                                    else res $ go <+> text "<<" <+> int shift
   where go | isILFC    sid = pfid
            | isBoolean sid = pfid <> text "?1:0"
            | isDouble  sid = text "(int)" <> toLong pfid <> text "^" <>

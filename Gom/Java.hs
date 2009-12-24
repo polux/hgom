@@ -2,7 +2,7 @@ module Gom.Java (
   -- * File hierarchies
   FileHierarchy(..),
   generateFileHierarchy,
-  generateFileHierarchyIn,
+  generateHierarchyIn,
   -- * Java pretty-printing
   -- ** Generic
   ibraces, sbraces, encloseCommas, rBody,
@@ -53,21 +53,23 @@ data FileHierarchy
     fileContent :: Doc 
   }
 
--- | Actually generates files on disk.
-generateFileHierarchy :: FileHierarchy -> IO ()
-generateFileHierarchy h = do cur <- getCurrentDirectory
-                             generateFileHierarchyIn cur [] h
+-- | Actually generates files on disk. If the first argument is
+-- true, generates compact code.
+generateFileHierarchy :: Bool -> FileHierarchy -> IO ()
+generateFileHierarchy c h = do cur <- getCurrentDirectory
+                               generateHierarchyIn c cur [] h
 
--- | @generateFileHierarchyIn dir [pack]@ generates the files in directory
--- @dir@ in package @pack@. Adds proper @package ...@ on top of java files.
+-- | @generateHierarchyIn compact dir [pack]@ generates the files in
+-- directory @dir@ in package @pack@. Adds proper @package ...@ on top of java
+-- files. If @compatc@ is true, the generated code is more compact.
 --
--- Common usage : @generateFileHierarchyIn dir []@
-generateFileHierarchyIn :: FilePath -> [String] -> FileHierarchy -> IO ()
-generateFileHierarchyIn dir pac h = go h
+-- Common usage : @generateFileHierarchyIn compact dir []@
+generateHierarchyIn :: Bool -> FilePath -> [String] -> FileHierarchy -> IO ()
+generateHierarchyIn cp dir pac h = go h
   where go (Package n hs) = let ndir = dir `combine` n
                                 npac = pac ++ [n]       
                             in do createDirectoryIfMissing False ndir
-                                  mapM_ (generateFileHierarchyIn ndir npac) hs
+                                  mapM_ (generateHierarchyIn cp ndir npac) hs
         go (Class n b)    = let fn = dir `combine` (n `addExtension` "java")
                                 fb = rFullClass pac b
                             in renderInFile fn fb
@@ -75,8 +77,9 @@ generateFileHierarchyIn dir pac h = go h
                             in renderInFile fn b
         renderInFile n b  = do hdl <- openFile n WriteMode
                                --hPutDoc hdl b
-                               displayIO hdl (renderPretty 0.6 80 b)
+                               displayIO hdl (rdr b) 
                                hClose hdl
+        rdr = if cp then renderCompact else renderPretty 0.6 80 
 
 -- | Encloses a document into { } and indents the body.
 ibraces :: Doc -> Doc
