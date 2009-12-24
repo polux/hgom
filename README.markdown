@@ -72,3 +72,29 @@ concerning the number of generated lines (using
 
 It takes some time. The generated files can be plotted using
 [gnuplot](http://www.gnuplot.info) for instance.
+
+## Differences with gom ##
+
+### Better ###
+
+ * faster !
+ * smaller code, almost 100% code coverage,
+   compiles much faster
+ * more things optional : visitable, checker, ...
+ * `toHaskell` methods generation (optional)
+ * smaller code for some generated 
+   methods (string escaping factorized for instance)
+ * faster code for some generated 
+   methods (less function calls, more constants)
+
+### Worse ###
+
+ * no `fromAterm`, `toAterm`, `fromString` for the moment
+ * no hooks !
+ * no ant task
+ * no special treatment of variadic constructors in
+   the generated `toString` methods
+
+### Different ###
+
+ * slightly different command-line arguments syntax

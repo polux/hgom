@@ -1,0 +1,3 @@
+ * generate parser methods (fromString, fromAterm, ...)
+ * improve variadic constructors pretty-printing
+ * generate congruence strategies [emilie]
