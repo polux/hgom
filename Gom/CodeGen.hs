@@ -901,15 +901,16 @@ compInitHash c = do cfs <- askSt $ fieldsOf c
 -- >   return c;
 -- > }
 compHashFun :: CtorId -> Gen Doc
-compHashFun c = do len <- length `liftM` askSt (fieldsOf c)
+compHashFun c = do fis <- askSt (fieldsOf c)
+                   let len = length fis
                    let modif = protected <+> if len == 0 then static else empty 
                    return $ rMethodDef modif jint 
-                                       (text "hashFunction") [] (body len)
-  where body len = rBody (prologue ++ [middle len] ++ epilogue)
+                                       (text "hashFunction") [] (body fis len)
+  where body f l = rBody (prologue ++ mid f l ++ epilogue)
         prologue = map text ["int a, b, c",
                              "a = 0x9e3779b9",
                              "b = nameHash << 8"]
-        middle l = text "c =" <+> int l <> semi 
+        mid f l  = (text "c =" <+> int l) : hashArgs f l
         epilogue = map text ["a -= b; a -= c; a ^= (c >> 13)",
                              "b -= c; b -= a; b ^= (a << 8)" ,
                              "c -= a; c -= b; c ^= (b >> 13)",
@@ -920,3 +921,27 @@ compHashFun c = do len <- length `liftM` askSt (fieldsOf c)
                              "b -= c; b -= a; b ^= (a << 10)",
                              "c -= a; c -= b; c ^= (b >> 15)",
                              "return c"]
+
+-- | Auxiliary function for @'compHashFun'@, generates the fields-related part of
+-- the @hashFunction@ method.
+hashArgs :: [(FieldId,SortId)] -> Int -> [Doc]
+hashArgs fis len = zipWith (\i (f,s) -> hashArg i f s) (desc (len -1)) fis
+  where desc n = n:desc (n-1)
+
+-- | Auxiliary function for @'hashArgs'@, generates the recursive call
+-- to the @hashFunction@ method for a non-builin field, ad-hoc magic
+-- otherwise.
+hashArg :: Int -> FieldId -> SortId -> Doc
+hashArg idx fid sid = let res d = char accum <+> text "+=" <+> parens d in
+                      if shift /= 0 then res $ go <+> text "<<" <+> int shift
+                                    else res go
+  where go | isILFC    sid = pfid
+           | isBoolean sid = pfid <> text "?1:0"
+           | isDouble  sid = text "(int)" <> toLong pfid <> text "^" <>
+                             parens (toLong pfid) <> text ">>>32"
+           | otherwise     = rMethodCall pfid (text "hashCode") []
+        shift = (idx `mod` 4) * 8
+        accum = "aaaabbbbcccc" !! (idx `mod` 12)
+        isILFC s = or $ map ($ s) [isInt,isLong,isFloat,isChar]
+        toLong x = text "java.lang.Double.doubleToLongBits" <> parens x
+        pfid = this <> dot <> pretty fid
