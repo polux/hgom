@@ -86,7 +86,8 @@ It takes some time. The generated files can be plotted using
    methods (string escaping factorized for instance)
  * faster code for some generated 
    methods (less function calls, more constants)
- * pretty-printed generated code
+ * pretty-printed generated code, 
+   optional compact (no indentation) option
 
 ### Worse ###
 
