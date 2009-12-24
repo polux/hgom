@@ -308,11 +308,11 @@ compConstructor c = do mem  <- compMembersOfConstructor c
 -- | Given a non-variadic constructor @C@, 
 -- generates a congruence strategy class @_C.java@.
 compCongruence :: CtorId -> Gen FileHierarchy
-compCongruence c = do body <- vcat `liftM` sequence [compCongruenceConstructor c,
-                                                     compVisit c,
-                                                     compVisitLight c]
-                      return $ Class ("_"++show c) (wrap body)
-                   where wrap b = rClass public (pretty c) (Just jSCombinator) [] b
+compCongruence c = 
+  do body <- vcat `liftM` sequence [compCongruenceConstructor c,
+                                    compVisit c, compVisitLight c]
+     return $ Class ('_':show c) (wrap body)
+  where wrap = rClass public (pretty c) (Just jSCombinator) []
 -- | TODO
 compVisit :: CtorId -> Gen Doc
 compVisit c = return $ rMethodDef private empty (pretty c) [] empty
@@ -334,7 +334,7 @@ compCongruenceConstructor c = do
   return $ rMethodDef private empty (pretty c) typedArgs 
                       (rBody [rMethodCall this (text "initSubterm") args])
   where prettyArgs fis prefix = map (pre . pretty . fst) fis
-          where pre x = prefix <> (text "s_") <> x
+          where pre x = prefix <> text "s_" <> x
 
 -- | Helper fonction that iters over the fields of
 -- a constructor and combines them.
@@ -349,13 +349,11 @@ iterOverFields f g c = do fis  <- askSt (fieldsOf c)
 
 -- | @renderBuiltin s f b@ generates what is necessary to put
 -- the representation of @f@ (field of sort @s@) in the buffer @b@.
-renderBuiltin 
-  :: SortId -> FieldId -> Doc -> Doc
+renderBuiltin :: SortId -> FieldId -> Doc -> Doc
 renderBuiltin s f b 
-  | s == makeSortId "String" = text "renderString" <> 
-                               parens (b <> comma <> pretty f)
-  | s == makeSortId "char"   = rMethodCall b (text "append") [fMinus0]
-  | otherwise                = rMethodCall b (text "append") [pretty f]
+  | isString s = text "renderString" <> parens (b <> comma <> pretty f)
+  | isChar   s = rMethodCall b (text "append") [fMinus0]
+  | otherwise  = rMethodCall b (text "append") [pretty f]
   where fMinus0 = text "(int)" <> pretty f <> text " - (int)'0'"
 
 -- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@,
@@ -830,10 +828,10 @@ compOpList c = do co     <- askSt (codomainOf c)
 -- > }
 compDuplicate :: CtorId -> Gen Doc
 compDuplicate c = rdr `liftM` askSt (fieldsOf c)
-  where pc = pretty c
-        cl = text "clone"
-        th = (text "this." <>) . pretty . fst
-        rdr  fis = rMethodDef public jShared (text "duplicate") [] (body fis)
+  where pc  = pretty c
+        cl  = text "clone"
+        th  = (text "this." <>) . pretty . fst
+        rdr = rMethodDef public jShared (text "duplicate") [] . body
         body fis = rBody 
           [pc <+> cl <+> equals <+> new <+> pc <> text "()",
            rMethodCall cl (text "init") (map th fis ++ [text "hashCode"]),
@@ -851,8 +849,8 @@ compInit :: CtorId -> Gen Doc
 compInit c = do cfs <- askSt $ fieldsOf c
                 tfs <- mapM rdr cfs
                 let args = tfs ++ [text "int hashCode"]
-                let body = rBody $ (map ass cfs) ++ [lastLine]
-                return $ rMethodDef (private) void (text "init") args body
+                let body = rBody $ map ass cfs ++ [lastLine]
+                return $ rMethodDef private void (text "init") args body
   where rdr (f,s) = do qs <- qualifiedSort s
                        return $ qs <+> (text . show) f
         ass (f,s) = let pf = pretty f 
@@ -888,7 +886,7 @@ compInitHash c = do cfs <- askSt $ fieldsOf c
 -- >   a = 0x9e3779b9;
 -- >   b = nameHash << 8;
 -- >   c = n;
--- >   TODO
+-- >   hashArgs [(x1,T1),..,(xn,Tn)] n
 -- >   a -= b; a -= c; a ^= (c >> 13);
 -- >   b -= c; b -= a; b ^= (a << 8);
 -- >   c -= a; c -= b; c ^= (b >> 13);
@@ -896,7 +894,7 @@ compInitHash c = do cfs <- askSt $ fieldsOf c
 -- >   b -= c; b -= a; b ^= (a << 16);
 -- >   c -= a; c -= b; c ^= (b >> 5);
 -- >   a -= b; a -= c; a ^= (c >> 3);
--- >   b -= c; b -= a; b ^= (a << 10);                                                                          
+-- >   b -= c; b -= a; b ^= (a << 10); 
 -- >   c -= a; c -= b; c ^= (b >> 15);
 -- >   return c;
 -- > }
@@ -942,6 +940,6 @@ hashArg idx fid sid = let res d = char accum <+> text "+=" <+> parens d in
            | otherwise     = rMethodCall pfid (text "hashCode") []
         shift = (idx `mod` 4) * 8
         accum = "aaaabbbbcccc" !! (idx `mod` 12)
-        isILFC s = or $ map ($ s) [isInt,isLong,isFloat,isChar]
+        isILFC s = any ($ s) [isInt,isLong,isFloat,isChar]
         toLong x = text "java.lang.Double.doubleToLongBits" <> parens x
         pfid = this <> dot <> pretty fid
