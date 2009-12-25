@@ -94,8 +94,6 @@ It takes some time. The generated files can be plotted using
  * no `fromAterm`, `toAterm`, `fromString` for the moment
  * no hooks !
  * no ant task
- * no special treatment of variadic constructors in
-   the generated `toString` methods
  * generates no comments
 
 ### Different ###

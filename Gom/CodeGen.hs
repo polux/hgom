@@ -260,9 +260,67 @@ compAbstractVariadic vc = do cl <- body
                              return $ Class (show vc) cl
   where body = do co  <- askSt (codomainOf vc)
                   qto <- qualifiedSort co
+                  bd  <- compToStringBuilderVariadic vc
                   return $ rClass (public <+> abstract)
                                   (pretty vc) (Just qto)
-                                  [] empty 
+                                  [] bd
+
+-- | Given a variadic constructor @List(T*)@, generates
+--
+-- >  public void toStringBuilder(java.lang.StringBuilder buf) {
+-- >   buffer.append("List(");
+-- >   if(this instanceof mod.types.codom.ConsList) {
+-- >     mod.types.List cur = this;
+-- >     while(cur instanceof mod.types.codom.ConsList) {
+-- >       mod.types.T elem = cur.getHeadList();
+-- >       cur = cur.getTailList();
+-- >       elem.toStringBuilder(buf);
+-- >       if(cur instanceof mod.types.codom.ConsList) {
+-- >         buf.append(",");
+-- >       }
+-- >     }
+-- >     if(!(cur instanceof mod.types.codom.EmptyList)) {
+-- >       buf.append(",");
+-- >       cur.toStringBuilder(buf);
+-- >     }
+-- >   }
+-- >   buf.append(")");
+-- > }
+compToStringBuilderVariadic :: CtorId -> Gen Doc
+compToStringBuilderVariadic vc = do
+  qcons <- qualifiedCtor cons
+  qnil  <- qualifiedCtor nil
+  co    <- askSt (codomainOf vc)
+  dom   <- askSt (fieldOf vc) 
+  qco   <- pretty `liftM` qualifiedSort co
+  qdom  <- pretty `liftM` qualifiedSort dom
+  let mid = middle qco qcons qnil qdom (isBuiltin dom)
+  return $ rMethodDef public void toSB
+                      [stringBuilder <+> buf]
+                      (rBody [pre,mid,post])
+  where bapp arg = rMethodCall buf (text "append") [arg]
+        cons = prependCons vc
+        nil  = prependEmpty vc
+        pre  = bapp $ dquotes (pretty vc <> lparen)
+        post = bapp $ dquotes rparen 
+        comm = bapp $ dquotes comma
+        cur  = text "cur"
+        elm = text "elem"
+        getH = text "getHead" <> pretty vc
+        getT = text "getTail" <> pretty vc
+        toSB = text "toStringBuilder"
+        buf  = text "buf"
+        jneg = (text "!" <>) . parens
+        middle qco qc qn dom btin = 
+          rIfThen (this <+> instanceof <+> qc) $ rBody
+            [qco <+> cur <+> equals <+> this,
+             rWhile (cur <+> instanceof <+> qc) $ rBody
+               [dom <+> elm <+> equals <+> rMethodCall cur getH [],
+                cur <+> equals <+> rMethodCall cur getT [],
+                if btin then bapp elm else rMethodCall elm toSB [buf],
+                rIfThen (cur <+> instanceof <+> qc) (rBody [comm])],
+             rIfThen (jneg $ cur <+> instanceof <+> qn) $ rBody 
+               [comm, rMethodCall cur toSB [buf]]]
 
 -- | Given a non-variadic constructor @C@, generates a concrete class @C.java@.
 compConstructor :: CtorId -> Gen FileHierarchy
@@ -272,7 +330,7 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                        mak  <- compMakeOfConstructor c
                        get  <- compGettersOfConstructor c
                        set  <- compSettersOfConstructor c
-                       tos  <- compToStringBuilder c
+                       tos  <- ifNG $ compToStringBuilder c
                        toh  <- ifConfM haskell (compToHaskellBuilder c) rempty
                        eqs  <- ifConfM sharing (compEquiv c) (compEquals c)
                        hac  <- ifConf sharing hashCodeMethod empty
@@ -294,17 +352,20 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                        cls  <- wrap body
                        return $ Class (show c) cls
 
-  where ifV = flip (ifConfM visit) rempty
+  where rempty = return empty
+        ifV = flip (ifConfM visit) rempty
         ifS = flip (ifConfM sharing) rempty
-        rempty = return empty
+        -- ifNG == if not generated
+        ifNG a = do gen <- askSt (isGenerated c) 
+                    maybe a (const rempty) gen
         wrap b = do
-           gen <- askSt (isGenerated c)                                     
-           let rcls d = rClass public (pretty c) (Just d) [] b              
-           case gen of Nothing -> do co  <- askSt (codomainOf c)            
-                                     qco <- qualifiedSort co                     
-                                     return $ rcls qco                           
-                       Just bc -> do qbc <- qualifiedCtor bc                     
-                                     return $ rcls qbc                        
+          gen <- askSt (isGenerated c)                                     
+          let rcls d = rClass public (pretty c) (Just d) [] b            
+          case gen of Nothing -> do co  <- askSt (codomainOf c)
+                                    qco <- qualifiedSort co
+                                    return $ rcls qco
+                      Just bc -> do qbc <- qualifiedCtor bc
+                                    return $ rcls qbc
 
 -- | Given a non-variadic constructor @C@, 
 -- generates a congruence strategy class @_C.java@.
@@ -806,8 +867,8 @@ compOp c = do isfsym <- compIsFsym
 -- > %oplist Co VC(T*) {
 -- >   is_fsym(t) { (    ($t instanceof foo.types.co.ConsVC) 
 -- >                  || ($t instanceof foo.types.co.EmptyVC)) }
--- >   make_empty() { new foo.types.co.EmptyVC() }
--- >   make_insert(e,l) { new foo.types.co.ConsVC($e,$l) }
+-- >   make_empty() { foo.types.co.EmptyVC.make() }
+-- >   make_insert(e,l) { foo.types.co.ConsVC.make($e,$l) }
 -- >   get_head(l) { $l.getHeadVC() }
 -- >   get_tail(l) { $l.getTailVC() }
 -- >   is_empty(l) { $l.isEmptyVC() }

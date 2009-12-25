@@ -11,7 +11,7 @@ module Gom.Java (
   -- ** Java keywords
   abstract, public, protected, private, this,
   jreturn, throw, new, void, instanceof, jif,
-  for, jelse, jtrue, jfalse, final, static,
+  for, while, jelse, jtrue, jfalse, final, static,
   -- ** Java Types
   jint, jString, stringBuilder, jboolean,
   jObject, jVisitable, jShared, jSharedId,
@@ -21,7 +21,7 @@ module Gom.Java (
   -- ** Methods
   rMethodDef, rMethodCall, rWrapBuiltin,
   -- ** Control structures
-  rIfThen, rIfThenElse, rFromTo, rSwitch,
+  rIfThen, rIfThenElse, rFromTo, rWhile, rSwitch,
   -- * Tom pretty-printing
   -- ** Mappings
   rOp, rOpList, rTypeterm,
@@ -91,7 +91,7 @@ sbraces d = lbrace <+> d <+> rbrace
 
 abstract,public,protected,private :: Doc
 this,jreturn,throw,new,void,final,static :: Doc
-instanceof,jif,for,jelse,jtrue,jfalse :: Doc
+instanceof,jif,for,while,jelse,jtrue,jfalse :: Doc
 
 abstract   = text "abstract"
 public     = text "public"
@@ -105,6 +105,7 @@ void       = text "void"
 instanceof = text "instanceof"
 jif        = text "if"
 for        = text "for"
+while      = text "while"
 jelse      = text "else"
 jtrue      = text "true"
 jfalse     = text "false"
@@ -223,6 +224,13 @@ rFromTo i f t b = group $ for <+> parens cond <+> ibraces b
                                  i <+> text "<" <+> t,
                                  i <> text "++"]
 
+-- | Renders @while(cond) { body }
+rWhile
+  :: Doc -- ^ cond
+  -> Doc -- ^ body
+  -> Doc
+rWhile c b = group $ while <+> parens c <+> ibraces b
+
 -- | @rSwitch s [(l1,r1),..,(ln,rn)] d@ renders
 --
 -- > switch (s) {
@@ -304,8 +312,8 @@ rOp s c fs b =
 --
 -- > %oplist co VC(dom*) {
 -- >   is_fsym(t) { (($t instanceof cons) || ($t instanceof empty)) }
--- >   make_empty() { new empty() }
--- >   make_insert(e,l) { new cons($e,$l) }
+-- >   make_empty() { empty.make() }
+-- >   make_insert(e,l) { cons.make($e,$l) }
 -- >   get_head(l) { $l.getHeadc() }
 -- >   get_tail(l) { $l.getTailc() }
 -- >   is_empty(l) { $l.isEmptyc() }
@@ -321,8 +329,8 @@ rOpList c co dom consc emptyc =
   text "%oplist" <+> co <+> c <> parens (dom <> text "*") <+> 
    ibraces (vcat
      [text "is_fsym(t) { (($t instanceof" <+> consc <> text ") || ($t instanceof" <+> emptyc <> text ")) }",
-      text "make_empty() { new" <+> emptyc <> text "() }",
-      text "make_insert(e,l) { new" <+> consc <> text "($e,$l) }",
+      text "make_empty() {" <+> emptyc <> text ".make() }",
+      text "make_insert(e,l) {" <+> consc <> text ".make($e,$l) }",
       text "get_head(l) { $l.getHead" <> c <> text "() }",
       text "get_tail(l) { $l.getTail" <> c <> text "() }",
       text "is_empty(l) { $l.isEmpty" <> c <> text "() }"])
