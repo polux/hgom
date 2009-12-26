@@ -23,7 +23,8 @@ data Config =
     checker :: Bool, -- ^ perform checks ?
     congr   :: CongrOpt, -- ^ generate congruence strategies ?
     sharing :: Bool, -- ^ maximally share terms ?
-    compact :: Bool -- ^ generate compact code ?
+    compact :: Bool, -- ^ generate compact code ?
+    parsers :: Bool -- ^ generate from* methods ? 
   } 
 
 -- | Default configuration.
@@ -39,7 +40,8 @@ defaultConfig =
     checker = True,
     congr   = NoCongr,
     sharing = True,
-    compact = False
+    compact = False,
+    parsers = True
   }
 
 -- | Represents the three options values for --withCongruenceStrategies
@@ -77,6 +79,8 @@ options =
           "don't maximally share terms instances"
   ,Option [] ["noVisitable"] (NoArg cvisit)
           "don't implement Visitable"
+  ,Option [] ["noParsers"] (NoArg cparsers)
+          "don't generate from* methods"
   ,Option [] ["noCheck"] (NoArg ccheck)
           "don't perform consistency checks"]
 
@@ -89,6 +93,7 @@ options =
         ccheck     c = return $ c { checker = False }
         csharing   c = return $ c { sharing = False }
         ccompact   c = return $ c { compact = True }
+        cparsers   c = return $ c { parsers = False }
 
         ccongr "no"   c = return $ c { congr = NoCongr } 
         ccongr "same" c = return $ c { congr = SameFile }

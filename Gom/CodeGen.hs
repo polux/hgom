@@ -103,17 +103,20 @@ compSt = do mn <- lower `liftM` askSt modName
             tf <- compTomFile
             pr <- askConf package
             cs <- mapM compStrategy ds
-            let tp = [ac,tf,Package "types" (concat hs)] 
-            ps <- ifC (Package "strategy" cs:tp) tp 
-            return . wrap pr $ Package mn ps
+            pc <- ifP $ Class "Parser" absParser
+            lc <- ifP $ Class "Lexer" absLexer
+            ps <- ifC $ Package "strategy" cs
+            let always = [ac,tf,Package "types" (concat hs)] 
+            return . wrap pr $ Package mn (always ++ pc ++ lc ++ ps)
   where -- wraps the package in the user-provided prefix hierarchy (-p option)
         wrap Nothing  h = h
         wrap (Just l) h = foldr w h l
         w p h = Package p [h]
-        ifC t e = do congrval <- askConf congr
-                     case congrval of
-                       NoCongr -> return e
-                       _ -> return t
+        ifC x = do congrval <- askConf congr
+                   case congrval of
+                     NoCongr -> return []
+                     _ ->       return [x]
+        ifP x = ifConf parsers [x] []
          
 
 -- | Generates the @ModAbstractType@ abstract java class for module @Mod@.
@@ -247,9 +250,12 @@ compAbstractSort :: SortId -> Gen FileHierarchy
 compAbstractSort s = do eg <- compEmptyGettersOfSort s
                         es <- compEmptySettersOfSort s
                         ei <- compEmptyIsX s
-                        cl <- wrap $ vcat [eg,es,ei]
+                        pa <- ifP $ compParseSort s
+                        fs <- ifP $ compFromStringSort s
+                        cl <- wrap $ vcat [eg,es,ei,pa,fs]
                         return $ Class (show s) cl
-  where wrap body = do qat <- qualifiedAbstractType
+  where ifP = flip (ifConfM parsers) (return empty)
+        wrap body = do qat <- qualifiedAbstractType
                        return $ rClass (public <+> abstract) 
                                        (pretty s) (Just qat)  
                                        [] body
@@ -305,7 +311,7 @@ compToStringBuilderVariadic vc = do
         post = bapp $ dquotes rparen 
         comm = bapp $ dquotes comma
         cur  = text "cur"
-        elm = text "elem"
+        elm  = text "elem"
         getH = text "getHead" <> pretty vc
         getT = text "getTail" <> pretty vc
         toSB = text "toStringBuilder"
@@ -343,18 +349,20 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                        gcs  <- ifV $ compGetChildren c
                        sca  <- ifV $ compSetChildAt c
                        scs  <- ifV $ compSetChildren c
+                       par  <- ifP $ compParseConstructor c
                        let isc = compIsX c
                        let syn = compSymbolName c
                        let body = vcat [mem,smem,ctor,mak,syn,
                                         get,set,tos,toh,eqs,hac,
                                         dup,ini,inh,haf,isc,gcc,
-                                        gca,gcs,sca,scs]
+                                        gca,gcs,sca,scs,par]
                        cls  <- wrap body
                        return $ Class (show c) cls
 
   where rempty = return empty
         ifV = flip (ifConfM visit) rempty
         ifS = flip (ifConfM sharing) rempty
+        ifP = flip (ifConfM parsers) rempty
         -- ifNG == if not generated
         ifNG a = do gen <- askSt (isGenerated c) 
                     maybe a (const rempty) gen
@@ -1005,3 +1013,81 @@ hashArg idx fid sid = let res d = char accum <+> text "+=" <+> parens d in
         isILFC s = any ($ s) [isInt,isLong,isFloat,isChar]
         toLong x = text "java.lang.Double.doubleToLongBits" <> parens x
         pfid = this <> dot <> pretty fid
+
+-- | Given a constructor @C(x1:T1,...,xn:Tn)@, 
+-- of codomain @Co@, generates
+--
+-- > final static mod.types.Co parse(mod.Parser par) {
+-- >   modAbstractType.parseId("C",lex);
+-- >   modAbstractType.parseLPar(lex);
+-- >   mod.types.T1 x1 = mod.types.T1.parse(lex);
+-- >   modAbstractType.parseComma(lex);
+-- >   ...
+-- >   modAbstractType.parseComma(lex);
+-- >   mod.types.Tn xn = mod.types.Tn.parse(lex);
+-- >   return mod.types.Co.C.make(x1,...,xn);
+-- > }
+compParseConstructor :: CtorId -> Gen Doc
+compParseConstructor c = do
+  pr   <- packagePrefix
+  co   <- askSt (codomainOf c)
+  qco  <- qualifiedSort co
+  recs <- iterOverFields call (intersperse pcomm) c
+  post <- postM
+  return $ rMethodDef (final <+> static <+> public) qco (text "parse")
+                      [pars pr <+> arg] (rBody (pre++recs++post))
+  where pars pr  = pr <> dot <> text "Parser"
+        arg      = text "par"
+        pcomm    = rMethodCall arg (text "parseComma") []
+        call f s = do 
+          qs <- qualifiedSort s
+          return $ qs <+> pretty f <+> equals <+>
+                   if isBuiltin s 
+                     then rMethodCall arg (text "parse" <> pretty s) []
+                     else rMethodCall qs (text "parse") [arg]
+        pre      = [rMethodCall arg (text "parseId") [dquotes (pretty c)],
+                    rMethodCall arg (text "parseLpar") []]
+        postM    = do qc <- qualifiedCtor c
+                      fis <- map (pretty . fst) `liftM` askSt (fieldsOf c)
+                      return $ [rMethodCall arg (text "parseRpar") [], 
+                                jreturn <+> rMethodCall qc (text "make") fis]
+
+-- | Given a sort @T = f1(...) | ... | fn(...)@, generates
+--
+-- > final static sig.types.T parse(mod.Parser par) {
+-- >   try { return parsef1(par); }
+-- >   catch (Exception e) {}
+-- >   ...
+-- >   try { return parsefn(par); }
+-- >   catch (Exception e) {}
+-- >   throw new RuntimeException();
+-- > }
+compParseSort :: SortId -> Gen Doc
+compParseSort s = do
+  qs  <- qualifiedSort s
+  cs  <- askSt (sCtorsOf s)
+  qcs <- mapM qualifiedCtor cs
+  pr  <- packagePrefix
+  let calls = map (<$> catche) (map call qcs) 
+  return $ rMethodDef (static <+> public) qs (text "parse")
+           [pars pr <+> arg] (rBody $ calls++[post])
+  where pars pr  = pr <> dot <> text "Parser"
+        arg      = text "par"
+        post     = text "throw new RuntimeException()"
+        call qc  = text "try { return " <> qc <> text ".parse(par); }"
+        catche   = text "catch (Exception e) {}"
+
+-- | Given a sort @S@, generates
+--
+-- > public static mod.types.S fromString(String s) {
+-- >   return mod.types.S.parse(new mod.Parser(s));
+-- > }
+compFromStringSort :: SortId -> Gen Doc
+compFromStringSort s = do
+  qs <- qualifiedSort s
+  pr <- packagePrefix
+  let pa = pr <> dot <> text "Parser"
+  return $ vcat
+    [text "public static" <+> qs <+> text "fromString(String s) {",
+     text "  return" <+> qs <> text ".parse(new" <+> pa <> text "(s));",
+     text "}"]
