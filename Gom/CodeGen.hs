@@ -1018,7 +1018,6 @@ hashArg idx fid sid = let res d = char accum <+> text "+=" <+> parens d in
 -- of codomain @Co@, generates
 --
 -- > final static mod.types.Co parse(mod.Parser par) {
--- >   modAbstractType.parseId("C",lex);
 -- >   modAbstractType.parseLPar(lex);
 -- >   mod.types.T1 x1 = mod.types.T1.parse(lex);
 -- >   modAbstractType.parseComma(lex);
@@ -1035,7 +1034,7 @@ compParseConstructor c = do
   recs <- iterOverFields call (intersperse pcomm) c
   post <- postM
   return $ rMethodDef (final <+> static <+> public) qco (text "parse")
-                      [pars pr <+> arg] (rBody (pre++recs++post))
+                      [pars pr <+> arg] (rBody (pre:recs++post))
   where pars pr  = pr <> dot <> text "Parser"
         arg      = text "par"
         pcomm    = rMethodCall arg (text "parseComma") []
@@ -1045,8 +1044,7 @@ compParseConstructor c = do
                    if isBuiltin s 
                      then rMethodCall arg (text "parse" <> pretty s) []
                      else rMethodCall qs (text "parse") [arg]
-        pre      = [rMethodCall arg (text "parseId") [dquotes (pretty c)],
-                    rMethodCall arg (text "parseLpar") []]
+        pre      = rMethodCall arg (text "parseLpar") []
         postM    = do qc <- qualifiedCtor c
                       fis <- map (pretty . fst) `liftM` askSt (fieldsOf c)
                       return $ [rMethodCall arg (text "parseRpar") [], 
@@ -1055,12 +1053,11 @@ compParseConstructor c = do
 -- | Given a sort @T = f1(...) | ... | fn(...)@, generates
 --
 -- > final static sig.types.T parse(mod.Parser par) {
--- >   try { return parsef1(par); }
--- >   catch (Exception e) {}
--- >   ...
--- >   try { return parsefn(par); }
--- >   catch (Exception e) {}
--- >   throw new RuntimeException();
+-- >   String id = par.parseId();
+-- >   if (id.equals("f1")) return mod.types.t.f1.parse(par);
+-- >   else ....
+-- >   else if(id.equals("fn")) return mod.types.t.fn.parse(par);
+-- >   else throw new RuntimeException();
 -- > }
 compParseSort :: SortId -> Gen Doc
 compParseSort s = do
@@ -1068,14 +1065,16 @@ compParseSort s = do
   cs  <- askSt (sCtorsOf s)
   qcs <- mapM qualifiedCtor cs
   pr  <- packagePrefix
-  let calls = map (<$> catche) (map call qcs) 
+  let calls = foldr ifsym post (zip cs qcs)
   return $ rMethodDef (static <+> public) qs (text "parse")
-           [pars pr <+> arg] (rBody $ calls++[post])
+           [pars pr <+> arg] (vcat $ [pre,calls])
   where pars pr  = pr <> dot <> text "Parser"
         arg      = text "par"
-        post     = text "throw new RuntimeException()"
-        call qc  = text "try { return " <> qc <> text ".parse(par); }"
-        catche   = text "catch (Exception e) {}"
+        pre      = text "String id = par.parseId();"
+        post     = text "throw new RuntimeException();"
+        cond c   = rMethodCall (text "id") (text "equals") [dquotes $ pretty c]
+        rcall qc = rMethodCall (pretty qc) (text "parse") [arg]
+        ifsym (c,qc) b = rIfThenElse (cond c) (jreturn <+> rcall qc <> semi) b
 
 -- | Given a sort @S@, generates
 --
