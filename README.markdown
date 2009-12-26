@@ -86,7 +86,7 @@ It takes some time. The generated files can be plotted using
    methods (string escaping factorized for instance)
  * faster code for some generated 
    methods (less function calls, more constants)
- * faster parser (from*) methods : doesn't use an
+ * faster parser (from*) methods : don't use an
    intermediate ATerm representation
  * pretty-printed generated code, 
    optional compact (no indentation) option
