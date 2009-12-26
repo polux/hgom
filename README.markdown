@@ -86,12 +86,13 @@ It takes some time. The generated files can be plotted using
    methods (string escaping factorized for instance)
  * faster code for some generated 
    methods (less function calls, more constants)
+ * faster parser (from*) methods : does not use a
+   intermediate ATerm representation
  * pretty-printed generated code, 
    optional compact (no indentation) option
 
 ### Worse ###
 
- * no `fromAterm`, `toAterm`, `fromString` for the moment
  * no hooks !
  * no ant task
  * generates no comments

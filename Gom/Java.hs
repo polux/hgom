@@ -224,7 +224,7 @@ rFromTo i f t b = group $ for <+> parens cond <+> ibraces b
                                  i <+> text "<" <+> t,
                                  i <> text "++"]
 
--- | Renders @while(cond) { body }
+-- | Renders @while(cond) { body }@
 rWhile
   :: Doc -- ^ cond
   -> Doc -- ^ body
