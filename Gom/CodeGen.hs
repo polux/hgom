@@ -264,12 +264,15 @@ compAbstractSort s = do eg <- compEmptyGettersOfSort s
 compAbstractVariadic :: CtorId -> Gen FileHierarchy
 compAbstractVariadic vc = do cl <- body
                              return $ Class (show vc) cl
-  where body = do co  <- askSt (codomainOf vc)
+  where ifP = flip (ifConfM parsers) (return empty)
+        body = do co  <- askSt (codomainOf vc)
                   qto <- qualifiedSort co
-                  bd  <- compToStringBuilderVariadic vc
-                  return $ rClass (public <+> abstract)
-                                  (pretty vc) (Just qto)
-                                  [] bd
+                  tsb <- compToStringBuilderVariadic vc
+                  pa  <- ifP $ compParseVariadic vc
+                  pat <- ifP $ compParseVariadicTail vc
+                  return $ rClass (public <+> abstract) (pretty vc)
+                                  (Just qto) [] (vcat [tsb,pa,pat])
+                                   
 
 -- | Given a variadic constructor @List(T*)@, generates
 --
@@ -1014,16 +1017,29 @@ hashArg idx fid sid = let res d = char accum <+> text "+=" <+> parens d in
         toLong x = text "java.lang.Double.doubleToLongBits" <> parens x
         pfid = this <> dot <> pretty fid
 
+-- | Given a sort @s@, @parseRecCall arg s@ generates
+--
+--  * @arg.parses()@ if @s@ is a builtin, 
+--
+--  * @mod.types.s.parse(arg)@ otherwise
+parseRecCall :: Doc -> SortId -> Gen Doc
+parseRecCall arg s = do
+  qs <- qualifiedSort s
+  return $ if isBuiltin s 
+    then rMethodCall arg (text "parse" <> pretty s) []
+    else rMethodCall qs (text "parse") [arg]
+
 -- | Given a constructor @C(x1:T1,...,xn:Tn)@, 
 -- of codomain @Co@, generates
 --
--- > final static mod.types.Co parse(mod.Parser par) {
--- >   modAbstractType.parseLPar(lex);
--- >   mod.types.T1 x1 = mod.types.T1.parse(lex);
--- >   modAbstractType.parseComma(lex);
+-- > final static mod.types.Co parseArgs(mod.Parser par) {
+-- >   par.parseLpar();
+-- >   mod.types.T1 x1 = mod.types.T1.parse(par);
+-- >   par.parseComma();
 -- >   ...
--- >   modAbstractType.parseComma(lex);
--- >   mod.types.Tn xn = mod.types.Tn.parse(lex);
+-- >   par.parseComma();
+-- >   mod.types.Tn xn = mod.types.Tn.parse(par);
+-- >   par.parseRpar();
 -- >   return mod.types.Co.C.make(x1,...,xn);
 -- > }
 compParseConstructor :: CtorId -> Gen Doc
@@ -1033,26 +1049,109 @@ compParseConstructor c = do
   qco  <- qualifiedSort co
   recs <- iterOverFields call (intersperse pcomm) c
   post <- postM
-  return $ rMethodDef (final <+> static <+> public) qco (text "parse")
+  return $ rMethodDef (final <+> static <+> public)
+                      qco (text "parseArgs")
                       [pars pr <+> arg] (rBody (pre:recs++post))
   where pars pr  = pr <> dot <> text "Parser"
         arg      = text "par"
         pcomm    = rMethodCall arg (text "parseComma") []
         call f s = do 
-          qs <- qualifiedSort s
-          return $ qs <+> pretty f <+> equals <+>
-                   if isBuiltin s 
-                     then rMethodCall arg (text "parse" <> pretty s) []
-                     else rMethodCall qs (text "parse") [arg]
+          qs  <- qualifiedSort s
+          rec <- parseRecCall arg s
+          return $ qs <+> pretty f <+> equals <+> rec
         pre      = rMethodCall arg (text "parseLpar") []
         postM    = do qc <- qualifiedCtor c
                       fis <- map (pretty . fst) `liftM` askSt (fieldsOf c)
                       return $ [rMethodCall arg (text "parseRpar") [], 
                                 jreturn <+> rMethodCall qc (text "make") fis]
 
+-- | Given a variadic constructor @VC(T*)@, 
+-- of codomain @Co@, generates
+--
+-- > static public mod.types.Co parseArgs(mod.Parser par) {
+-- >   par.parseLpar();
+-- >   if (!par.isRpar()) {
+-- >     mod.types.T  head =  mod.types.T.parse(par)
+-- >     mod.types.Co tail = mod.types.vc.VC.parseTail(par);
+-- >     par.parseRpar();
+-- >     return mod.types.vc.ConsVC.make(head,tail);
+-- >   } else {
+-- >     par.parseRpar();
+-- >     return mod.types.vc.EmptyVC.make();
+-- >   }
+-- > }
+compParseVariadic :: CtorId -> Gen Doc
+compParseVariadic vc = do
+  pr    <- packagePrefix
+  co    <- askSt (codomainOf vc)
+  qco   <- qualifiedSort co
+  qvc   <- qualifiedCtor vc
+  qcons <- qualifiedCtor (prependCons vc)
+  qnil  <- qualifiedCtor (prependEmpty vc)
+  phead <- parseHead
+  return $ rMethodDef 
+    (static <+> public) qco (text "parseArgs") [pars pr <+> arg]
+    (vcat [text "par.parseLpar();",
+           rIfThenElse (text "!par.isRpar()")
+             (rBody [phead, parseTail qco qvc,
+                     text "par.parseRpar()", makeCons qcons])
+             (rBody [text "par.parseRpar()", makeNil qnil])])
+  where pars pr      = pr <> dot <> text "Parser"
+        arg          = text "par"
+        parseHead    = do dom  <- askSt (fieldOf vc)
+                          qdom <- qualifiedSort dom
+                          rec  <- parseRecCall arg dom
+                          return $ qdom <+> (text "head") <+> equals <+> rec
+        retMake q as = jreturn <+> rMethodCall q (text "make") as
+        makeCons qc  = retMake qc [text "head", text "tail"]
+        makeNil  qn  = retMake qn []
+        parseTail qco qvc = qco <+> (text "tail") <+> equals <+> 
+                            rMethodCall qvc (text "parseTail") [arg]
+
+-- | Given a variadic constructor @VC(T*)@, 
+-- of codomain @Co@, generates
+--
+-- > static public mod.types.Co parseTail(mod.Parser par) {
+-- >   if (par.isComma()) {
+-- >     par.parseComma();
+-- >     mod.types.T  head = mod.types.T.parse(par)
+-- >     mod.types.Co tail = mod.types.vc.VC.parseTail(par);
+-- >     return mod.types.vc.ConsVC.make(head,tail);
+-- >   } else {
+-- >     return mod.types.vc.EmptyVC.make();
+-- >   }
+-- > }
+compParseVariadicTail :: CtorId -> Gen Doc
+compParseVariadicTail vc = do
+  pr    <- packagePrefix
+  co    <- askSt (codomainOf vc)
+  qco   <- qualifiedSort co
+  qvc   <- qualifiedCtor vc
+  qcons <- qualifiedCtor (prependCons vc)
+  qnil  <- qualifiedCtor (prependEmpty vc)
+  phead <- parseHead
+  return $ rMethodDef 
+    (static <+> public) qco (text "parseTail") [pars pr <+> arg]
+    (rIfThenElse (text "par.isComma()")
+       (rBody [text "par.parseComma()", phead,
+               parseTail qco qvc ,makeCons qcons])
+       (makeNil qnil <> semi))
+  where pars pr      = pr <> dot <> text "Parser"
+        arg          = text "par"
+        parseHead    = do dom  <- askSt (fieldOf vc)
+                          qdom <- qualifiedSort dom
+                          rec  <- parseRecCall arg dom
+                          return $ qdom <+> (text "head") <+> equals <+> rec
+        retMake q as = jreturn <+> rMethodCall q (text "make") as
+        makeCons qc  = retMake qc [text "head", text "tail"]
+        makeNil  qn  = retMake qn []
+        parseTail qco qvc = qco <+> (text "tail") <+> equals <+> 
+                            rMethodCall qvc (text "parseTail") [arg]
+
+
 -- | Given a sort @T = f1(...) | ... | fn(...)@, generates
 --
--- > final static sig.types.T parse(mod.Parser par) {
+-- > static public sig.types.T parse(mod.Parser par) {
 -- >   String id = par.parseId();
 -- >   if (id.equals("f1")) return mod.types.t.f1.parse(par);
 -- >   else ....
@@ -1062,7 +1161,9 @@ compParseConstructor c = do
 compParseSort :: SortId -> Gen Doc
 compParseSort s = do
   qs  <- qualifiedSort s
-  cs  <- askSt (sCtorsOf s)
+  scs <- askSt (sCtorsOf s)
+  vcs <- askSt (vCtorsOf s)
+  let cs = scs++vcs
   qcs <- mapM qualifiedCtor cs
   pr  <- packagePrefix
   let calls = foldr ifsym post (zip cs qcs)
@@ -1073,7 +1174,7 @@ compParseSort s = do
         pre      = text "String id = par.parseId();"
         post     = text "throw new RuntimeException();"
         cond c   = rMethodCall (text "id") (text "equals") [dquotes $ pretty c]
-        rcall qc = rMethodCall (pretty qc) (text "parse") [arg]
+        rcall qc = rMethodCall (pretty qc) (text "parseArgs") [arg]
         ifsym (c,qc) b = rIfThenElse (cond c) (jreturn <+> rcall qc <> semi) b
 
 -- | Given a sort @S@, generates
