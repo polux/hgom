@@ -1070,14 +1070,14 @@ compParseConstructor c = do
 --
 -- > static public mod.types.Co parseArgs(mod.Parser par) {
 -- >   par.parseLpar();
--- >   if (!par.isRpar()) {
+-- >   if (par.isRpar()) {
+-- >     par.parseRpar();
+-- >     return mod.types.vc.EmptyVC.make();
+-- >   } else {
 -- >     mod.types.T  head =  mod.types.T.parse(par)
 -- >     mod.types.Co tail = mod.types.vc.VC.parseTail(par);
 -- >     par.parseRpar();
 -- >     return mod.types.vc.ConsVC.make(head,tail);
--- >   } else {
--- >     par.parseRpar();
--- >     return mod.types.vc.EmptyVC.make();
 -- >   }
 -- > }
 compParseVariadic :: CtorId -> Gen Doc
@@ -1092,10 +1092,10 @@ compParseVariadic vc = do
   return $ rMethodDef 
     (static <+> public) qco (text "parseArgs") [pars pr <+> arg]
     (vcat [text "par.parseLpar();",
-           rIfThenElse (text "!par.isRpar()")
+           rIfThenElse (text "par.isRpar()")
+             (rBody [text "par.parseRpar()", makeNil qnil])
              (rBody [phead, parseTail qco qvc,
-                     text "par.parseRpar()", makeCons qcons])
-             (rBody [text "par.parseRpar()", makeNil qnil])])
+                     text "par.parseRpar()", makeCons qcons])])
   where pars pr      = pr <> dot <> text "Parser"
         arg          = text "par"
         parseHead    = do dom  <- askSt (fieldOf vc)
