@@ -14,12 +14,12 @@ module Gom.Java (
   for, while, jelse, jtrue, jfalse, final, static,
   -- ** Java Types
   jint, jString, stringBuilder, jboolean,
-  jObject, jVisitable, jShared, jSharedId,
-  jVisitableArray, jSCombinator,
+  jObject, jVisitable, jVisitFailure, jShared, jSharedId,
+  jVisitableArray, jSCombinator, jVisit, jVisitLight,
   -- ** Classes
   rClass, rFullClass,
   -- ** Methods
-  rMethodDef, rMethodCall, rWrapBuiltin,
+  rMethodDef, rMethodCall, rWrapBuiltin, rConstructorCall,
   -- ** Control structures
   rIfThen, rIfThenElse, rFromTo, rWhile, rSwitch,
   -- * Tom pretty-printing
@@ -113,7 +113,7 @@ final      = text "final"
 static     = text "static"
 
 jint,jString,stringBuilder,jboolean,jObject :: Doc
-jVisitable,jShared,jSharedId,jVisitableArray :: Doc
+jVisitable,jVisitFailure,jShared,jSharedId,jVisitableArray,jVisit,jVisitLight :: Doc
 jSCombinator :: Doc
 jint            = text "int"
 jString         = text "String"
@@ -121,6 +121,9 @@ jboolean        = text "boolean"
 stringBuilder   = text "java.lang.StringBuilder"
 jObject         = text "Object"
 jVisitable      = text "tom.library.sl.Visitable"
+jVisitFailure   = text "tom.library.sl.VisitFailure"
+jVisitLight     = text "visitLight"
+jVisit          = text "visit"
 jSCombinator    = text "tom.library.sl.AbstractStrategyCombinator"
 jShared         = text "shared.SharedObject"
 jSharedId       = text "shared.SharedObjectWithID"
@@ -181,6 +184,14 @@ rMethodCall
 rMethodCall o f args = 
   o <> dot <> f <> encloseCommas args
 
+-- | Renders @new className(arg_1,...,arg_n)@.
+rConstructorCall
+ :: Doc   -- ^ class name
+ -> [Doc] -- ^ arguments
+ -> Doc
+rConstructorCall c args = 
+  new <> c <> encloseCommas args
+
 -- | @rWrapBuiltin qt@ renders
 --
 -- > tom.library.sl.VisitableBuiltin<qt>
@@ -211,7 +222,7 @@ rIfThenElse
 rIfThenElse c b1 b2 = 
   group $ jif <+> parens c <+> ibraces b1 <+> jelse <+> ibraces b2
 
--- | Renders @if(int var = from; var<to; var++) { body }@.
+-- | Renders @for(int var = from; var<to; var++) { body }@.
 rFromTo 
   :: Doc -- ^ var
   -> Doc -- ^ from

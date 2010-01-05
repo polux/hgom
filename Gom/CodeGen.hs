@@ -390,10 +390,47 @@ compCongruence c =
 compVisit :: CtorId -> Gen Doc
 compVisit c = return $ rMethodDef private empty (pretty c) [] empty
 
--- | TODO
-compVisitLight :: CtorId -> Gen Doc
-compVisitLight c = return $ rMethodDef private empty (pretty c) [] empty
+--   public <T> T visitLight(T any, tom.library.sl.Introspector introspector) throws tom.library.sl.VisitFailure {
+--    if(any instanceof gom.term.types.term.f) {
+--      T result = any;
+--      Object[] childs = null;
+--      for (int i = 0, nbi = 0; i < 1; i++) {
+--          Object oldChild = introspector.getChildAt(any,nbi);
+--          Object newChild = args[i].visitLight(oldChild,introspector);
+--          if(childs != null) {
+--            childs[nbi] = newChild;
+--          } else if(newChild != oldChild) {
+--            // allocate the array, and fill it
+--            childs = introspector.getChildren(any);
+--            childs[nbi] = newChild;
+--          }
+--          nbi++;
+--      }
+--      if(childs!=null) {
+--        result = introspector.setChildren(any,childs);
+--      }
+--      return result;
+--    } else {
+--      throw new tom.library.sl.VisitFailure(msg);
+--    }
+--  }
 
+
+compVisitLight :: CtorId -> Gen Doc
+compVisitLight c = return $ rMethodDef private empty (pretty c) [jVisitable <+> text "o"] body
+                     where body = rBody [ifthenelse]
+                           cdoc = pretty c
+                           ifthenelse =  rIfThenElse cond successBranch (throw <+> (rConstructorCall jVisitFailure []) <> semi) 
+                           cond = text "o" <+> instanceof <+> cdoc
+                           successBranch = rMethodCall (rConstructorCall (text "All") []) jVisitLight [(text "o")]
+                           initResult = typeT <+> result <+> equals <+> anyVar  
+                           initChilds = typeT <+> childs <+> equals <+> new <+> jObject <+> text("[]") 
+                           typeT = (text "T")
+                           result = (text "result")
+                           anyVar = (text "any")
+                           childs = (text "childs")
+                           newChild = (text "newChild")
+                           oldChild = (text "oldChild")
 -- | Given a Constructor @C(x1:T1, ..., xn:Tn)@, generates
 --
 -- > private C(Strategy s_x1, ..., Strategy s_xn) {
