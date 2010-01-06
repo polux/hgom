@@ -25,15 +25,21 @@ data-files:        tests/examples/*.gom
 
 executable hgom
   main-is:       Gom.hs
-  other-modules: Gom.Sig,
+  other-modules: Gom.Config,
+                 Gom.Constants,
                  Gom.Parser,
+                 Gom.Checker,
                  Gom.Pretty,
-                 Gom.Checker
-                 Gom.SymbolTable
-                 Gom.CodeGen
+                 Gom.CodeGen,
+                 Gom.CodeGen.Abstract,
+                 Gom.CodeGen.Constructors,
+                 Gom.CodeGen.Mappings,
+                 Gom.CodeGen.Common,
+                 Gom.CodeGen.Strategies,
+                 Gom.CodeGen.Sorts,
+                 Gom.SymbolTable,
+                 Gom.Sig,
                  Gom.Java
-                 Gom.Constants
-                 Gom.Config
   build-depends: base >= 4 && < 5, containers >= 0.2,
                  parsec >= 3.0.0, wl-pprint >= 1.0,
                  mtl >= 1.1.0.2, directory >= 1.0.0.2,
