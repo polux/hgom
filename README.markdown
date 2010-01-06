@@ -52,9 +52,7 @@ benchmark scripts.
 
 Code coverage can be tested as follows.
 
-    cabal clean
-    cabal configure
-    cabal build --ghc-option -fhpc
+    cabal build --ghc-options "-fhpc -fforce-recomp"
     cd tests/coverage
     ./coverage.sh
 
