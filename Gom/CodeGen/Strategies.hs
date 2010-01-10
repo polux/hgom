@@ -55,17 +55,17 @@ compVisitLight :: CtorId -> Gen Doc
 compVisitLight c = return $ rMethodDef private empty (pretty c) [jVisitable <+> text "o"] body
                      where body = rBody [ifthenelse]
                            cdoc = pretty c
-                           ifthenelse =  rIfThenElse cond successBranch (throw <+> (rConstructorCall jVisitFailure []) <> semi) 
+                           ifthenelse = rIfThenElse cond successBranch (throw <+> rConstructorCall jVisitFailure [] <> semi) 
                            cond = text "o" <+> instanceof <+> cdoc
                            successBranch = rMethodCall (rConstructorCall (text "All") []) jVisitLight [(text "o")]
                            initResult = typeT <+> result <+> equals <+> anyVar  
-                           initChilds = typeT <+> childs <+> equals <+> new <+> jObject <+> text("[]") 
-                           typeT = (text "T")
-                           result = (text "result")
-                           anyVar = (text "any")
-                           childs = (text "childs")
-                           newChild = (text "newChild")
-                           oldChild = (text "oldChild")
+                           initChilds = typeT <+> childs <+> equals <+> new <+> jObject <+> text "[]"
+                           typeT = text "T"
+                           result = text "result"
+                           anyVar = text "any"
+                           childs = text "childs"
+                           newChild = text "newChild"
+                           oldChild = text "oldChild"
 -- | Given a Constructor @C(x1:T1, ..., xn:Tn)@, generates
 --
 -- > private C(Strategy s_x1, ..., Strategy s_xn) {

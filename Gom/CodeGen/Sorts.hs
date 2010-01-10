@@ -105,19 +105,19 @@ compParseSort s = do
   qs  <- qualifiedSort s
   scs <- askSt (sCtorsOf s)
   vcs <- askSt (vCtorsOf s)
-  let cs = scs++vcs
+  let cs = scs ++ vcs
   qcs <- mapM qualifiedCtor cs
   pr  <- packagePrefix
   let calls = foldr ifsym post (zip cs qcs)
   return $ rMethodDef (static <+> public) qs (text "parse")
-           [pars pr <+> arg] (vcat $ [pre,calls])
+           [pars pr <+> arg] (vcat [pre,calls])
   where pars pr  = pr <> dot <> text "Parser"
         arg      = text "par"
         pre      = text "String id = par.parseId();"
         post     = text "throw new RuntimeException();"
         cond c   = rMethodCall (text "id") (text "equals") [dquotes $ pretty c]
         rcall qc = rMethodCall (pretty qc) (text "parseArgs") [arg]
-        ifsym (c,qc) b = rIfThenElse (cond c) (jreturn <+> rcall qc <> semi) b
+        ifsym (c,qc) = rIfThenElse (cond c) (jreturn <+> rcall qc <> semi)
 
 -- | Given a sort @S@, generates
 --

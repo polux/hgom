@@ -126,8 +126,8 @@ compParseConstructor c = do
         pre      = rMethodCall arg (text "parseLpar") []
         postM    = do qc <- qualifiedCtor c
                       fis <- map (pretty . fst) `liftM` askSt (fieldsOf c)
-                      return $ [rMethodCall arg (text "parseRpar") [], 
-                                jreturn <+> rMethodCall qc (text "make") fis]
+                      return [rMethodCall arg (text "parseRpar") [], 
+                              jreturn <+> rMethodCall qc (text "make") fis]
 
 -- | Given a variadic constructor @VC(T*)@, 
 -- of codomain @Co@, generates
@@ -165,11 +165,11 @@ compParseVariadic vc = do
         parseHead    = do dom  <- askSt (fieldOf vc)
                           qdom <- qualifiedSort dom
                           rec  <- parseRecCall arg dom
-                          return $ qdom <+> (text "head") <+> equals <+> rec
+                          return $ qdom <+> text "head" <+> equals <+> rec
         retMake q as = jreturn <+> rMethodCall q (text "make") as
         makeCons qc  = retMake qc [text "head", text "tail"]
         makeNil  qn  = retMake qn []
-        parseTail qco qvc = qco <+> (text "tail") <+> equals <+> 
+        parseTail qco qvc = qco <+> text "tail" <+> equals <+> 
                             rMethodCall qvc (text "parseTail") [arg]
 
 -- | Given a variadic constructor @VC(T*)@, 
@@ -205,11 +205,11 @@ compParseVariadicTail vc = do
         parseHead    = do dom  <- askSt (fieldOf vc)
                           qdom <- qualifiedSort dom
                           rec  <- parseRecCall arg dom
-                          return $ qdom <+> (text "head") <+> equals <+> rec
+                          return $ qdom <+> text "head" <+> equals <+> rec
         retMake q as = jreturn <+> rMethodCall q (text "make") as
         makeCons qc  = retMake qc [text "head", text "tail"]
         makeNil  qn  = retMake qn []
-        parseTail qco qvc = qco <+> (text "tail") <+> equals <+> 
+        parseTail qco qvc = qco <+> text "tail" <+> equals <+> 
                             rMethodCall qvc (text "parseTail") [arg]
 
 -- | Given a non-variadic constructor @C@, generates a concrete class @C.java@.
@@ -248,8 +248,7 @@ compConstructor c = do mem  <- compMembersOfConstructor c
         ifS = flip (ifConfM sharing) rempty
         ifP = flip (ifConfM parsers) rempty
         -- ifNG == if not generated
-        ifNG a = do gen <- askSt (isGenerated c) 
-                    maybe a (const rempty) gen
+        ifNG a = askSt (isGenerated c) >>= maybe a (const rempty)
         wrap b = do
           gen <- askSt (isGenerated c)                                     
           let rcls d = rClass public (pretty c) (Just d) [] b            
