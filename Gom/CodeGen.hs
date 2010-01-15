@@ -15,7 +15,7 @@ import Gom.CodeGen.Sorts
 
 -- | Compiles a symbol table into a Java hierarchy
 st2java :: SymbolTable -> Config -> FileHierarchy
-st2java st c = runReader compSt (st,c)
+st2java = runGen compSt
 
 -- | Generates the whole file hierarchy of the \"global\" symbol table.
 compSt :: Gen FileHierarchy
