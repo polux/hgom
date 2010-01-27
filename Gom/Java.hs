@@ -1,3 +1,19 @@
+-------------------------------------------------------------------
+-- |
+-- Module      : Gom.Java
+-- Copyright   : (c) Paul Brauner 2009
+--               (c) Emilie Balland 2009
+--               (c) INRIA 2009
+-- Licence     : GPL (see COPYING)
+--
+-- Maintainer  : paul.brauner\@inria.fr
+-- Stability   : provisional
+-- Portability : non-portable (requires GeneralizedNewtypeDeriving)
+--
+-- Some utility functions for generating
+-- java and tom pieces of type 'Doc'.
+--------------------------------------------------------------------
+
 module Gom.Java (
   -- * File hierarchies
   FileHierarchy(..),

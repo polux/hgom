@@ -1,6 +1,20 @@
-{- | This module exports nothing but defines instances of
-     'Text.PrettyPrint.Leijen.Pretty' for 'Ctor', 'SortDef' and 'Module'.
--}
+-------------------------------------------------------------------
+-- |
+-- Module      : Gom.Pretty
+-- Copyright   : (c) Paul Brauner 2009
+--               (c) Emilie Balland 2009
+--               (c) INRIA 2009
+-- Licence     : GPL (see COPYING)
+--
+-- Maintainer  : paul.brauner\@inria.fr
+-- Stability   : provisional
+-- Portability : non-portable (requires GeneralizedNewtypeDeriving)
+--
+-- This module exports nothing but defines instances of
+-- 'Text.PrettyPrint.Leijen.Pretty' for 'Ctor', 'SortDef' and 'Module'.
+--------------------------------------------------------------------
+
+
 
 module Gom.Pretty () where
 

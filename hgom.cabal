@@ -2,7 +2,9 @@ name:           hgom
 version:        0.3.1
 author:         Paul Brauner and Emilie Balland
 maintainer:     Paul Brauner <paul.brauner@loria.fr>
-copyright:      © 2009 INRIA
+copyright:      (c) Paul Brauner 2009
+                (c) Emilie Balland 2009
+                (c) INRIA 2009
 homepage:       http://www.loria.fr/~brauner
 synopsis:       An haskell port of the java version of gom 
 description:

@@ -1,3 +1,16 @@
+------------------------------------------------------------------
+-- |
+-- Module      : Gom.CodeGen.Sorts
+-- Copyright   : (c) Paul Brauner 2009
+--               (c) Emilie Balland 2009
+--               (c) INRIA 2009
+-- Licence     : GPL (see COPYING)
+--
+-- Maintainer  : paul.brauner\@inria.fr
+-- Stability   : provisional
+-- Portability : non-portable (requires GeneralizedNewtypeDeriving)
+--------------------------------------------------------------------
+
 module Gom.CodeGen.Sorts where
 
 import Gom.Sig

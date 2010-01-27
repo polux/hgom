@@ -1,4 +1,17 @@
--- | Checker to be run before the construction of a symbol table.
+------------------------------------------------------------------
+-- |
+-- Module      : Gom.Checker
+-- Copyright   : (c) Paul Brauner 2009
+--               (c) Emilie Balland 2009
+--               (c) INRIA 2009
+-- Licence     : GPL (see COPYING)
+--
+-- Maintainer  : paul.brauner\@inria.fr
+-- Stability   : provisional
+-- Portability : non-portable (requires GeneralizedNewtypeDeriving)
+--
+-- Checker to be run before the construction of a symbol table.
+--------------------------------------------------------------------
 
 module Gom.Checker (
   NameConsistencyError(),

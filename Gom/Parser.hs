@@ -1,4 +1,17 @@
--- | Parser of gom modules.
+-------------------------------------------------------------------
+-- |
+-- Module      : Gom.Config
+-- Copyright   : (c) Paul Brauner 2009
+--               (c) Emilie Balland 2009
+--               (c) INRIA 2009
+-- Licence     : GPL (see COPYING)
+--
+-- Maintainer  : paul.brauner\@inria.fr
+-- Stability   : provisional
+-- Portability : non-portable (requires GeneralizedNewtypeDeriving)
+--
+-- Parser for gom modules.
+--------------------------------------------------------------------
 
 module Gom.Parser(parseModule) where
 
