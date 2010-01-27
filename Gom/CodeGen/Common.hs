@@ -6,7 +6,7 @@
 --               (c) INRIA 2009
 -- Licence     : GPL (see COPYING)
 --
--- Maintainer  : paul.brauner\@inria.fr
+-- Maintainer  : paul.brauner@inria.fr
 -- Stability   : provisional
 -- Portability : non-portable (requires GeneralizedNewtypeDeriving)
 --------------------------------------------------------------------
