@@ -34,9 +34,76 @@ compCongruence c =
                                     compVisit c, compVisitLight c]
      return $ Class ('_':show c) (wrap body)
   where wrap = rClass public (pretty c) (Just jSCombinator) []
--- | TODO
+
+
+
+-- public int visit(Introspector introspector) {
+--  environment.setIntrospector(introspector);
+--  Object any = environment.getSubject();
+--  if(any instanceof gom.term.types.term.f) {
+--    int childCount = introspector.getChildCount(any);
+--    Object[] childs = null;
+--    for(int i = 0; i < childCount; i++) {
+--      Object oldChild = introspector.getChildAt(any,i);
+--      environment.down(i+1);
+--      int status = arguments[ARG].visit(introspector);
+--      if(status != Environment.SUCCESS) {
+--        environment.upLocal();
+--        return status;
+--      }
+--      Object newChild = environment.getSubject();
+--      if(childs != null) {
+--        childs[i] = newChild;
+--      } else if(newChild != oldChild) {
+--        // allocate the array, and fill it
+--        childs = introspector.getChildren(any);
+--        childs[i] = newChild;
+--      } 
+--      environment.upLocal();
+--    }
+--    if(childs!=null) {
+--      environment.setSubject(introspector.setChildren(any,childs));
+--    }
+--    return Environment.SUCCESS;
+--  }
+--  else {
+--    return Environment.FAILURE;
+--  }
+--}
 compVisit :: CtorId -> Gen Doc
-compVisit c = return $ rMethodDef private empty (pretty c) [] empty
+compVisit c = return $ rMethodDef public (text "int") (text "visit") [jIntrospector <+> text "introspector"] body
+                  where body = vcat $ map text 
+                             ["environment.setIntrospector(introspector);",
+                              "Object any = environment.getSubject();",
+                              "if (any instanceof "++ (show c) ++") {",
+                              "  int childCount = introspector.getChildCount(any);",
+                              "  Object[] childs = null;",
+                              "  for(int i = 0; i < childCount; i++) {",
+                              "    Object oldChild = introspector.getChildAt(any,i);",
+                              "    environment.down(i+1);",
+                              "    int status = arguments[ARG].visit(introspector);",
+                              "    if(status != Environment.SUCCESS) {",
+                              "      environment.upLocal();",
+                              "      return status;",
+                              "    }",
+                              "    Object newChild = environment.getSubject();",
+                              "    if(childs != null) {",
+                              "      childs[i] = newChild;",
+                              "    } else if(newChild != oldChild) {",
+                              "      // allocate the array, and fill it",
+                              "      childs = introspector.getChildren(any);",
+                              "      childs[i] = newChild;",
+                              "    } ",
+                              "    environment.upLocal();",
+                              "  }",
+                              "  if(childs!=null) {",
+                              "    environment.setSubject(introspector.setChildren(any,childs));",
+                              "  }",
+                              "  return Environment.SUCCESS;",
+                              "} else {",
+                              "  return Environment.FAILURE;",
+                              "}"]
+
 
 --   public <T> T visitLight(T any, tom.library.sl.Introspector introspector) throws tom.library.sl.VisitFailure {
 --    if(any instanceof gom.term.types.term.f) {
@@ -65,31 +132,39 @@ compVisit c = return $ rMethodDef private empty (pretty c) [] empty
 
 
 compVisitLight :: CtorId -> Gen Doc
-compVisitLight c = return $ rMethodDef private empty (pretty c) [jVisitable <+> text "o"] body
-                     where body = rBody [ifthenelse]
-                           cdoc = pretty c
-                           ifthenelse = rIfThenElse cond successBranch (throw <+> rConstructorCall jVisitFailure [] <> semi) 
-                           cond = text "o" <+> instanceof <+> cdoc
-                           successBranch = rMethodCall (rConstructorCall (text "All") []) jVisitLight [(text "o")]
-                           initResult = typeT <+> result <+> equals <+> anyVar  
-                           initChilds = typeT <+> childs <+> equals <+> new <+> jObject <+> text "[]"
-                           typeT = text "T"
-                           result = text "result"
-                           anyVar = text "any"
-                           childs = text "childs"
-                           newChild = text "newChild"
-                           oldChild = text "oldChild"
--- | Given a Constructor @C(x1:T1, ..., xn:Tn)@, generates
---
--- > private C(Strategy s_x1, ..., Strategy s_xn) {
--- >   initSubterm(s_x1,...,s_xn);
--- > }
+compVisitLight c = return $ rMethodDef public typeGenericT (text "visitLight") [typeT <+> text "any", jIntrospector <+> text "introspector"] body
+  where typeT = (text "T")
+        typeGenericT = (text "<T> T")
+        body = vcat $ map text 
+              ["if(any instanceof "++ (show c) ++") {",
+              "   T result = any;",
+              "   Object[] childs = null;",
+              "   for (int i = 0, nbi = 0; i < 1; i++) {",
+              "       Object oldChild = introspector.getChildAt(any,nbi);",
+              "       Object newChild = args[i].visitLight(oldChild,introspector);",
+              "       if(childs != null) {",
+              "         childs[nbi] = newChild;",
+              "       } else if(newChild != oldChild) {",
+              "         // allocate the array, and fill it",
+              "         childs = introspector.getChildren(any);",
+              "         childs[nbi] = newChild;",
+              "       }",
+              "       nbi++;",
+              "   }",
+              "   if(childs!=null) {",
+              "     result = introspector.setChildren(any,childs);",
+              "   }",
+              "   return result;",
+              " } else {",
+              "   throw new tom.library.sl.VisitFailure(msg);",
+              " }"]
+        
 compCongruenceConstructor :: CtorId -> Gen Doc
 compCongruenceConstructor c = do
   fis <-  askSt (fieldsOf c)
   let typedArgs = prettyArgs fis (text "Strategy ")
   let args =  prettyArgs fis empty
-  return $ rMethodDef private empty (pretty c) typedArgs 
+  return $ rMethodDef public empty ((text "_")<>(pretty c)) typedArgs 
                       (rBody [rMethodCall this (text "initSubterm") args])
   where prettyArgs fis prefix = map (pre . pretty . fst) fis
           where pre x = prefix <> text "s_" <> x

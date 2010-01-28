@@ -32,6 +32,7 @@ module Gom.Java (
   jint, jString, stringBuilder, jboolean,
   jObject, jVisitable, jVisitFailure, jShared, jSharedId,
   jVisitableArray, jSCombinator, jVisit, jVisitLight,
+  jIntrospector,
   -- ** Classes
   rClass, rFullClass,
   -- ** Methods
@@ -140,6 +141,7 @@ jVisitable      = text "tom.library.sl.Visitable"
 jVisitFailure   = text "tom.library.sl.VisitFailure"
 jVisitLight     = text "visitLight"
 jVisit          = text "visit"
+jIntrospector   = text "tom.library.sl.Introspector"
 jSCombinator    = text "tom.library.sl.AbstractStrategyCombinator"
 jShared         = text "shared.SharedObject"
 jSharedId       = text "shared.SharedObjectWithID"
