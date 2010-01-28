@@ -8,7 +8,7 @@
 --
 -- Maintainer  : paul.brauner@inria.fr
 -- Stability   : provisional
--- Portability : non-portable (requires GeneralizedNewtypeDeriving)
+-- Portability : non-portable (requires generalized newtype deriving)
 --
 -- This module exports nothing but defines instances of
 -- 'Text.PrettyPrint.Leijen.Pretty' for 'Ctor', 'SortDef' and 'Module'.

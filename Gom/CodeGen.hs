@@ -8,7 +8,7 @@
 --
 -- Maintainer  : paul.brauner@inria.fr
 -- Stability   : provisional
--- Portability : non-portable (requires GeneralizedNewtypeDeriving)
+-- Portability : non-portable (requires generalized newtype deriving)
 --
 -- Generation of a file hierarchy from a symbol table.
 -------------------------------------------------------------------- 
