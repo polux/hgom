@@ -194,6 +194,7 @@ compMakeRandomSort s = do
                      <$> 
                      rSwitch (nextint $ length c2) (zip ints c2) (Just dflt)
 
+-- | Monadic version of Data.List.partition
 partitionM :: (Monad m) => (a -> m Bool) -> [a] -> m ([a], [a])
 partitionM p xs = foldM f ([],[]) xs
   where f (a,b) x = do test <- p x
