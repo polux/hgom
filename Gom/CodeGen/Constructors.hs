@@ -247,12 +247,13 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                        sca  <- ifV $ compSetChildAt c
                        scs  <- ifV $ compSetChildren c
                        par  <- ifP $ compParseConstructor c
+                       ran  <- ifR $ compMakeRandomConstructor c
                        let isc = compIsX c
                        let syn = compSymbolName c
                        let body = vcat [mem,smem,ctor,mak,syn,
                                         get,set,tos,toh,eqs,hac,
                                         dup,ini,inh,haf,isc,gcc,
-                                        gca,gcs,sca,scs,par]
+                                        gca,gcs,sca,scs,par,ran]
                        cls  <- wrap body
                        return $ Class (show c) cls
 
@@ -260,6 +261,7 @@ compConstructor c = do mem  <- compMembersOfConstructor c
         ifV = flip (ifConfM visit) rempty
         ifS = flip (ifConfM sharing) rempty
         ifP = flip (ifConfM parsers) rempty
+        ifR = flip (ifConfM random) rempty
         -- ifNG == if not generated
         ifNG a = askSt (isGenerated c) >>= maybe a (const rempty)
         wrap b = do
@@ -799,4 +801,26 @@ compEqAux meth comb ty c = do rcalls <- iterOverFields rcall id c
                                   then lhs <+> text "==" <+> rhs
                                   else lhs `comb` rhs
 
-
+-- | Given a constructor @C(x1:T1,...,xn:Tn)@, 
+-- of codomain @Co@, generates
+--
+-- > final static public
+-- > mod.types.Co makeRandom(java.util.Random rand, int depth) {
+-- >   return
+-- >   mod.types.co.C.make(mod.types.T1.makeRandom(rand,depth),
+-- >                       ...,
+-- >                       mod.types.Tn.makeRandom(rand,depth));
+-- > }
+compMakeRandomConstructor :: CtorId -> Gen Doc
+compMakeRandomConstructor c = do
+  qc   <- qualifiedCtor c
+  co   <- askSt (codomainOf c)
+  qco  <- qualifiedSort co
+  tys  <- map snd `liftM` askSt (fieldsOf c)
+  qtys <- mapM qualifiedSort tys
+  return $ rMethodDef (final <+> static <+> public)
+                      qco (text "makeRandom")
+                      [text "java.util.Random rand", text "int depth"] 
+                      (body qc $ map rcall qtys)
+  where rcall qs = qs <> text ".makeRandom(rand,depth)"
+        body qc rc = jreturn <+> rMethodCall qc (text "make") rc <> semi

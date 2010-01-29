@@ -45,10 +45,11 @@ compAbstractSort :: SortId -> Gen FileHierarchy
 compAbstractSort s = do eg <- compEmptyGettersOfSort s
                         es <- compEmptySettersOfSort s
                         ei <- compEmptyIsX s
-                        pa <- ifP $ compParseSort s
                         fs <- ifP $ compFromStringSort s
+                        pa <- ifP $ compParseSort s
+                        ri <- ifR $ compMakeRandomSortInit s
                         ra <- ifR $ compMakeRandomSort s
-                        cl <- wrap $ vcat [eg,es,ei,pa,fs,ra]
+                        cl <- wrap $ vcat [eg,es,ei,pa,fs,ri,ra]
                         return $ Class (show s) cl
   where ifP = flip (ifConfM parsers) (return empty)
         ifR = flip (ifConfM random) (return empty)
@@ -152,7 +153,7 @@ compFromStringSort s = do
 
 -- | Given a sort @T = f1(...) | ... | fn(...)@, generates
 --
--- > static protected sig.types.T 
+-- > static public sig.types.T 
 -- > makeRandom(java.util.Random rand, int depth) {
 -- >   if (depth <= 0) {
 -- >     switch(rand.nextInt(m)) {
@@ -180,7 +181,7 @@ compMakeRandomSort s = do
   qnzcs      <- mapM qualifiedCtor nzcs
   let rcalls1 = map rcall1 qzcs 
   let rcalls2 = map rcall2 qnzcs
-  return $ rMethodDef (static <+> protected) qs (text "makeRandom")
+  return $ rMethodDef (static <+> public) qs (text "makeRandom")
                       [text "java.util.Random rand", text "int depth"] 
                       (pack rcalls1 (rcalls1 ++ rcalls2))
   where isConst c  = askSt (fieldsOf c) >>= return . null
@@ -188,11 +189,24 @@ compMakeRandomSort s = do
         rcall2 qc  = jreturn <+> pretty qc <> text ".makeRandom(rand,depth-1);"
         ints       = map int [0..]
         dflt       = text "throw new RuntimeException();"
-        nextint n  = (rMethodCall (text "rand") (text "nextInt") [int n])
+        nextint n  = (rMethodCall (text "rand") (text "nextInt") [int (max n 1)])
         pack c1 c2 = rIfThen (text "depth <= 0") 
                        (rSwitch (nextint $ length c1) (zip ints c1) Nothing)
                      <$> 
                      rSwitch (nextint $ length c2) (zip ints c2) (Just dflt)
+
+-- | generates
+--
+-- > static public sig.types.T makeRandom(int depth) {
+-- >   sig.types.T.makeRandom(new java.util.Random(), depth);
+-- > }
+compMakeRandomSortInit :: SortId -> Gen Doc
+compMakeRandomSortInit s = do
+  qs <- qualifiedSort s
+  return $ rMethodDef (static <+> public) qs (text "makeRandom") 
+                      [text "int depth"] (body qs)
+  where body qs = jreturn <+> qs <> 
+                  text ".makeRandom(new java.util.Random(), depth);"
 
 -- | Monadic version of Data.List.partition
 partitionM :: (Monad m) => (a -> m Bool) -> [a] -> m ([a], [a])
