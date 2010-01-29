@@ -37,7 +37,8 @@ data Config =
     congr   :: CongrOpt, -- ^ generate congruence strategies ?
     sharing :: Bool, -- ^ maximally share terms ?
     compact :: Bool, -- ^ generate compact code ?
-    parsers :: Bool -- ^ generate from* methods ? 
+    parsers :: Bool, -- ^ generate from* methods ? 
+    random  :: Bool -- ^ generate makeRandom methods ?
   } 
 
 -- | Default configuration.
@@ -54,7 +55,8 @@ defaultConfig =
     congr   = NoCongr,
     sharing = True,
     compact = False,
-    parsers = True
+    parsers = True,
+    random  = False
   }
 
 -- | Represents the three options values for --withCongruenceStrategies
@@ -86,6 +88,8 @@ options =
           (unlines ["generate congruence strategies",
                     "in the same or in a separate .tom",
                     "file (defaults to no)"])
+  ,Option [] ["random"] (NoArg crandom)
+          "genarate makeRamdom methods"
   ,Option [] ["compact"] (NoArg ccompact)
           "generate compact code (no indentation)"
   ,Option [] ["noSharing"] (NoArg csharing)
@@ -107,6 +111,7 @@ options =
         csharing   c = return $ c { sharing = False }
         ccompact   c = return $ c { compact = True }
         cparsers   c = return $ c { parsers = False }
+        crandom    c = return $ c { random = True }
 
         ccongr "no"   c = return $ c { congr = NoCongr } 
         ccongr "same" c = return $ c { congr = SameFile }

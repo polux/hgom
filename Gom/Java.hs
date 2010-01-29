@@ -271,10 +271,10 @@ rWhile c b = group $ while <+> parens c <+> ibraces b
 rSwitch
  :: Doc -- ^ subject
  -> [(Doc,Doc)] -- ^ lhs, rhs
- -> Doc -- ^ default case
+ -> Maybe Doc -- ^ default case
  -> Doc
 rSwitch s l d = text "switch" <+> parens s <+> ibraces body
-  where body    = vcat (map f l) <$> (text "default:" <+> align d)
+  where body    = vcat (map f l) <$> (maybe empty ((text "default:" <+>) . align) d)
         f (x,y) = text "case" <+> x <> colon <+> align y
 
 -- | @rTypeterm s qs shr@ renders

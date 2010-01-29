@@ -21,6 +21,7 @@ import Gom.CodeGen.Common
 import Gom.CodeGen.Constructors
 
 import Text.PrettyPrint.Leijen
+import Control.Monad(foldM)
 
 -- | Given a sort @Sort@, generates 
 --  an abstract class @Sort.java@
@@ -46,9 +47,11 @@ compAbstractSort s = do eg <- compEmptyGettersOfSort s
                         ei <- compEmptyIsX s
                         pa <- ifP $ compParseSort s
                         fs <- ifP $ compFromStringSort s
-                        cl <- wrap $ vcat [eg,es,ei,pa,fs]
+                        ra <- ifR $ compMakeRandomSort s
+                        cl <- wrap $ vcat [eg,es,ei,pa,fs,ra]
                         return $ Class (show s) cl
   where ifP = flip (ifConfM parsers) (return empty)
+        ifR = flip (ifConfM random) (return empty)
         wrap body = do qat <- qualifiedAbstractType
                        return $ rClass (public <+> abstract) 
                                        (pretty s) (Just qat)  
@@ -146,3 +149,52 @@ compFromStringSort s = do
     [text "public static" <+> qs <+> text "fromString(String s) {",
      text "  return" <+> qs <> text ".parse(new" <+> pa <> text "(s));",
      text "}"]
+
+-- | Given a sort @T = f1(...) | ... | fn(...)@, generates
+--
+-- > static protected sig.types.T 
+-- > makeRandom(java.util.Random rand, int depth) {
+-- >   if (depth <= 0) {
+-- >     switch(rand.nextInt(m)) {
+-- >       case 0: return sig.types.t.g1.make();
+-- >       ...
+-- >       case m-1: return sig.types.t.gn.make();
+-- >     }
+-- >   } else {
+-- >     switch(rand.nextInt(n)) {
+-- >       case 0: return sig.types.t.f1.makeRandom(rand,maxdepth);
+-- >       ...
+-- >       case n-1: return sig.types.t.fn.makeRandom(rand,maxdepth);
+-- >       default: throw new RuntimeException("never happens");
+-- >     }
+-- >   }
+-- > }
+--
+-- Where @g1 ... gm@ are the constructors with arity 0 among @f1 ... fn@.
+compMakeRandomSort :: SortId -> Gen Doc
+compMakeRandomSort s = do
+  qs         <- qualifiedSort s
+  cs         <- askSt (sCtorsOf s)
+  (zcs,nzcs) <- partitionM isConst cs
+  qzcs       <- mapM qualifiedCtor zcs
+  qnzcs      <- mapM qualifiedCtor nzcs
+  let rcalls1 = map rcall1 qzcs 
+  let rcalls2 = map rcall2 qnzcs
+  return $ rMethodDef (static <+> protected) qs (text "makeRandom")
+                      [text "java.util.Random rand", text "int depth"] 
+                      (pack rcalls1 (rcalls1 ++ rcalls2))
+  where isConst c  = askSt (fieldsOf c) >>= return . null
+        rcall1 qc  = jreturn <+> pretty qc <> text ".make();"
+        rcall2 qc  = jreturn <+> pretty qc <> text ".makeRandom(rand,depth-1);"
+        ints       = map int [0..]
+        dflt       = text "throw new RuntimeException();"
+        nextint n  = (rMethodCall (text "rand") (text "nextInt") [int n])
+        pack c1 c2 = rIfThen (text "depth <= 0") 
+                       (rSwitch (nextint $ length c1) (zip ints c1) Nothing)
+                     <$> 
+                     rSwitch (nextint $ length c2) (zip ints c2) (Just dflt)
+
+partitionM :: (Monad m) => (a -> m Bool) -> [a] -> m ([a], [a])
+partitionM p xs = foldM f ([],[]) xs
+  where f (a,b) x = do test <- p x
+                       return $ if test then (x:a,b) else (a,x:b)

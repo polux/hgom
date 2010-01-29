@@ -636,7 +636,7 @@ compGetChildAt c = do fis <- askSt (fieldsOf c)
                                  public jVisitable (text "getChildAt")
                                  [jint <+> arg] (body arg cs)
   where cook (f,s)  = jreturn <+> wrap (this <> dot <> pretty f) s <> semi 
-        body n cs   = rSwitch n cs outOfBounds
+        body n cs   = rSwitch n cs (Just outOfBounds)
         outOfBounds = text "throw new IndexOutOfBoundsException();"
         wrap f s | isBuiltin s = new <+> rWrapBuiltin qs <> parens f
                  | otherwise   = f
@@ -683,7 +683,7 @@ compSetChildAt c = do fis  <- askSt (fieldsOf c)
                                  public jVisitable (text "setChildAt")
                                  [jint <+> text "n", jVisitable <+> text "v"] 
                                  (body cs)
-  where body cs     = rSwitch (text "n") cs outOfBounds
+  where body cs     = rSwitch (text "n") cs (Just outOfBounds)
         outOfBounds = text "throw new IndexOutOfBoundsException();"
         set (xs1,(_,t),xs2) = 
           let f (x,_) = this <> dot <> pretty x
