@@ -20,6 +20,7 @@ module Gom.Constants (
   abstractToHaskellBuilder,
   abstractSymbolName,
   abstractSharing,
+  abstractRandom,
   absParser,
   absLexer,
   hashCodeMethod,
@@ -221,6 +222,14 @@ abstractSharing = vcat $ map text
    "}",
    "public void setUniqueIdentifier(int uniqueID) {",
    "  this.uniqueID = uniqueID;",
+   "}"]
+
+-- | declaration of random related methods for the
+-- modNameAbstractType class
+abstractRandom :: Doc
+abstractRandom = vcat $ map text
+  ["public final static int randomint(java.util.Random rand) {",
+   "  return rand.nextInt();",
    "}"]
 
 -- | declaration of the @hashCode@ method which returns the private 

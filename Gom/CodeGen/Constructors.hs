@@ -801,6 +801,21 @@ compEqAux meth comb ty c = do rcalls <- iterOverFields rcall id c
                                   then lhs <+> text "==" <+> rhs
                                   else lhs `comb` rhs
 
+
+-- | Given a sort @s@, @randomRecCall s@ generates
+--
+--  * @mod.modAbstractType.randoms(rand)@ if @s@ is a builtin, 
+--
+--  * @mod.types.s.makeRandom(rand,depth)@ otherwise
+randomRecCall :: SortId -> Gen Doc
+randomRecCall s = do
+  qs <- qualifiedSort s
+  at <- qualifiedAbstractType
+  return $ if isBuiltin s 
+    then rMethodCall at (text "random" <> pretty s) [text "rand"]
+    else rMethodCall qs (text "makeRandom") [text "rand", text "depth"]
+
+
 -- | Given a constructor @C(x1:T1,...,xn:Tn)@, 
 -- of codomain @Co@, generates
 --
@@ -813,14 +828,13 @@ compEqAux meth comb ty c = do rcalls <- iterOverFields rcall id c
 -- > }
 compMakeRandomConstructor :: CtorId -> Gen Doc
 compMakeRandomConstructor c = do
-  qc   <- qualifiedCtor c
-  co   <- askSt (codomainOf c)
-  qco  <- qualifiedSort co
-  tys  <- map snd `liftM` askSt (fieldsOf c)
-  qtys <- mapM qualifiedSort tys
+  qc  <- qualifiedCtor c
+  co  <- askSt (codomainOf c)
+  qco <- qualifiedSort co
+  tys <- map snd `liftM` askSt (fieldsOf c)
+  rcalls <- mapM randomRecCall tys
   return $ rMethodDef (final <+> static <+> public)
                       qco (text "makeRandom")
                       [text "java.util.Random rand", text "int depth"] 
-                      (body qc $ map rcall qtys)
-  where rcall qs = qs <> text ".makeRandom(rand,depth)"
-        body qc rc = jreturn <+> rMethodCall qc (text "make") rc <> semi
+                      (body qc rcalls)
+  where body qc rc = jreturn <+> rMethodCall qc (text "make") rc <> semi

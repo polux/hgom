@@ -36,14 +36,17 @@ compAbstract = do at <- abstractType
                   -- if String is imported we generate renderString
                   im <- askSt importsString
                   let rs = if im then str else []
+                  -- if random is enabled, generate builtin random generation
+                  ra <- ifConf random rdm []
                   -- build the class
-                  return $ Class at (cl at (hs++ss++rs) (iv++is))
+                  return $ Class at (cl at (hs++ss++rs++ra) (iv++is))
   where cl at e i = rClass (public <+> abstract) (text at) 
-                         Nothing i (body e)
+                           Nothing i (body e)
         body      = vcat . (always ++)
         always    = [abstractSymbolName,toStringBody,abstractToStringBuilder]
         hask      = [toHaskellBody,abstractToHaskellBuilder]
         share     = [abstractSharing]
+        rdm       = [abstractRandom]
         str       = [renderStringMethod] 
 
 
