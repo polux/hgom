@@ -74,7 +74,7 @@ compVisit c = return $ rMethodDef public (text "int") (text "visit") [jIntrospec
                   where body = vcat $ map text 
                              ["environment.setIntrospector(introspector);",
                               "Object any = environment.getSubject();",
-                              "if (any instanceof "++ (show c) ++") {",
+                              "if (any instanceof " ++ show c ++ ") {",
                               "  int childCount = introspector.getChildCount(any);",
                               "  Object[] childs = null;",
                               "  for(int i = 0; i < childCount; i++) {",
@@ -132,10 +132,10 @@ compVisit c = return $ rMethodDef public (text "int") (text "visit") [jIntrospec
 
 compVisitLight :: CtorId -> Gen Doc
 compVisitLight c = return $ rMethodDef public typeGenericT (text "visitLight") [typeT <+> text "any", jIntrospector <+> text "introspector"] body
-  where typeT = (text "T")
-        typeGenericT = (text "<T> T")
+  where typeT = text "T"
+        typeGenericT = text "<T> T"
         body = vcat $ map text 
-              ["if(any instanceof "++ (show c) ++") {",
+              ["if(any instanceof " ++ show c ++ ") {",
               "   T result = any;",
               "   Object[] childs = null;",
               "   for (int i = 0, nbi = 0; i < 1; i++) {",
@@ -163,7 +163,7 @@ compCongruenceConstructor c = do
   fis <-  askSt (fieldsOf c)
   let typedArgs = prettyArgs fis (text "Strategy ")
   let args =  prettyArgs fis empty
-  return $ rMethodDef public empty ((text "_")<>(pretty c)) typedArgs 
+  return $ rMethodDef public empty (text "_" <> pretty c) typedArgs 
                       (rBody [rMethodCall this (text "initSubterm") args])
   where prettyArgs fis prefix = map (pre . pretty . fst) fis
           where pre x = prefix <> text "s_" <> x
