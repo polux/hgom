@@ -129,8 +129,8 @@ jfalse     = text "false"
 final      = text "final"
 static     = text "static"
 
-jint,jString,stringBuilder,jboolean,jObject :: Doc
-jVisitable,jVisitFailure,jShared,jSharedId,jVisitableArray,jVisit,jVisitLight :: Doc
+jint,jString,stringBuilder,jboolean,jObject, jIntrospector, jVisit :: Doc
+jVisitable,jVisitFailure,jShared,jSharedId,jVisitableArray,jVisitLight :: Doc
 jSCombinator :: Doc
 jint            = text "int"
 jString         = text "String"

@@ -32,10 +32,9 @@ compCongruence :: CtorId -> Gen FileHierarchy
 compCongruence c = 
   do body <- vcat `liftM` sequence [compCongruenceConstructor c,
                                     compVisit c, compVisitLight c]
-     return $ Class ('_':show c) (wrap body)
-  where wrap = rClass public (pretty c) (Just jSCombinator) []
-
-
+     return $ Class classname (wrap body)
+  where wrap = rClass public (text classname) (Just jSCombinator) []
+        classname = '_':show c
 
 -- public int visit(Introspector introspector) {
 --  environment.setIntrospector(introspector);
