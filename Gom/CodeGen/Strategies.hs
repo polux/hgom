@@ -21,6 +21,9 @@ import Gom.CodeGen.Common
 import Text.PrettyPrint.Leijen
 import Control.Monad.Reader
 
+-- | Given a sort @S@ of constructors @Ci@, 
+-- generates the package @s@ containing the
+-- @_Ci@ congruence classes.
 compStrategy :: SortId -> Gen FileHierarchy
 compStrategy s = do ctrs  <- askSt (sCtorsOf s)
                     cs <- mapM compCongruence ctrs
@@ -37,7 +40,8 @@ compCongruence c =
         classname = '_':show c
 
 -- | Given a non-variadic constructor @C@, generates
--- the method @public int visit(Introspector introspector) { ... }@.
+-- the method @public int visit(Introspector introspector) { ... }@
+-- for class @_C@.
 compVisit :: CtorId -> Gen Doc
 compVisit c = return $ rMethodDef public (text "int") (text "visit") 
                                   [jIntrospector <+> text "introspector"] body
@@ -75,7 +79,8 @@ compVisit c = return $ rMethodDef public (text "int") (text "visit")
 
 
 -- | Given a non-variadic constructor @C@, generates
--- the method @public int visitLight(Introspector introspector) { ... }@.
+-- the method @public int visitLight(Introspector introspector) { ... }@
+-- for class @_C@.
 compVisitLight :: CtorId -> Gen Doc
 compVisitLight c = return $ 
   rMethodDef public typeGenericT (text "visitLight") 
