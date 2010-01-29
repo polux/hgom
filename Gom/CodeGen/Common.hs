@@ -17,6 +17,12 @@ module Gom.CodeGen.Common (
   -- * Pure functions
   lower,
   renderBuiltin,
+  -- * Impure functions
+  packagePrefix,
+  qualifiedSort,
+  qualifiedCtor,
+  abstractType,
+  qualifiedAbstractType,
   -- * The @Gen@ monad
   -- ** Definition
   Gen(),
@@ -27,13 +33,7 @@ module Gom.CodeGen.Common (
   ifConf,
   ifConfM,
   iterOverFields,
-  iterOverSortFields,
-  -- ** Impure functions
-  packagePrefix,
-  qualifiedSort,
-  qualifiedCtor,
-  abstractType,
-  qualifiedAbstractType
+  iterOverSortFields
 ) where
 
 import Gom.Sig
