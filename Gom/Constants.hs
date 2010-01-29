@@ -10,7 +10,7 @@
 -- Stability   : provisional
 -- Portability : non-portable (requires generalized newtype deriving)
 --
--- Checker to be run before the construction of a symbol table.
+-- Big 'Doc' constants and builtins.
 --------------------------------------------------------------------
 
 module Gom.Constants (
