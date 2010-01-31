@@ -230,6 +230,22 @@ abstractRandom :: Doc
 abstractRandom = vcat $ map text
   ["public final static int randomint(java.util.Random rand) {",
    "  return rand.nextInt();",
+   "}",
+   "public static char[] chars =",
+   "  {'a','b','c','d','e','f','g','h','i','j','k','l','m',",
+   "   'n','o','p','q','r','s','t','u','v','w','x','y','z',",
+   "   'A','B','C','D','E','F','G','H','I','J','K','L','M',",
+   "   'N','O','P','Q','R','S','T','U','V','W','X','Y','Z','_'};",
+   "public static char randomchar(java.util.Random rand) {",
+   "  return chars[rand.nextInt(53)];",
+   "}",
+   "public static String randomString(java.util.Random rand) {",
+   "  int n = rand.nextInt(10);",
+   "  char buf[] = new char[n];",
+   "  for (int i=0; i<n; i++) {",
+   "    buf[i] = chars[rand.nextInt(53)];",
+   "  }",
+   "  return new String(buf);",
    "}"]
 
 -- | declaration of the @hashCode@ method which returns the private 
