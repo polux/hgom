@@ -47,6 +47,6 @@ compAbstract = do at <- abstractType
         hask      = [toHaskellBody,abstractToHaskellBuilder]
         share     = [abstractSharing]
         rdm       = [abstractRandom]
-        str       = [renderStringMethod] 
+        str       = [renderStringMethod,renderCharMethod] 
 
 

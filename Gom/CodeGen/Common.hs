@@ -56,9 +56,8 @@ lower = map toLower
 renderBuiltin :: SortId -> FieldId -> Doc -> Doc
 renderBuiltin s f b 
   | isString s = text "renderString" <> parens (b <> comma <> pretty f)
-  | isChar   s = rMethodCall b (text "append") [fMinus0]
+  | isChar   s = text "renderChar"   <> parens (b <> comma <> pretty f)
   | otherwise  = rMethodCall b (text "append") [pretty f]
-  where fMinus0 = text "(int)" <> pretty f <> text " - (int)'0'"
 
 -- | A computation inside a context containing a read-only symbol table.
 newtype Gen a = Gen (Reader (SymbolTable,Config) a)
