@@ -21,7 +21,7 @@ import Gom.CodeGen.Common
 import Gom.CodeGen.Constructors
 
 import Text.PrettyPrint.Leijen
-import Control.Monad(foldM)
+import Control.Monad(foldM,liftM)
 
 -- | Given a sort @Sort@, generates 
 --  an abstract class @Sort.java@
@@ -184,12 +184,12 @@ compMakeRandomSort s = do
   return $ rMethodDef (static <+> public) qs (text "makeRandom")
                       [text "java.util.Random rand", text "int depth"] 
                       (pack rcalls1 (rcalls1 ++ rcalls2))
-  where isConst c  = askSt (fieldsOf c) >>= return . null
+  where isConst c  = null `liftM` askSt (fieldsOf c) 
         rcall1 qc  = jreturn <+> pretty qc <> text ".make();"
         rcall2 qc  = jreturn <+> pretty qc <> text ".makeRandom(rand,depth-1);"
         ints       = map int [0..]
         dflt       = text "throw new RuntimeException();"
-        nextint n  = (rMethodCall (text "rand") (text "nextInt") [int (max n 1)])
+        nextint n  = rMethodCall (text "rand") (text "nextInt") [int (max n 1)]
         pack c1 c2 = rIfThen (text "depth <= 0") 
                        (rSwitch (nextint $ length c1) (zip ints c1) Nothing)
                      <$> 
