@@ -15,6 +15,8 @@ $HGOM -c foo t1.gom
 $HGOM -h t1.gom 
 $HGOM --compact t1.gom 
 $HGOM --random t1.gom 
+$HGOM --size t1.gom 
+$HGOM --depth t1.gom 
 $HGOM --noVisitable t1.gom
 $HGOM --noSharing t1.gom
 $HGOM --noCheck t1.gom
