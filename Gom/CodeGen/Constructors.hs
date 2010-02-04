@@ -856,7 +856,17 @@ compMakeRandomConstructor c = do
 -- >   return max + 1;
 -- > }
 compDepthConstructor :: CtorId -> Gen Doc
-compDepthConstructor = undefined
+compDepthConstructor c = do
+  fis <- askSt (fieldsOf c)
+  return .wrap $ if null fis then text "return 0;" else pack fis
+  where call (f,s) | isBuiltin s = []
+                   | otherwise = [this <> dot <> pretty f <> text ".depth();",
+                                  text "if (cd > max) max = cd;"]
+        pack l = vcat ([pre] ++ mid ++ [post]) 
+           where pre  = text "int max = 0; int cd = 0;"
+                 mid  = concatMap call l
+                 post = text "return max + 1;"
+        wrap d = text "final public int depth()" <+> ibraces d
 
 -- > final public static int size() {
 -- >   return x1.size() + ... + xn.size();
