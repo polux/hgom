@@ -228,7 +228,7 @@ compParseVariadicTail vc = do
 -- | Given a non-variadic constructor @C@, generates a concrete class @C.java@.
 compConstructor :: CtorId -> Gen FileHierarchy
 compConstructor c = do mem  <- compMembersOfConstructor c
-                       smem <- ifS $ compSharingMembers c
+                       smem <- ifSh $ compSharingMembers c
                        ctor <- compCtorOfConstructor c
                        mak  <- compMakeOfConstructor c
                        get  <- compGettersOfConstructor c
@@ -237,31 +237,35 @@ compConstructor c = do mem  <- compMembersOfConstructor c
                        toh  <- ifConfM haskell (compToHaskellBuilder c) rempty
                        eqs  <- ifConfM sharing (compEquiv c) (compEquals c)
                        hac  <- ifConf sharing hashCodeMethod empty
-                       dup  <- ifS $ compDuplicate c
-                       ini  <- ifS $ compInit c
-                       inh  <- ifS $ compInitHash c
-                       haf  <- ifS $ compHashFun c
-                       gcc  <- ifV $ compGetChildCount c
-                       gca  <- ifV $ compGetChildAt c
-                       gcs  <- ifV $ compGetChildren c
-                       sca  <- ifV $ compSetChildAt c
-                       scs  <- ifV $ compSetChildren c
-                       par  <- ifP $ compParseConstructor c
-                       ran  <- ifR $ compMakeRandomConstructor c
+                       dup  <- ifSh $ compDuplicate c
+                       ini  <- ifSh $ compInit c
+                       inh  <- ifSh $ compInitHash c
+                       haf  <- ifSh $ compHashFun c
+                       gcc  <- ifV  $ compGetChildCount c
+                       gca  <- ifV  $ compGetChildAt c
+                       gcs  <- ifV  $ compGetChildren c
+                       sca  <- ifV  $ compSetChildAt c
+                       scs  <- ifV  $ compSetChildren c
+                       par  <- ifP  $ compParseConstructor c
+                       ran  <- ifR  $ compMakeRandomConstructor c
+                       dep  <- ifD  $ compDepthConstructor c 
+                       siz  <- ifSi $ compSizeConstructor c 
                        let isc = compIsX c
                        let syn = compSymbolName c
                        let body = vcat [mem,smem,ctor,mak,syn,
                                         get,set,tos,toh,eqs,hac,
-                                        dup,ini,inh,haf,isc,gcc,
-                                        gca,gcs,sca,scs,par,ran]
+                                        dup,ini,inh,haf,isc,gcc,gca,
+                                        gcs,sca,scs,par,ran,dep,siz]
                        cls  <- wrap body
                        return $ Class (show c) cls
 
   where rempty = return empty
-        ifV = flip (ifConfM visit) rempty
-        ifS = flip (ifConfM sharing) rempty
-        ifP = flip (ifConfM parsers) rempty
-        ifR = flip (ifConfM random) rempty
+        ifV  = flip (ifConfM visit  ) rempty
+        ifSh = flip (ifConfM sharing) rempty
+        ifP  = flip (ifConfM parsers) rempty
+        ifR  = flip (ifConfM random ) rempty
+        ifD  = flip (ifConfM depth  ) rempty
+        ifSi = flip (ifConfM size   ) rempty
         -- ifNG == if not generated
         ifNG a = askSt (isGenerated c) >>= maybe a (const rempty)
         wrap b = do
@@ -838,3 +842,33 @@ compMakeRandomConstructor c = do
                       [text "java.util.Random rand", text "int depth"] 
                       (body qc rcalls)
   where body qc rc = jreturn <+> rMethodCall qc (text "make") rc <> semi
+
+-- | Given a constructor @C(x1:T1,...,xn:Tn)@, generates
+--
+-- > final public static int depth() {
+-- >   int max = 0;
+-- >   int cd = 0;
+-- >   cd = x1.depth();
+-- >   if (cd > max) max = cd;
+-- >   ...
+-- >   cd = xn.depth();
+-- >   if (cd > max) max = cd;
+-- >   return max + 1;
+-- > }
+compDepthConstructor :: CtorId -> Gen Doc
+compDepthConstructor = undefined
+
+-- > final public static int size() {
+-- >   return x1.size() + ... + xn.size();
+-- > }
+compSizeConstructor :: CtorId -> Gen Doc
+compSizeConstructor c = do
+  fis <- askSt (fieldsOf c)
+  return . pack $ if null fis then one else add (map call fis)
+  where add = align . fillSep . intersperse (text "+")
+        one = text "1"
+        call (f,s) | isBuiltin s = one
+                   | otherwise   = this <> dot <> pretty f 
+                                   <> text ".size()"
+        pack d = text "final public int size()" 
+                 <+> ibraces (jreturn <+> d <> semi)

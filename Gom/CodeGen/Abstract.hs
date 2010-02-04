@@ -26,9 +26,8 @@ compAbstract :: Gen FileHierarchy
 compAbstract = do at <- abstractType
                   -- if haskell option is enabled, generate abstract toHaskell
                   hs <- ifConf haskell hask []
-                  -- if sharing option is enabled, generate afferent abstract
-                  -- methods
-                  ss <- ifConf sharing share []
+                  -- if sharing option is enabled, generate abstract methods
+                  ss <- ifConf sharing [abstractSharing] []
                   -- if visit option is enabled, implement visitable 
                   iv <- ifConf visit [jVisitable] []
                   -- if sharing option is enabled, implement shared
@@ -37,16 +36,16 @@ compAbstract = do at <- abstractType
                   im <- askSt importsString
                   let rs = if im then str else []
                   -- if random is enabled, generate builtin random generation
-                  ra <- ifConf random rdm []
+                  ra <- ifConf random [randomBuiltins] []
+                  -- if depth is enabled, generate size abstract method
+                  de <- ifConf depth [abstractDepth] []
+                  -- if size is enabled, generate size abstract method
+                  si <- ifConf size [abstractSize] []
                   -- build the class
-                  return $ Class at (cl at (hs++ss++rs++ra) (iv++is))
-  where cl at e i = rClass (public <+> abstract) (text at) 
-                           Nothing i (body e)
+                  return $ Class at (cl at (hs++ss++rs++ra++de++si) (iv++is))
+  where cl at e i = rClass (public <+> abstract) (text at) Nothing i (body e)
         body      = vcat . (always ++)
         always    = [abstractSymbolName,toStringBody,abstractToStringBuilder]
         hask      = [toHaskellBody,abstractToHaskellBuilder]
-        share     = [abstractSharing]
-        rdm       = [abstractRandom]
         str       = [renderStringMethod,renderCharMethod] 
-
 

@@ -20,7 +20,9 @@ module Gom.Constants (
   abstractToHaskellBuilder,
   abstractSymbolName,
   abstractSharing,
-  abstractRandom,
+  randomBuiltins,
+  abstractSize,
+  abstractDepth,
   absParser,
   absLexer,
   hashCodeMethod,
@@ -311,8 +313,8 @@ abstractSharing = vcat $ map text
 
 -- | declaration of random related methods for the
 -- modNameAbstractType class
-abstractRandom :: Doc
-abstractRandom = vcat $ map text
+randomBuiltins :: Doc
+randomBuiltins = vcat $ map text
   ["public final static long randomlong(java.util.Random rand) {",
    "  return rand.nextLong();",
    "}",
@@ -344,6 +346,14 @@ hashCodeMethod = vcat $ map text
   ["public final int hashCode() {",
    "  return hashCode;",
    "}"]
+
+-- | declaration of the @depth@ abstract method
+abstractDepth :: Doc
+abstractDepth = text "public abstract int depth();"
+
+-- | declaration of the @size@ abstract method
+abstractSize :: Doc
+abstractSize = text "public abstract int size();"
 
 -- | The parser class generated in package @mod@.
 absParser :: Doc

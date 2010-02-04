@@ -38,7 +38,9 @@ data Config =
     sharing :: Bool, -- ^ maximally share terms ?
     compact :: Bool, -- ^ generate compact code ?
     parsers :: Bool, -- ^ generate from* methods ? 
-    random  :: Bool -- ^ generate makeRandom methods ?
+    random  :: Bool, -- ^ generate makeRandom methods ?
+    depth   :: Bool, -- ^ generate depth methods ?
+    size    :: Bool  -- ^ generate size methods ?
   } 
 
 -- | Default configuration.
@@ -56,7 +58,9 @@ defaultConfig =
     sharing = True,
     compact = False,
     parsers = True,
-    random  = False
+    random  = False,
+    depth   = False,
+    size    = False
   }
 
 -- | Represents the three options values for --withCongruenceStrategies
@@ -90,6 +94,10 @@ options =
                     "file (defaults to no)"])
   ,Option [] ["random"] (NoArg crandom)
           "genarate makeRamdom methods"
+  ,Option [] ["depth"] (NoArg cdepth)
+          "generate depth methods"
+  ,Option [] ["size"] (NoArg csize)
+          "generate size methods"
   ,Option [] ["compact"] (NoArg ccompact)
           "generate compact code (no indentation)"
   ,Option [] ["noSharing"] (NoArg csharing)
@@ -101,17 +109,19 @@ options =
   ,Option [] ["noCheck"] (NoArg ccheck)
           "don't perform consistency checks"]
 
-  where chelp      c = return $ c { help = True }
-        cversion   c = return $ c { version = True }
-        cpackage p c = return $ c { package = Just (split '.' p) }
-        cpretty    c = return $ c { prprint = True }
-        chaskell   c = return $ c { haskell = True }
-        cvisit     c = return $ c { visit = False }
+  where chelp      c = return $ c { help    = True  }
+        cversion   c = return $ c { version = True  }
+        cpretty    c = return $ c { prprint = True  }
+        chaskell   c = return $ c { haskell = True  }
+        cvisit     c = return $ c { visit   = False }
         ccheck     c = return $ c { checker = False }
         csharing   c = return $ c { sharing = False }
-        ccompact   c = return $ c { compact = True }
+        ccompact   c = return $ c { compact = True  }
         cparsers   c = return $ c { parsers = False }
-        crandom    c = return $ c { random = True }
+        crandom    c = return $ c { random  = True  }
+        cdepth     c = return $ c { depth   = True  }
+        csize      c = return $ c { size    = True  }
+        cpackage p c = return $ c { package = Just (split '.' p) }
 
         ccongr "no"   c = return $ c { congr = NoCongr } 
         ccongr "same" c = return $ c { congr = SameFile }
