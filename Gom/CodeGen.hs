@@ -16,7 +16,7 @@
 module Gom.CodeGen where
 
 import Gom.SymbolTable
-import Gom.RenderCode
+import Gom.Helpers
 import Gom.Constants
 import Gom.Config
 

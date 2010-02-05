@@ -38,7 +38,7 @@ module Gom.CodeGen.Common (
 
 import Gom.Sig
 import Gom.SymbolTable
-import Gom.RenderCode
+import Gom.Helpers
 import Gom.Builtins
 import Gom.Config
 

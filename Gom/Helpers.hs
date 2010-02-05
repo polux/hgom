@@ -1,6 +1,6 @@
 -------------------------------------------------------------------
 -- |
--- Module      : Gom.RenderCode
+-- Module      : Gom.Helpers
 -- Copyright   : (c) Paul Brauner 2009
 --               (c) Emilie Balland 2009
 --               (c) INRIA 2009
@@ -14,7 +14,7 @@
 -- java and tom pieces of type 'Doc'.
 --------------------------------------------------------------------
 
-module Gom.RenderCode (
+module Gom.Helpers (
   -- * File hierarchies
   FileHierarchy(..),
   generateFileHierarchy,

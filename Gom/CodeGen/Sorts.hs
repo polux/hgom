@@ -15,7 +15,7 @@ module Gom.CodeGen.Sorts where
 
 import Gom.Sig
 import Gom.SymbolTable
-import Gom.RenderCode
+import Gom.Helpers
 import Gom.Config
 import Gom.CodeGen.Common
 import Gom.CodeGen.Constructors

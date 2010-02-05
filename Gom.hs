@@ -21,7 +21,7 @@ import Gom.Pretty ()
 import Gom.Checker
 import Gom.SymbolTable
 import Gom.CodeGen
-import Gom.RenderCode
+import Gom.Helpers
 import Gom.Config
 
 import System.Environment(getArgs)
