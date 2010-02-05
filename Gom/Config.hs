@@ -33,16 +33,16 @@ data Config =
     version :: Bool, -- ^ display version information ?
     package :: Maybe [String], -- ^ optional package prefix
     prprint :: Bool,  -- ^ pretty-print module and exit ?
-    haskell :: Bool, -- ^ generate toHaskell methods ?
-    visit   :: Bool, -- ^ implement visitable ? 
+    haskell :: Bool, -- ^ generate @toHaskell@ methods ?
+    visit   :: Bool, -- ^ implement @Visitable@ ? 
     checker :: Bool, -- ^ perform checks ?
     congr   :: CongrOpt, -- ^ generate congruence strategies ?
     sharing :: Bool, -- ^ maximally share terms ?
     compact :: Bool, -- ^ generate compact code ?
-    parsers :: Bool, -- ^ generate from* methods ? 
-    random  :: Bool, -- ^ generate makeRandom methods ?
-    depth   :: Bool, -- ^ generate depth methods ?
-    size    :: Bool  -- ^ generate size methods ?
+    parsers :: Bool, -- ^ generate @from*@ methods ? 
+    random  :: Bool, -- ^ generate @makeRandom@ methods ?
+    depth   :: Bool, -- ^ generate @depth@ methods ?
+    size    :: Bool  -- ^ generate @size@ methods ?
   } 
 
 -- | Default configuration.
