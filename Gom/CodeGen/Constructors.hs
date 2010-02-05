@@ -17,6 +17,7 @@ import Gom.Sig
 import Gom.SymbolTable
 import Gom.Java
 import Gom.Constants
+import Gom.Builtins
 import Gom.Config
 import Gom.CodeGen.Common
 

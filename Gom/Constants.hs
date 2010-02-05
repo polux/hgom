@@ -10,7 +10,7 @@
 -- Stability   : provisional
 -- Portability : non-portable (requires generalized newtype deriving)
 --
--- Big 'Doc' constants and builtins.
+-- Big 'Doc' constants.
 --------------------------------------------------------------------
 
 module Gom.Constants (
@@ -26,34 +26,20 @@ module Gom.Constants (
   absParser,
   absLexer,
   hashCodeMethod,
-  builtins,
-  isBuiltin,
-  isBoolean,
-  isInt,
-  isChar,
-  isDouble,
-  isFloat,
-  isLong,
-  isString,
-  qualifiedBuiltin,
-  builtinImport,
   renderStringMethod,
   renderCharMethod,
 ) where
 
-import Data.Maybe(fromMaybe)
 import Text.PrettyPrint.Leijen
-import Gom.Java
-import Gom.Sig
 
 -- | Full text of the toString method of @moduleAbstractType@.
 toStringBody :: Doc
-toStringBody =
- text "public String toString()" <+>
- (ibraces . rBody . map text)
-    ["java.lang.StringBuilder buf = new java.lang.StringBuilder()",
-     "toStringBuilder(buf)",
-     "return buf.toString()"]
+toStringBody = vcat $ map text
+  ["public String toString() {",
+   "  java.lang.StringBuilder buf = new java.lang.StringBuilder();",
+   "  toStringBuilder(buf);",
+   "  return buf.toString();",
+   "}"]
 
 -- | Full prototype of the abstract method of @moduleAbstractType@.
 abstractToStringBuilder :: Doc
@@ -62,12 +48,12 @@ abstractToStringBuilder =
 
 -- | Full text of the toHaskell method of @moduleAbstractType@.
 toHaskellBody :: Doc
-toHaskellBody =
- text "public String toHaskell()" <+>
- (ibraces . rBody . map text)
-    ["java.lang.StringBuilder buf = new java.lang.StringBuilder()",
-     "toHaskellBuilder(buf)",
-     "return buf.toString()"]
+toHaskellBody = vcat $ map text
+  ["public String toHaskell() {",
+  "  java.lang.StringBuilder buf = new java.lang.StringBuilder();",
+  "  toHaskellBuilder(buf);",
+  "  return buf.toString();",
+  "}"]
 
 -- | Full prototype of the abstract method of @moduleAbstractType@.
 abstractToHaskellBuilder :: Doc
@@ -79,53 +65,9 @@ abstractSymbolName :: Doc
 abstractSymbolName =
   text "public abstract String symbolName();"
 
--- | List of supported java builtins
-builtins :: [SortId]
-builtins = map makeSortId 
-  ["boolean","int","char","double","float","long","String"]
-
--- | Check if some sort is a builtin.
-isBuiltin :: SortId -> Bool
-isBuiltin = (`elem` builtins)
- 
--- | Check if some sort is a java bool
-isBoolean :: SortId -> Bool
--- | Check if some sort is a java int
-isInt :: SortId -> Bool
--- | Check if some sort is a java char
-isChar :: SortId -> Bool
--- | Check if some sort is a java double
-isDouble :: SortId -> Bool
--- | Check if some sort is a java float
-isFloat :: SortId -> Bool
--- | Check if some sort is a java long
-isLong :: SortId -> Bool
--- | Check if some sort is a java String
-isString :: SortId -> Bool
-
-[isBoolean,isInt,isChar,isDouble,isFloat,isLong,isString] = map (==) builtins
-
-qbuiltins :: [(SortId,Doc)]
-qbuiltins = zip builtins (map text qts)
-  where qts = ["java.lang.Boolean",
-               "java.lang.Integer",
-               "java.lang.Character",
-               "java.lang.Double",
-               "java.lang.Float",
-               "java.lang.Long"] 
-
--- | Returns the qualified java type for builtin boxing.
-qualifiedBuiltin :: SortId -> Doc
-qualifiedBuiltin s = fromMaybe (pretty s) (s `lookup` qbuiltins)
-
-ibuiltins :: [(SortId,Doc)]
-ibuiltins = zip builtins (map text toms)
-  where toms = ["boolean.tom","int.tom","char.tom","double.tom","float.tom","long.tom","string.tom"] 
-
--- | Returns the right .tom filename associated to a builtin.
-builtinImport :: SortId -> Doc
-builtinImport s = fromMaybe (pretty s) (s `lookup` ibuiltins)
-
+-- | Code of the 
+-- @pubic void renderChar(StringBuilder buf, char c)@
+-- method
 renderCharMethod :: Doc
 renderCharMethod = vcat $ map text
   ["public void renderChar(java.lang.StringBuilder buf, char c) {",
@@ -210,6 +152,9 @@ renderCharMethod = vcat $ map text
    "  buf.append('\\'');",
    "}"]
 
+-- | Code of the 
+-- @pubic void renderChar(StringBuilder buf, String s)@
+-- method
 renderStringMethod :: Doc
 renderStringMethod = vcat $ map text
   ["public void renderString(java.lang.StringBuilder buf, String x) {",

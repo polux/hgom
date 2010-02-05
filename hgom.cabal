@@ -29,6 +29,7 @@ executable hgom
   main-is:       Gom.hs
   other-modules: Gom.Config,
                  Gom.Constants,
+                 Gom.Builtins,
                  Gom.Parser,
                  Gom.Checker,
                  Gom.Pretty,
