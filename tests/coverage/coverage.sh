@@ -7,7 +7,7 @@ for i in t*.gom; do
 done 
 
 $HGOM --help
-$HGOM -r t1.gom 
+$HGOM -P t1.gom 
 $HGOM -c no t1.gom 
 $HGOM -c sep t1.gom 
 $HGOM -c same t1.gom 

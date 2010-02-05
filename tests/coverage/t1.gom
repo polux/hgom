@@ -9,3 +9,4 @@ T4 = T(x:char)
 
 List = List(T1*)
 IList = iList(int*)
+IList2 = iList21(int*) | iList22(int*)

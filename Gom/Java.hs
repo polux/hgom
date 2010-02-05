@@ -27,18 +27,18 @@ module Gom.Java (
   -- ** Java keywords
   abstract, public, protected, private, this,
   jreturn, throw, new, void, instanceof, jif,
-  for, while, jelse, jtrue, jfalse, final, static,
+  while, jelse, jtrue, jfalse, final, static,
   -- ** Java Types
-  jint, jString, stringBuilder, jboolean,
-  jObject, jVisitable, jVisitFailure, jShared, jSharedId,
-  jVisitableArray, jSCombinator, jVisit, jVisitLight,
+  jint, stringBuilder, jboolean,
+  jObject, jVisitable, jShared, jSharedId,
+  jVisitableArray, jSCombinator, 
   jIntrospector,
   -- ** Classes
   rClass, rFullClass,
   -- ** Methods
   rMethodDef, rMethodCall, rWrapBuiltin, rConstructorCall,
   -- ** Control structures
-  rIfThen, rIfThenElse, rFromTo, rWhile, rSwitch,
+  rIfThen, rIfThenElse, rWhile, rSwitch,
   -- * Tom pretty-printing
   -- ** Mappings
   rOp, rOpList, rTypeterm,
@@ -107,7 +107,7 @@ sbraces d = lbrace <+> d <+> rbrace
 
 abstract,public,protected,private :: Doc
 this,jreturn,throw,new,void,final,static :: Doc
-instanceof,jif,for,while,jelse,jtrue,jfalse :: Doc
+instanceof,jif,while,jelse,jtrue,jfalse :: Doc
 
 abstract   = text "abstract"
 public     = text "public"
@@ -120,7 +120,6 @@ new        = text "new"
 void       = text "void"
 instanceof = text "instanceof"
 jif        = text "if"
-for        = text "for"
 while      = text "while"
 jelse      = text "else"
 jtrue      = text "true"
@@ -128,18 +127,14 @@ jfalse     = text "false"
 final      = text "final"
 static     = text "static"
 
-jint,jString,stringBuilder,jboolean,jObject, jIntrospector, jVisit :: Doc
-jVisitable,jVisitFailure,jShared,jSharedId,jVisitableArray,jVisitLight :: Doc
+jint,stringBuilder,jboolean,jObject, jIntrospector :: Doc
+jVisitable,jShared,jSharedId,jVisitableArray :: Doc
 jSCombinator :: Doc
 jint            = text "int"
-jString         = text "String"
 jboolean        = text "boolean"
 stringBuilder   = text "java.lang.StringBuilder"
 jObject         = text "Object"
 jVisitable      = text "tom.library.sl.Visitable"
-jVisitFailure   = text "tom.library.sl.VisitFailure"
-jVisitLight     = text "visitLight"
-jVisit          = text "visit"
 jIntrospector   = text "tom.library.sl.Introspector"
 jSCombinator    = text "tom.library.sl.AbstractStrategyCombinator"
 jShared         = text "shared.SharedObject"
@@ -238,19 +233,6 @@ rIfThenElse
   -> Doc
 rIfThenElse c b1 b2 = 
   group $ jif <+> parens c <+> ibraces b1 <+> jelse <+> ibraces b2
-
--- | Renders @for(int var = from; var<to; var++) { body }@.
-rFromTo 
-  :: Doc -- ^ var
-  -> Doc -- ^ from
-  -> Doc -- ^ to
-  -> Doc -- ^ body
-  -> Doc
-rFromTo i f t b = group $ for <+> parens cond <+> ibraces b
-  where cond = align . cat $ 
-                 punctuate semi [jint <+> i <+> equals <+> f,
-                                 i <+> text "<" <+> t,
-                                 i <> text "++"]
 
 -- | Renders @while(cond) { body }@
 rWhile
