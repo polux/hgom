@@ -55,8 +55,3 @@ compSt = do mn <- lower `liftM` askSt modName
                      NoCongr -> return []
                      _ ->       return [x]
         ifP x = ifConf parsers [x] []
-         
-
-
-
-

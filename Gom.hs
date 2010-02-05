@@ -28,16 +28,22 @@ import System.Environment(getArgs)
 import Text.PrettyPrint.Leijen (pretty)
 import Control.Monad(liftM)
 
+hgomVersion :: String
+hgomVersion = "Version 0.3.1 - December 2009"
+
 main ::  IO ()
-main = do (c,n) <- getArgs >>= gomOpts
-          if help c 
-            then putStrLn usage
-            else if version c
-              then putStrLn "Version 0.3.1 - December 2009 - Copyrigth (c) INRIA"
-              else case n of
-                [f] -> go f c 
-                []  -> paramsError "No input file specified.\n"
-                _   -> paramsError "Too many input files specified.\n"
+main = do args <- getArgs 
+          case gomOpts args of 
+            Left err -> paramsError err
+            Right (c,n) ->
+              if help c 
+                then putStrLn usage
+                else if version c
+                  then putStrLn hgomVersion
+                  else case n of
+                    [f] -> go f c 
+                    []  -> paramsError "No input file specified.\n"
+                    _   -> paramsError "Too many input files specified.\n"
 
 go :: String -> Config -> IO ()
 go f c = do sig <- parseModule `liftM` readFile f
