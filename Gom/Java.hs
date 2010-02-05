@@ -93,7 +93,6 @@ generateHierarchyIn cp dir pac h = go h
         go (Tom n b)      = let fn = dir `combine` (n `addExtension` "tom")
                             in renderInFile fn b
         renderInFile n b  = do hdl <- openFile n WriteMode
-                               --hPutDoc hdl b
                                displayIO hdl (rdr b) 
                                hClose hdl
         rdr = if cp then renderCompact else renderPretty 0.6 80 
@@ -208,7 +207,7 @@ rConstructorCall
  -> [Doc] -- ^ arguments
  -> Doc
 rConstructorCall c args = 
-  new <> c <> encloseCommas args
+  new <+> c <> encloseCommas args
 
 -- | @rWrapBuiltin qt@ renders
 --

@@ -349,7 +349,7 @@ compMakeOfConstructor c = ifConfM sharing cmakes cmake
         cmake  = do cfs <- cfields
                     let b = newC (map (pretty . fst) cfs) <> semi
                     makeDef b
-          where newC fs = jreturn <+> new <+> pretty c <> encloseCommas fs
+          where newC fs = jreturn <+> rConstructorCall (pretty c) fs
         -- takes a body bd and returns public static C make(...) { bd }
         makeDef bd = do cfs <- cfields 
                         a <- mapM rdr cfs
@@ -500,7 +500,7 @@ compDuplicate c = rdr `liftM` askSt (fieldsOf c)
         th  = (text "this." <>) . pretty . fst
         rdr = rMethodDef public jShared (text "duplicate") [] . body
         body fis = rBody 
-          [pc <+> cl <+> equals <+> new <+> pc <> text "()",
+          [pc <+> cl <+> equals <+> rConstructorCall pc [],
            rMethodCall cl (text "init") (map th fis ++ [text "hashCode"]),
            jreturn <+> cl]
 
@@ -644,7 +644,7 @@ compGetChildAt c = do fis <- askSt (fieldsOf c)
   where cook (f,s)  = jreturn <+> wrap (this <> dot <> pretty f) s <> semi 
         body n cs   = rSwitch n cs (Just outOfBounds)
         outOfBounds = text "throw new IndexOutOfBoundsException();"
-        wrap f s | isBuiltin s = new <+> rWrapBuiltin qs <> parens f
+        wrap f s | isBuiltin s = rConstructorCall (rWrapBuiltin qs) [f]
                  | otherwise   = f
           where qs = qualifiedBuiltin s
 
@@ -665,7 +665,7 @@ compGetChildren c = do fis <- askSt (fieldsOf c)
   where body fs = let cs = align . sep . punctuate comma $ map child fs
                   in jreturn <+> new <+> jVisitableArray <+> ibraces cs <> semi
         child (f,s) =
-          if isBuiltin s then new <+> rWrapBuiltin qs <> parens df else df
+          if isBuiltin s then rConstructorCall (rWrapBuiltin qs) [df] else df
             where qs = qualifiedBuiltin s
                   df = this <> dot <> pretty f
 

@@ -79,35 +79,34 @@ split c (x:xs)
 options :: [OptDescr (Config -> IO Config)]
 options =
   [Option [] ["help"] (NoArg  chelp) 
-          "show this message"
+          "show this message and exit"
   ,Option ['V'] ["version"] (NoArg  cversion)                
-          "show version number"
-  ,Option ['r'] ["pretty"] (NoArg  cpretty)
+          "show version number and exit"
+  ,Option ['P'] ["pretty"] (NoArg  cpretty)
           "pretty-print the module and exit"
   ,Option ['p'] ["package"] (ReqArg cpackage "packageName") 
           "specify package name"
+  ,Option ['c'] ["congruence"] (ReqArg ccongr "(same|sep)")
+          (unlines ["generate congruence strategies in",
+                    "the same or in a separate .tom file"])
+  ,Option ['r'] ["random"] (NoArg crandom)
+          "genarate makeRamdom methods"
+  ,Option ['d'] ["depth"] (NoArg cdepth)
+          "generate depth methods"
+  ,Option ['d'] ["size"] (NoArg csize)
+          "generate size methods"
   ,Option ['h'] ["haskell"] (NoArg  chaskell)                
           "generate 'toHaskell' methods"
-  ,Option ['c'] ["congruence"] (ReqArg ccongr "(no|same|sep)")
-          (unlines ["generate congruence strategies",
-                    "in the same or in a separate .tom",
-                    "file (defaults to no)"])
-  ,Option [] ["random"] (NoArg crandom)
-          "genarate makeRamdom methods"
-  ,Option [] ["depth"] (NoArg cdepth)
-          "generate depth methods"
-  ,Option [] ["size"] (NoArg csize)
-          "generate size methods"
-  ,Option [] ["compact"] (NoArg ccompact)
-          "generate compact code (no indentation)"
   ,Option [] ["noSharing"] (NoArg csharing)
-          "don't maximally share terms instances"
+          "don't share structurally equal terms"
   ,Option [] ["noVisitable"] (NoArg cvisit)
           "don't implement Visitable"
   ,Option [] ["noParsers"] (NoArg cparsers)
           "don't generate from* methods"
   ,Option [] ["noCheck"] (NoArg ccheck)
-          "don't perform consistency checks"]
+          "don't perform consistency checks"
+  ,Option [] ["compact"] (NoArg ccompact)
+          "generate compact code (no indentation)"]
 
   where chelp      c = return $ c { help    = True  }
         cversion   c = return $ c { version = True  }
@@ -123,11 +122,10 @@ options =
         csize      c = return $ c { size    = True  }
         cpackage p c = return $ c { package = Just (split '.' p) }
 
-        ccongr "no"   c = return $ c { congr = NoCongr } 
         ccongr "same" c = return $ c { congr = SameFile }
         ccongr "sep"  c = return $ c { congr = SeparateFile }
         ccongr _      _ = paramsError 
-           "'--congruence' argument must be 'no', 'same' or 'sep'.\n"
+           "'--congruence' argument must be 'same' or 'sep'.\n"
 
 -- | Usage info message header : @Usage: hgom [OPTION...] file@.
 header :: String
