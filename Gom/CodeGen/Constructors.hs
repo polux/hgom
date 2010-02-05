@@ -15,7 +15,7 @@ module Gom.CodeGen.Constructors where
 
 import Gom.Sig
 import Gom.SymbolTable
-import Gom.Java
+import Gom.RenderCode
 import Gom.Constants
 import Gom.Builtins
 import Gom.Config

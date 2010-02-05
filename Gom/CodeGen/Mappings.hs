@@ -15,7 +15,7 @@ module Gom.CodeGen.Mappings where
 
 import Gom.Sig
 import Gom.SymbolTable
-import Gom.Java
+import Gom.RenderCode
 import Gom.Builtins
 import Gom.Config
 import Gom.CodeGen.Common

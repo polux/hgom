@@ -15,7 +15,7 @@ module Gom.CodeGen.Strategies where
 
 import Gom.Sig
 import Gom.SymbolTable
-import Gom.Java
+import Gom.RenderCode
 import Gom.CodeGen.Common
 
 import Text.PrettyPrint.Leijen

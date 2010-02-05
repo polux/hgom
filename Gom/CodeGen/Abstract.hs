@@ -14,7 +14,7 @@
 module Gom.CodeGen.Abstract where
 
 import Gom.SymbolTable
-import Gom.Java
+import Gom.RenderCode
 import Gom.Constants
 import Gom.Config
 import Gom.CodeGen.Common

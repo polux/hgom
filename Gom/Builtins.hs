@@ -1,6 +1,6 @@
 ------------------------------------------------------------------
 -- |
--- Module      : Gom.Constants
+-- Module      : Gom.Builtins
 -- Copyright   : (c) Paul Brauner 2009
 --               (c) Emilie Balland 2009
 --               (c) INRIA 2009

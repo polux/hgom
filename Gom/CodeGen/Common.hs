@@ -38,8 +38,7 @@ module Gom.CodeGen.Common (
 
 import Gom.Sig
 import Gom.SymbolTable
-import Gom.Java
-import Gom.Constants
+import Gom.RenderCode
 import Gom.Builtins
 import Gom.Config
 
