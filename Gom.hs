@@ -29,7 +29,7 @@ import Text.PrettyPrint.Leijen (pretty)
 import Control.Monad(liftM)
 
 hgomVersion :: String
-hgomVersion = "Version 0.3.1 - December 2009"
+hgomVersion = "Version 0.4 - January 2009"
 
 main ::  IO ()
 main = do args <- getArgs 
