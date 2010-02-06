@@ -11,7 +11,9 @@
 -- Portability : non-portable (requires generalized newtype deriving)
 --------------------------------------------------------------------
 
-module Gom.CodeGen.Sorts where
+module Gom.CodeGen.Sorts (
+  compSort
+) where
 
 import Gom.Sig
 import Gom.Config

@@ -11,7 +11,10 @@
 -- Portability : non-portable (requires generalized newtype deriving)
 --------------------------------------------------------------------
 
-module Gom.CodeGen.Constructors where
+module Gom.CodeGen.Constructors (
+  compConstructor,
+  compAbstractVariadic
+) where
 
 import Gom.Sig
 import Gom.Config

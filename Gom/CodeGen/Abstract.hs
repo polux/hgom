@@ -11,7 +11,9 @@
 -- Portability : non-portable (requires generalized newtype deriving)
 --------------------------------------------------------------------
 
-module Gom.CodeGen.Abstract where
+module Gom.CodeGen.Abstract (
+  compAbstract
+) where
 
 import Gom.CodeGen.Common
 import Gom.SymbolTable

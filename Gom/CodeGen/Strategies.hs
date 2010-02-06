@@ -11,7 +11,9 @@
 -- Portability : non-portable (requires generalized newtype deriving)
 --------------------------------------------------------------------
 
-module Gom.CodeGen.Strategies where
+module Gom.CodeGen.Strategies (
+  compStrategy
+) where
 
 import Gom.Sig
 import Gom.FileGen

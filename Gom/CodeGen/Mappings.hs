@@ -11,7 +11,9 @@
 -- Portability : non-portable (requires generalized newtype deriving)
 --------------------------------------------------------------------
 
-module Gom.CodeGen.Mappings where
+module Gom.CodeGen.Mappings (
+  compTomFile
+) where
 
 import Gom.Sig
 import Gom.Config
