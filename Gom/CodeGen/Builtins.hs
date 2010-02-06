@@ -1,6 +1,6 @@
 ------------------------------------------------------------------
 -- |
--- Module      : Gom.Builtins
+-- Module      : Gom.CodeGen.Builtins
 -- Copyright   : (c) Paul Brauner 2009
 --               (c) Emilie Balland 2009
 --               (c) INRIA 2009
@@ -13,7 +13,7 @@
 -- Builtins handling.
 --------------------------------------------------------------------
 
-module Gom.Builtins (
+module Gom.CodeGen.Builtins (
   builtins,
   isBuiltin,
   isBoolean,

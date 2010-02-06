@@ -28,14 +28,14 @@ data-files:        tests/examples/*.gom
 executable hgom
   main-is:       Gom.hs
   other-modules: Gom.Config,
-                 Gom.Constants,
-                 Gom.Builtins,
                  Gom.Parser,
                  Gom.Checker,
                  Gom.Pretty,
                  Gom.FileGen,
                  Gom.CodeGen,
+                 Gom.CodeGen.Constants,
                  Gom.CodeGen.Abstract,
+                 Gom.CodeGen.Builtins,
                  Gom.CodeGen.Constructors,
                  Gom.CodeGen.Mappings,
                  Gom.CodeGen.Common,

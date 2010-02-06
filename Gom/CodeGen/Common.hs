@@ -39,7 +39,7 @@ module Gom.CodeGen.Common (
 import Gom.Sig
 import Gom.SymbolTable
 import Gom.CodeGen.Helpers
-import Gom.Builtins
+import Gom.CodeGen.Builtins
 import Gom.Config
 
 import Text.PrettyPrint.Leijen

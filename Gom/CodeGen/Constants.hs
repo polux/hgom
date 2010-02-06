@@ -1,6 +1,6 @@
 ------------------------------------------------------------------
 -- |
--- Module      : Gom.Constants
+-- Module      : Gom.CodeGen.Constants
 -- Copyright   : (c) Paul Brauner 2009
 --               (c) Emilie Balland 2009
 --               (c) INRIA 2009
@@ -13,7 +13,7 @@
 -- Big 'Doc' constants.
 --------------------------------------------------------------------
 
-module Gom.Constants (
+module Gom.CodeGen.Constants (
   toStringBody,
   abstractToStringBuilder,
   toHaskellBody,
