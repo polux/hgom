@@ -10,7 +10,7 @@
 -- Stability   : provisional
 -- Portability : non-portable (requires generalized newtype deriving)
 --
--- | Defines the 'Gen' monad, a context containing a read-only symbol table.
+-- Defines the 'Gen' monad, a context containing a read-only symbol table.
 --------------------------------------------------------------------
 
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}

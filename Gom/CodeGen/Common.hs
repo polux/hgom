@@ -10,7 +10,7 @@
 -- Stability   : provisional
 -- Portability : non-portable (requires generalized newtype deriving)
 --
--- Exports common modules used by code generation functions.
+-- Exports common functions used by code generation modules.
 --------------------------------------------------------------------
 
 module Gom.CodeGen.Common (

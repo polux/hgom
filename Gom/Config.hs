@@ -95,7 +95,7 @@ options =
           "genarate makeRamdom methods"
   ,Option ['d'] ["depth"] (NoArg cdepth)
           "generate depth methods"
-  ,Option ['d'] ["size"] (NoArg csize)
+  ,Option ['s'] ["size"] (NoArg csize)
           "generate size methods"
   ,Option ['h'] ["haskell"] (NoArg  chaskell)                
           "generate 'toHaskell' methods"

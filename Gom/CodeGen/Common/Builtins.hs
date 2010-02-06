@@ -10,11 +10,10 @@
 -- Stability   : provisional
 -- Portability : non-portable (requires generalized newtype deriving)
 --
--- Common.Builtins handling.
+-- Builtins handling.
 --------------------------------------------------------------------
 
 module Gom.CodeGen.Common.Builtins (
-  builtins,
   isBuiltin,
   isBoolean,
   isInt,
