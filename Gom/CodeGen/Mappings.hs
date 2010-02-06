@@ -14,12 +14,10 @@
 module Gom.CodeGen.Mappings where
 
 import Gom.Sig
-import Gom.SymbolTable
-import Gom.CodeGen.Helpers
-import Gom.CodeGen.Builtins
 import Gom.Config
 import Gom.FileGen
-import Gom.CodeGen.GenMonad
+import Gom.SymbolTable
+import Gom.CodeGen.Common
 
 import Text.PrettyPrint.Leijen
 import Control.Arrow((***))

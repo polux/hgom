@@ -14,10 +14,9 @@
 module Gom.CodeGen.Strategies where
 
 import Gom.Sig
-import Gom.SymbolTable
-import Gom.CodeGen.Helpers
 import Gom.FileGen
-import Gom.CodeGen.GenMonad
+import Gom.SymbolTable
+import Gom.CodeGen.Common
 
 import Text.PrettyPrint.Leijen
 import Control.Monad.Reader

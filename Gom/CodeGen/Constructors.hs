@@ -14,13 +14,10 @@
 module Gom.CodeGen.Constructors where
 
 import Gom.Sig
-import Gom.SymbolTable
-import Gom.CodeGen.Helpers
-import Gom.CodeGen.Constants
-import Gom.CodeGen.Builtins
 import Gom.Config
 import Gom.FileGen
-import Gom.CodeGen.GenMonad
+import Gom.SymbolTable
+import Gom.CodeGen.Common
 
 import Text.PrettyPrint.Leijen
 import Control.Monad.Reader
@@ -635,7 +632,7 @@ compGetChildCount c = do ar <- length `liftM` askSt (fieldsOf c)
 -- >   }
 -- > }
 --
--- Builtins are boxed in @tom.library.sl.VisitableBuiltin@.
+-- Common.Builtins are boxed in @tom.library.sl.VisitableBuiltin@.
 compGetChildAt :: CtorId -> Gen Doc
 compGetChildAt c = do fis <- askSt (fieldsOf c)
                       let cs  = zip (map int [0..]) (map cook fis)
@@ -658,7 +655,7 @@ compGetChildAt c = do fis <- askSt (fieldsOf c)
 -- >   };
 -- > }
 --
--- Builtins are boxed in @tom.library.sl.VisitableBuiltin@.
+-- Common.Builtins are boxed in @tom.library.sl.VisitableBuiltin@.
 compGetChildren :: CtorId -> Gen Doc
 compGetChildren c = do fis <- askSt (fieldsOf c)
                        return $ rMethodDef public jVisitableArray
@@ -682,7 +679,7 @@ compGetChildren c = do fis <- askSt (fieldsOf c)
 -- >   }
 -- > }
 --
--- Builtins are unboxed from @tom.library.sl.VisitableBuiltin@.
+-- Common.Builtins are unboxed from @tom.library.sl.VisitableBuiltin@.
 compSetChildAt :: CtorId -> Gen Doc
 compSetChildAt c = do fis  <- askSt (fieldsOf c)
                       fis' <- mapM set (parts fis)
@@ -725,7 +722,7 @@ compSetChildAt c = do fis  <- askSt (fieldsOf c)
 -- >   }
 -- > }
 --
--- Builtins are unboxed from @tom.library.sl.VisitableBuiltin@.
+-- Common.Builtins are unboxed from @tom.library.sl.VisitableBuiltin@.
 compSetChildren :: CtorId -> Gen Doc 
 compSetChildren c = do cs  <- askSt (fieldsOf c)
                        csn <- zipWithM cook [0..] cs

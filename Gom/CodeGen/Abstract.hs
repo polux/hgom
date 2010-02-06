@@ -13,12 +13,10 @@
 
 module Gom.CodeGen.Abstract where
 
+import Gom.CodeGen.Common
 import Gom.SymbolTable
-import Gom.CodeGen.Helpers
-import Gom.CodeGen.Constants
 import Gom.Config
 import Gom.FileGen
-import Gom.CodeGen.GenMonad
 
 import Text.PrettyPrint.Leijen
 
