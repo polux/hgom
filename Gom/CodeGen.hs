@@ -16,9 +16,9 @@
 module Gom.CodeGen where
 
 import Gom.SymbolTable
-import Gom.Helpers
 import Gom.Constants
 import Gom.Config
+import Gom.FileGen
 
 import Control.Monad.Reader
 

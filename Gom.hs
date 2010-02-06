@@ -21,8 +21,8 @@ import Gom.Pretty ()
 import Gom.Checker
 import Gom.SymbolTable
 import Gom.CodeGen
-import Gom.Helpers
 import Gom.Config
+import Gom.FileGen
 
 import System.Environment(getArgs)
 import Text.PrettyPrint.Leijen (pretty)

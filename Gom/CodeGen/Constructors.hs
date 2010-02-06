@@ -15,10 +15,11 @@ module Gom.CodeGen.Constructors where
 
 import Gom.Sig
 import Gom.SymbolTable
-import Gom.Helpers
+import Gom.CodeGen.Helpers
 import Gom.Constants
 import Gom.Builtins
 import Gom.Config
+import Gom.FileGen
 import Gom.CodeGen.Common
 
 import Text.PrettyPrint.Leijen
