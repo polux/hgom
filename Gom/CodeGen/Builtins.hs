@@ -25,10 +25,13 @@ module Gom.CodeGen.Builtins (
   isString,
   qualifiedBuiltin,
   builtinImport,
+  renderBuiltin
 ) where
 
 import Data.Maybe(fromMaybe)
 import Text.PrettyPrint.Leijen
+
+import Gom.CodeGen.Helpers
 import Gom.Sig
 
 -- | List of supported java builtins
@@ -77,3 +80,12 @@ ibuiltins = zip builtins (map text toms)
 -- | Returns the right .tom filename associated to a builtin.
 builtinImport :: SortId -> Doc
 builtinImport s = fromMaybe (pretty s) (s `lookup` ibuiltins)
+
+-- | @renderBuiltin s f b@ generates what is necessary to put
+-- the representation of @f@ (field of sort @s@) in the buffer @b@.
+renderBuiltin :: SortId -> FieldId -> Doc -> Doc
+renderBuiltin s f b 
+  | isString s = text "renderString" <> parens (b <> comma <> pretty f)
+  | isChar   s = text "renderChar"   <> parens (b <> comma <> pretty f)
+  | otherwise  = rMethodCall b (text "append") [pretty f]
+

@@ -13,15 +13,15 @@
 -- Generation of a file hierarchy from a symbol table.
 -------------------------------------------------------------------- 
 
-module Gom.CodeGen where
+module Gom.CodeGen (st2java) where
+
+import Control.Monad.Reader
+import Data.Char(toLower)
 
 import Gom.SymbolTable
 import Gom.CodeGen.Constants
 import Gom.Config
 import Gom.FileGen
-
-import Control.Monad.Reader
-
 import Gom.CodeGen.Common
 import Gom.CodeGen.Abstract
 import Gom.CodeGen.Mappings
@@ -34,7 +34,7 @@ st2java = runGen compSt
 
 -- | Generates the whole file hierarchy of the \"global\" symbol table.
 compSt :: Gen FileHierarchy
-compSt = do mn <- lower `liftM` askSt modName
+compSt = do mn <- map toLower `liftM` askSt modName
             ds <- askSt definedSortsIds
             hs <- mapM compSort ds
             ac <- compAbstract

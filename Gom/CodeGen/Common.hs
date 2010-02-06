@@ -9,36 +9,33 @@
 -- Maintainer  : paul.brauner@inria.fr
 -- Stability   : provisional
 -- Portability : non-portable (requires generalized newtype deriving)
+--
+-- | Defines the 'Gen' monad, a context containing a read-only symbol table.
 --------------------------------------------------------------------
 
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Gom.CodeGen.Common (
-  -- * Pure functions
-  lower,
-  renderBuiltin,
-  -- * Impure functions
-  packagePrefix,
-  qualifiedSort,
-  qualifiedCtor,
-  abstractType,
-  qualifiedAbstractType,
-  -- * The @Gen@ monad
-  -- ** Definition
+  -- * Definition
   Gen(),
   runGen,
-  -- ** Basic access
+  -- * Basic access
   askSt,
   askConf,
   ifConf,
   ifConfM,
   iterOverFields,
-  iterOverSortFields
+  iterOverSortFields,
+  -- * High-Level access
+  packagePrefix,
+  qualifiedSort,
+  qualifiedCtor,
+  abstractType,
+  qualifiedAbstractType
 ) where
 
 import Gom.Sig
 import Gom.SymbolTable
-import Gom.CodeGen.Helpers
 import Gom.CodeGen.Builtins
 import Gom.Config
 
@@ -46,18 +43,6 @@ import Text.PrettyPrint.Leijen
 import Control.Monad.Reader
 import Data.Char(toLower)
 import Data.List(nub, intersperse)
-
--- | Turns a 'String' into lowercase.
-lower :: String -> String
-lower = map toLower
-
--- | @renderBuiltin s f b@ generates what is necessary to put
--- the representation of @f@ (field of sort @s@) in the buffer @b@.
-renderBuiltin :: SortId -> FieldId -> Doc -> Doc
-renderBuiltin s f b 
-  | isString s = text "renderString" <> parens (b <> comma <> pretty f)
-  | isChar   s = text "renderChar"   <> parens (b <> comma <> pretty f)
-  | otherwise  = rMethodCall b (text "append") [pretty f]
 
 -- | A computation inside a context containing a read-only symbol table.
 newtype Gen a = Gen (Reader (SymbolTable,Config) a)
@@ -128,7 +113,7 @@ iterOverSortFields f g s = do cs <- askSt (sCtorsOf s)
 -- As an example, returns @aa.bb.cc.foo@ for the module @Foo@,
 -- provided the user toggled @-p aa.bb.cc@.
 packagePrefix :: Gen Doc
-packagePrefix = do m <- lower `liftM` askSt modName
+packagePrefix = do m <- map toLower `liftM` askSt modName
                    go (pretty m) `liftM` askConf package
   where go dm Nothing  = dm
         go dm (Just l) = hcat . intersperse dot $ map text l ++ [dm]
