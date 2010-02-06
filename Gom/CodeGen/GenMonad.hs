@@ -1,6 +1,6 @@
 ------------------------------------------------------------------
 -- |
--- Module      : Gom.CodeGen.Common
+-- Module      : Gom.CodeGen.GenMonad
 -- Copyright   : (c) Paul Brauner 2009
 --               (c) Emilie Balland 2009
 --               (c) INRIA 2009
@@ -15,7 +15,7 @@
 
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module Gom.CodeGen.Common (
+module Gom.CodeGen.GenMonad (
   -- * Definition
   Gen(),
   runGen,

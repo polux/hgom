@@ -22,7 +22,7 @@ import Gom.SymbolTable
 import Gom.CodeGen.Constants
 import Gom.Config
 import Gom.FileGen
-import Gom.CodeGen.Common
+import Gom.CodeGen.GenMonad
 import Gom.CodeGen.Abstract
 import Gom.CodeGen.Mappings
 import Gom.CodeGen.Strategies

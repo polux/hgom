@@ -38,7 +38,7 @@ executable hgom
                  Gom.CodeGen.Builtins,
                  Gom.CodeGen.Constructors,
                  Gom.CodeGen.Mappings,
-                 Gom.CodeGen.Common,
+                 Gom.CodeGen.GenMonad,
                  Gom.CodeGen.Strategies,
                  Gom.CodeGen.Sorts,
                  Gom.CodeGen.Helpers,

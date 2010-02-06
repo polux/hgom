@@ -18,7 +18,7 @@ import Gom.SymbolTable
 import Gom.CodeGen.Helpers
 import Gom.Config
 import Gom.FileGen
-import Gom.CodeGen.Common
+import Gom.CodeGen.GenMonad
 import Gom.CodeGen.Constructors
 
 import Text.PrettyPrint.Leijen

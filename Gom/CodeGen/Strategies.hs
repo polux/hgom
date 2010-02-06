@@ -17,7 +17,7 @@ import Gom.Sig
 import Gom.SymbolTable
 import Gom.CodeGen.Helpers
 import Gom.FileGen
-import Gom.CodeGen.Common
+import Gom.CodeGen.GenMonad
 
 import Text.PrettyPrint.Leijen
 import Control.Monad.Reader

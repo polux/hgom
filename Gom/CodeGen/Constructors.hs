@@ -20,7 +20,7 @@ import Gom.CodeGen.Constants
 import Gom.CodeGen.Builtins
 import Gom.Config
 import Gom.FileGen
-import Gom.CodeGen.Common
+import Gom.CodeGen.GenMonad
 
 import Text.PrettyPrint.Leijen
 import Control.Monad.Reader

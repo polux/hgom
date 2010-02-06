@@ -52,7 +52,7 @@ generateFileHierarchy c h = do cur <- getCurrentDirectory
 -- directory @dir@ in package @pack@. Adds proper @package ...@ on top of java
 -- files. If @compatc@ is true, the generated code is more compact.
 --
--- Common usage : @generateFileHierarchyIn compact dir []@
+-- GenMonad usage : @generateFileHierarchyIn compact dir []@
 generateHierarchyIn :: Bool -> FilePath -> [String] -> FileHierarchy -> IO ()
 generateHierarchyIn cp dir pac h = go h
   where go (Package n hs) = let ndir = dir `combine` n
