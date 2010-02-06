@@ -30,7 +30,7 @@ module Gom.CodeGen.Helpers (
   jVisitableArray, jSCombinator, 
   jIntrospector,
   -- ** Classes
-  rClass, rFullClass,
+  rClass,
   -- ** Methods
   rMethodDef, rMethodCall, rWrapBuiltin, rConstructorCall,
   -- ** Control structures
@@ -44,7 +44,6 @@ module Gom.CodeGen.Helpers (
 ) where
 
 import Text.PrettyPrint.Leijen
-import Data.List(intercalate)
 
 -- | Encloses a document into { } and indents the body.
 ibraces :: Doc -> Doc
@@ -115,15 +114,6 @@ rClass md cn ex im body =
         r1 (Just d) = text "extends" <+> d
         r2 [] = empty
         r2 l  = text "implements" <+> hsep (punctuate comma l)
-
--- | Adds package name at the top of a class declaration.
-rFullClass
-  :: [String] -- ^ package
-  -> Doc      -- ^ class content
-  -> Doc
-rFullClass [] bd = bd
-rFullClass pk bd = text "package" <+> text (intercalate "." pk) <>
-                   semi <> linebreak <$> bd
 
 -- | Renders @modifier type name(arg_1,...,arg_n) { body }@.
 rMethodDef

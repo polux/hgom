@@ -18,15 +18,13 @@
 module Gom.FileGen (
   FileHierarchy(..),
   generateFileHierarchy
---  generateHierarchyIn
 ) where
 
 import Text.PrettyPrint.Leijen
+import Data.List(intercalate)
 import System.FilePath hiding ((</>))
 import System.Directory
 import System.IO
-
-import Gom.CodeGen.Helpers(rFullClass)
 
 -- | Represents a hierarchy of Java packages, Java classes and .tom files.
 -- Constructors and field names speak for themselves.
@@ -70,3 +68,13 @@ generateHierarchyIn cp dir pac h = go h
                                displayIO hdl (rdr b) 
                                hClose hdl
         rdr = if cp then renderCompact else renderPretty 0.6 80 
+
+-- | Adds package name at the top of a class declaration.
+rFullClass
+  :: [String] -- ^ package
+  -> Doc      -- ^ class content
+  -> Doc
+rFullClass [] bd = bd
+rFullClass pk bd = text "package" <+> text (intercalate "." pk) <>
+                   semi <> linebreak <$> bd
+
