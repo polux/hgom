@@ -1,4 +1,3 @@
  * generate fromAterm
  * improve variadic constructors pretty-printing
  * generate congruence strategies [emilie]
- * add random term generation functions parameterized by depth
