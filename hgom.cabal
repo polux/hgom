@@ -32,7 +32,7 @@ executable hgom
                  Gom.Checker,
                  Gom.Pretty,
                  Gom.FileGen,
-                 Gom.CodeGn,
+                 Gom.CodeGen,
                  Gom.CodeGen.Common,
                  Gom.CodeGen.Common.Constants,
                  Gom.CodeGen.Common.Builtins,
