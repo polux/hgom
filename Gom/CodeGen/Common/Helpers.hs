@@ -25,7 +25,7 @@ module Gom.CodeGen.Common.Helpers (
   jreturn, throw, new, void, instanceof, jif,
   while, jelse, jtrue, jfalse, final, static,
   -- ** Java Types
-  jint, stringBuilder, jboolean,
+  jint, jStringBuilder, jboolean,
   jObject, jVisitable, jShared, jSharedId,
   jVisitableArray, jSCombinator, 
   jIntrospector,
@@ -75,12 +75,12 @@ jfalse     = text "false"
 final      = text "final"
 static     = text "static"
 
-jint,stringBuilder,jboolean,jObject, jIntrospector :: Doc
+jint,jStringBuilder,jboolean,jObject, jIntrospector :: Doc
 jVisitable,jShared,jSharedId,jVisitableArray :: Doc
 jSCombinator :: Doc
 jint            = text "int"
 jboolean        = text "boolean"
-stringBuilder   = text "java.lang.StringBuilder"
+jStringBuilder   = text "java.lang.StringBuilder"
 jObject         = text "Object"
 jVisitable      = text "tom.library.sl.Visitable"
 jIntrospector   = text "tom.library.sl.Introspector"

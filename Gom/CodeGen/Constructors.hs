@@ -70,7 +70,7 @@ compToStringBuilderVariadic vc = do
   qdom  <- pretty `liftM` qualifiedSort dom
   let mid = middle qco qcons qnil qdom (isBuiltin dom)
   return $ rMethodDef public void toSB
-                      [stringBuilder <+> buf]
+                      [jStringBuilder <+> buf]
                       (rBody [pre,mid,post])
   where bapp arg = rMethodCall buf (text "append") [arg]
         cons = prependCons vc
@@ -408,7 +408,7 @@ compToStringBuilder :: CtorId -> Gen Doc
 compToStringBuilder c = do rcalls <- iterOverFields rcall id c
                            return $ rMethodDef 
                              public void (text "toStringBuilder")
-                             [stringBuilder <+> text "buf"] (complete rcalls)
+                             [jStringBuilder <+> text "buf"] (complete rcalls)
   where complete b = rBody $ open : intersperse apcomma b ++ [close]
         bapp arg   = text "buf.append" <> parens arg
         apcomma    = bapp $ dquotes comma
@@ -437,7 +437,7 @@ compToHaskellBuilder :: CtorId -> Gen Doc
 compToHaskellBuilder c = do rcalls <- iterOverFields rcall id c
                             return $ rMethodDef 
                               public void (text "toHaskellBuilder")
-                              [stringBuilder <+> text "buf"] (complete rcalls)
+                              [jStringBuilder <+> text "buf"] (complete rcalls)
   where complete b = rBody $ open : addspaces b ++ [close]
         bapp arg   = text "buf.append" <> parens arg
         apspace    = bapp $ dquotes space
