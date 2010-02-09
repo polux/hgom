@@ -759,7 +759,7 @@ compSetChildren c = do cs  <- askSt (fieldsOf c)
 -- > public boolean isC() { return true; }
 compIsX :: CtorId -> Doc
 compIsX c = let fun = text "is" <> pretty c
-                b   = rBody [jreturn <+> jtrue]
+                b   = rBody [jreturn <+> true]
             in rMethodDef public jboolean fun [] b 
 
 -- | @compSymbolName c@ renders 
@@ -796,9 +796,9 @@ compEqAux meth comb ty c = do rcalls <- iterOverFields rcall id c
                                 (public <+> final) jboolean meth
                                 [ty <+> text "o"] (complete rcalls)
   where cdoc = pretty c
-        complete b = rIfThenElse cond (branch1 b) (jreturn <+> jfalse <> semi) 
+        complete b = rIfThenElse cond (branch1 b) (jreturn <+> false <> semi) 
         cond       = text "o" <+> instanceof <+> cdoc
-        branch1 b  = rBody [l1,l2 (jtrue:b)]
+        branch1 b  = rBody [l1,l2 (true:b)]
         l1 = cdoc <+> text "typed_o" <+> equals <+> parens cdoc <+> text "o"
         l2 b = jreturn <+> (align . fillSep $ intersperse (text "&&") b)
         rcall x s = let lhs = this <> dot <> pretty x

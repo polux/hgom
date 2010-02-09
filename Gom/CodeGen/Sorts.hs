@@ -107,7 +107,7 @@ compEmptyIsX :: SortId -> Gen Doc
 compEmptyIsX s = do cs  <- askSt (sCtorsOf s) 
                     return . vcat $ map isx cs
   where isx f = let fun = text "is" <> pretty f
-                    b   = rBody [jreturn <+> jfalse]
+                    b   = rBody [jreturn <+> false]
                 in rMethodDef public jboolean fun [] b 
 
 -- | Given a sort @T = f1(...) | ... | fn(...)@, generates

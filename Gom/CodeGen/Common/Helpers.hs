@@ -23,7 +23,7 @@ module Gom.CodeGen.Common.Helpers (
   -- ** Java keywords
   abstract, public, protected, private, this,
   jreturn, throw, new, void, instanceof, jif,
-  while, jelse, jtrue, jfalse, final, static,
+  while, jelse, true, false, final, static,
   -- ** Java Types
   jint, jStringBuilder, jboolean,
   jObject, jVisitable, jShared, jSharedId,
@@ -55,7 +55,7 @@ sbraces d = lbrace <+> d <+> rbrace
 
 abstract,public,protected,private :: Doc
 this,jreturn,throw,new,void,final,static :: Doc
-instanceof,jif,while,jelse,jtrue,jfalse :: Doc
+instanceof,jif,while,jelse,true,false :: Doc
 
 abstract   = text "abstract"
 public     = text "public"
@@ -70,8 +70,8 @@ instanceof = text "instanceof"
 jif        = text "if"
 while      = text "while"
 jelse      = text "else"
-jtrue      = text "true"
-jfalse     = text "false"
+true      = text "true"
+false     = text "false"
 final      = text "final"
 static     = text "static"
 
