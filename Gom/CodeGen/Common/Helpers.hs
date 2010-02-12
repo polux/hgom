@@ -28,7 +28,7 @@ module Gom.CodeGen.Common.Helpers (
   jint, jStringBuilder, jboolean,
   jObject, jVisitable, jShared, jSharedId,
   jVisitableArray, jSCombinator, 
-  jIntrospector,
+  jIntrospector, jVisitFailure,jStrategy,
   -- ** Classes
   rClass,
   -- ** Methods
@@ -75,15 +75,16 @@ false      = text "false"
 final      = text "final"
 static     = text "static"
 
-jint,jStringBuilder,jboolean,jObject, jIntrospector :: Doc
+jint,jStringBuilder,jboolean,jObject,jIntrospector,jVisitFailure,jSCombinator,jStrategy :: Doc
 jVisitable,jShared,jSharedId,jVisitableArray :: Doc
-jSCombinator :: Doc
 jint            = text "int"
 jboolean        = text "boolean"
 jStringBuilder  = text "java.lang.StringBuilder"
 jObject         = text "Object"
 jVisitable      = text "tom.library.sl.Visitable"
 jIntrospector   = text "tom.library.sl.Introspector"
+jStrategy       = text "tom.library.sl.Strategy"
+jVisitFailure   = text "tom.library.sl.VisitFailure"
 jSCombinator    = text "tom.library.sl.AbstractStrategyCombinator"
 jShared         = text "shared.SharedObject"
 jSharedId       = text "shared.SharedObjectWithID"
@@ -121,10 +122,14 @@ rMethodDef
  -> Doc   -- ^ return type
  -> Doc   -- ^ method name
  -> [Doc] -- ^ arguments
+ -> [Doc] -- ^ exceptions
  -> Doc   -- ^ body
  -> Doc
-rMethodDef md ty mn args body = 
-  md <+> ty <+> mn <> encloseCommas args <+> ibraces body
+rMethodDef md ty mn args exceptions body = 
+  md <+> ty <+> mn <> encloseCommas args <+> r exceptions <+> ibraces body
+  where r [] = empty
+        r l  = text "throws" <+> hsep (punctuate comma l)
+
 
 -- | Renders @object.method(arg_1,...,arg_n)@.
 rMethodCall

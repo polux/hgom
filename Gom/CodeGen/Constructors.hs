@@ -70,7 +70,7 @@ compToStringBuilderVariadic vc = do
   qdom  <- pretty `liftM` qualifiedSort dom
   let mid = middle qco qcons qnil qdom (isBuiltin dom)
   return $ rMethodDef public void toSB
-                      [jStringBuilder <+> buf]
+                      [jStringBuilder <+> buf] []
                       (rBody [pre,mid,post])
   where bapp arg = rMethodCall buf (text "append") [arg]
         cons = prependCons vc
@@ -130,7 +130,7 @@ compParseConstructor c = do
   post <- postM
   return $ rMethodDef (final <+> static <+> public)
                       qco (text "parseArgs")
-                      [pars pr <+> arg] (rBody (pre:recs++post))
+                      [pars pr <+> arg] [] (rBody (pre:recs++post))
   where pars pr  = pr <> dot <> text "Parser"
         arg      = text "par"
         pcomm    = rMethodCall arg (text "parseComma") []
@@ -169,7 +169,7 @@ compParseVariadic vc = do
   qnil  <- qualifiedCtor (prependEmpty vc)
   phead <- parseHead
   return $ rMethodDef 
-    (static <+> public) qco (text "parseArgs") [pars pr <+> arg]
+    (static <+> public) qco (text "parseArgs") [pars pr <+> arg] []
     (vcat [text "par.parseLpar();",
            rIfThenElse (text "par.isRpar()")
              (rBody [text "par.parseRpar()", makeNil qnil])
@@ -210,7 +210,7 @@ compParseVariadicTail vc = do
   qnil  <- qualifiedCtor (prependEmpty vc)
   phead <- parseHead
   return $ rMethodDef 
-    (static <+> public) qco (text "parseTail") [pars pr <+> arg]
+    (static <+> public) qco (text "parseTail") [pars pr <+> arg] []
     (rIfThenElse (text "par.isComma()")
        (rBody [text "par.parseComma()", phead,
                parseTail qco qvc ,makeCons qcons])
@@ -315,11 +315,11 @@ compSharingMembers c = do
 -- > }
 compCtorOfConstructor :: CtorId -> Gen Doc
 compCtorOfConstructor c = ifConfM sharing ctorShr ctorNoShr
-  where ctorShr   = return $ rMethodDef private empty (pretty c) [] empty
+  where ctorShr   = return $ rMethodDef private empty (pretty c) [] [] empty
         ctorNoShr = do fis <- askSt (fieldsOf c)
                        a <- mapM rdr1 fis
                        let b = rBody $ map rdr2 fis
-                       return $ rMethodDef private empty (pretty c) a b
+                       return $ rMethodDef private empty (pretty c) a [] b
           where rdr1 (f,s) = do qs <- qualifiedSort s
                                 return $ qs <+> (text . show) f
                 rdr2 (f,_) = this <> dot <> pretty f <+> equals <+> pretty f
@@ -356,7 +356,7 @@ compMakeOfConstructor c = ifConfM sharing cmakes cmake
         makeDef bd = do cfs <- cfields 
                         a <- mapM rdr cfs
                         return $ rMethodDef (public <+> static) 
-                                 (pretty c) (text "make") a bd
+                                 (pretty c) (text "make") a [] bd
           where rdr (f,s) = do qs <- qualifiedSort s
                                return $ qs <+> (text .show) f
         -- the fields of c
@@ -373,7 +373,7 @@ compGettersOfConstructor = iterOverFields getter vcat
   where getter f s = do qs <- qualifiedSort s
                         let fun = text "get" <> pretty f
                         let b = rBody [jreturn <+> pretty f]
-                        return $ rMethodDef public qs fun [] b 
+                        return $ rMethodDef public qs fun [] [] b 
 
 -- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@,
 -- generates the methods: 
@@ -390,7 +390,7 @@ compSettersOfConstructor = iterOverFields setter vcat
                         let a = [pretty qs <+> pretty f]
                         let b = rBody [this <> dot <> pretty f 
                                        <+> equals <+> pretty f]
-                        return $ rMethodDef public void fun a b 
+                        return $ rMethodDef public void fun a [] b 
 
 -- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@,
 -- generates 
@@ -408,7 +408,7 @@ compToStringBuilder :: CtorId -> Gen Doc
 compToStringBuilder c = do rcalls <- iterOverFields rcall id c
                            return $ rMethodDef 
                              public void (text "toStringBuilder")
-                             [jStringBuilder <+> text "buf"] (complete rcalls)
+                             [jStringBuilder <+> text "buf"] [] (complete rcalls)
   where complete b = rBody $ open : intersperse apcomma b ++ [close]
         bapp arg   = text "buf.append" <> parens arg
         apcomma    = bapp $ dquotes comma
@@ -437,7 +437,7 @@ compToHaskellBuilder :: CtorId -> Gen Doc
 compToHaskellBuilder c = do rcalls <- iterOverFields rcall id c
                             return $ rMethodDef 
                               public void (text "toHaskellBuilder")
-                              [jStringBuilder <+> text "buf"] (complete rcalls)
+                              [jStringBuilder <+> text "buf"] [] (complete rcalls)
   where complete b = rBody $ open : addspaces b ++ [close]
         bapp arg   = text "buf.append" <> parens arg
         apspace    = bapp $ dquotes space
@@ -500,7 +500,7 @@ compDuplicate c = rdr `liftM` askSt (fieldsOf c)
   where pc  = pretty c
         cl  = text "clone"
         th  = (text "this." <>) . pretty . fst
-        rdr = rMethodDef public jShared (text "duplicate") [] . body
+        rdr = rMethodDef public jShared (text "duplicate") [] [] . body
         body fis = rBody 
           [pc <+> cl <+> equals <+> rConstructorCall pc [],
            rMethodCall cl (text "init") (map th fis ++ [text "hashCode"]),
@@ -519,7 +519,7 @@ compInit c = do cfs <- askSt $ fieldsOf c
                 tfs <- mapM rdr cfs
                 let args = tfs ++ [text "int hashCode"]
                 let body = rBody $ map ass cfs ++ [lastLine]
-                return $ rMethodDef private void (text "init") args body
+                return $ rMethodDef private void (text "init") args [] body
   where rdr (f,s) = do qs <- qualifiedSort s
                        return $ qs <+> (text . show) f
         ass (f,s) = let pf = pretty f 
@@ -540,7 +540,7 @@ compInitHash c = do cfs <- askSt $ fieldsOf c
                     args <- mapM rdr cfs
                     let body = rBody $ map ass cfs ++ [lastLine]
                     return $ rMethodDef private void 
-                                        (text "initHashCode") args body
+                                        (text "initHashCode") args [] body
   where rdr (f,s) = do qs <- qualifiedSort s
                        return $ qs <+> (text . show) f
         ass (f,s) = let pf = pretty f 
@@ -596,7 +596,7 @@ compHashFun c = do fis <- askSt (fieldsOf c)
                    let len = length fis
                    let modif = protected <+> if len == 0 then static else empty 
                    return $ rMethodDef modif jint 
-                                       (text "hashFunction") [] (body fis len)
+                                       (text "hashFunction") [] [] (body fis len)
   where body f l = rBody (prologue ++ mid f l ++ epilogue)
         prologue = map text ["int a, b, c",
                              "a = 0x9e3779b9",
@@ -622,7 +622,7 @@ compGetChildCount ::  CtorId -> Gen Doc
 compGetChildCount c = do ar <- length `liftM` askSt (fieldsOf c)
                          return $ wrap ar
   where wrap n = rMethodDef public jint (text "getChildCount") 
-                            [] (jreturn <+> int n <> semi)
+                            [] [] (jreturn <+> int n <> semi)
 
 -- | Given a constructor @c@ of fields @x1,..,xn@ generates
 --
@@ -642,7 +642,7 @@ compGetChildAt c = do fis <- askSt (fieldsOf c)
                       let arg = text "n"
                       return $ rMethodDef 
                                  public jVisitable (text "getChildAt")
-                                 [jint <+> arg] (body arg cs)
+                                 [jint <+> arg] [] (body arg cs)
   where cook (f,s)  = jreturn <+> wrap (this <> dot <> pretty f) s <> semi 
         body n cs   = rSwitch n cs (Just outOfBounds)
         outOfBounds = text "throw new IndexOutOfBoundsException();"
@@ -663,7 +663,7 @@ compGetChildren :: CtorId -> Gen Doc
 compGetChildren c = do fis <- askSt (fieldsOf c)
                        return $ rMethodDef public jVisitableArray
                                            (text "getChildren")
-                                           [] (body fis)
+                                           [] [] (body fis)
   where body fs = let cs = align . sep . punctuate comma $ map child fs
                   in jreturn <+> new <+> jVisitableArray <+> ibraces cs <> semi
         child (f,s) =
@@ -689,7 +689,8 @@ compSetChildAt c = do fis  <- askSt (fieldsOf c)
                       let cs  = zip (map int [0..]) fis'
                       return $ rMethodDef 
                                  public jVisitable (text "setChildAt")
-                                 [jint <+> text "n", jVisitable <+> text "v"] 
+                                 [jint <+> text "n", jVisitable <+> text "v"]
+                                 []
                                  (body cs)
   where body cs     = rSwitch (text "n") cs (Just outOfBounds)
         outOfBounds = text "throw new IndexOutOfBoundsException();"
@@ -734,7 +735,7 @@ compSetChildren c = do cs  <- askSt (fieldsOf c)
                        let ite = rIfThenElse cd bd er
                        return $ rMethodDef 
                                   public jVisitable (text "setChildren")
-                                  [jVisitableArray <+> text "cs"] ite
+                                  [jVisitableArray <+> text "cs"] [] ite
   where cond csn = let cl = checkLen (length csn)
                        ci = map checkInstance csn
                    in align . fillSep $ intersperse (text "&&") (cl:ci)
@@ -760,7 +761,7 @@ compSetChildren c = do cs  <- askSt (fieldsOf c)
 compIsX :: CtorId -> Doc
 compIsX c = let fun = text "is" <> pretty c
                 b   = rBody [jreturn <+> true]
-            in rMethodDef public jboolean fun [] b 
+            in rMethodDef public jboolean fun [] [] b 
 
 -- | @compSymbolName c@ renders 
 --
@@ -794,7 +795,7 @@ compEqAux :: Doc -> (Doc -> Doc -> Doc) -> Doc -> CtorId -> Gen Doc
 compEqAux meth comb ty c = do rcalls <- iterOverFields rcall id c
                               return $ rMethodDef 
                                 (public <+> final) jboolean meth
-                                [ty <+> text "o"] (complete rcalls)
+                                [ty <+> text "o"] [] (complete rcalls)
   where cdoc = pretty c
         complete b = rIfThenElse cond (branch1 b) (jreturn <+> false <> semi) 
         cond       = text "o" <+> instanceof <+> cdoc
@@ -841,7 +842,7 @@ compMakeRandomConstructor c = do
   rcalls <- mapM randomRecCall tys
   return $ rMethodDef (final <+> static <+> public)
                       qco (text "makeRandom")
-                      [text "java.util.Random rand", text "int depth"] 
+                      [text "java.util.Random rand", text "int depth"] []
                       (body qc rcalls)
   where body qc rc = jreturn <+> rMethodCall qc (text "make") rc <> semi
 

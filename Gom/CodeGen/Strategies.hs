@@ -45,19 +45,20 @@ compCongruence c =
 -- the method @public int visit(Introspector introspector) { ... }@
 -- for class @_C@.
 compVisit :: CtorId -> Gen Doc
-compVisit c = return $ rMethodDef public (text "int") (text "visit") 
-                                  [jIntrospector <+> text "introspector"] body
-  where body = vcat $ map text 
+compVisit c = do qc <- qualifiedCtor c
+                 return $ rMethodDef public (text "int") (text "visit") 
+                                  [jIntrospector <+> text "introspector"] [] (body qc)
+  where body qc = vcat $ map text 
           ["environment.setIntrospector(introspector);",
            "Object any = environment.getSubject();",
-           "if (any instanceof " ++ show c ++ ") {",
+           "if (any instanceof " ++ show qc ++ ") {",
            "  int childCount = introspector.getChildCount(any);",
            "  Object[] childs = null;",
            "  for(int i = 0; i < childCount; i++) {",
            "    Object oldChild = introspector.getChildAt(any,i);",
            "    environment.down(i+1);",
-           "    int status = arguments[ARG].visit(introspector);",
-           "    if(status != Environment.SUCCESS) {",
+           "    int status = arguments[i].visit(introspector);",
+           "    if(status != tom.library.sl.Environment.SUCCESS) {",
            "      environment.upLocal();",
            "      return status;",
            "    }",
@@ -74,9 +75,9 @@ compVisit c = return $ rMethodDef public (text "int") (text "visit")
            "  if(childs!=null) {",
            "    environment.setSubject(introspector.setChildren(any,childs));",
            "  }",
-           "  return Environment.SUCCESS;",
+           "  return tom.library.sl.Environment.SUCCESS;",
            "} else {",
-           "  return Environment.FAILURE;",
+           "  return tom.library.sl.Environment.FAILURE;",
            "}"]
 
 
@@ -84,18 +85,19 @@ compVisit c = return $ rMethodDef public (text "int") (text "visit")
 -- the method @public int visitLight(Introspector introspector) { ... }@
 -- for class @_C@.
 compVisitLight :: CtorId -> Gen Doc
-compVisitLight c = return $ 
-  rMethodDef public typeGenericT (text "visitLight") 
-             [typeT <+> text "any", jIntrospector <+> text "introspector"] body
+compVisitLight c = do qc <- qualifiedCtor c
+                      return $ 
+                        rMethodDef public typeGenericT (text "visitLight") 
+                        [typeT <+> text "any", jIntrospector <+> text "introspector"] [jVisitFailure] (body qc)
   where typeT = text "T"
         typeGenericT = text "<T> T"
-        body = vcat $ map text 
-          ["if(any instanceof " ++ show c ++ ") {",
+        body qc = vcat $ map text 
+          ["if(any instanceof " ++ show qc ++ ") {",
           "   T result = any;",
           "   Object[] childs = null;",
           "   for (int i = 0, nbi = 0; i < 1; i++) {",
           "       Object oldChild = introspector.getChildAt(any,nbi);",
-          "       Object newChild = args[i].visitLight(oldChild,introspector);",
+          "       Object newChild = arguments[i].visitLight(oldChild,introspector);",
           "       if(childs != null) {",
           "         childs[nbi] = newChild;",
           "       } else if(newChild != oldChild) {",
@@ -110,7 +112,7 @@ compVisitLight c = return $
           "   }",
           "   return result;",
           " } else {",
-          "   throw new tom.library.sl.VisitFailure(msg);",
+          "   throw new tom.library.sl.VisitFailure();",
           " }"]
         
 -- | Given a non-variadic constructor @C@, generates
@@ -118,9 +120,9 @@ compVisitLight c = return $
 compCongruenceConstructor :: CtorId -> Gen Doc
 compCongruenceConstructor c = do
   fis <- askSt (fieldsOf c)
-  let typedArgs = prettyArgs fis (text "Strategy ")
+  let typedArgs = prettyArgs fis jStrategy
       args      = prettyArgs fis empty
-  return $ rMethodDef public empty (text "_" <> pretty c) typedArgs 
+  return $ rMethodDef public empty (text "_" <> pretty c) typedArgs []
                       (rBody [rMethodCall this (text "initSubterm") args])
   where prettyArgs fis prefix = map (pre . pretty . fst) fis
-          where pre x = prefix <> text "s_" <> x
+          where pre x = prefix <> text " s_" <> x
