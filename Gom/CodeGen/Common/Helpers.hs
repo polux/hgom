@@ -27,8 +27,7 @@ module Gom.CodeGen.Common.Helpers (
   -- ** Java Types
   jint, jStringBuilder, jboolean,
   jObject, jVisitable, jShared, jSharedId,
-  jVisitableArray, jSCombinator, 
-  jIntrospector, jVisitFailure,jStrategy,
+  jVisitableArray, jSCombinator, jStrategy,
   -- ** Classes
   rClass,
   -- ** Methods
@@ -75,16 +74,15 @@ false      = text "false"
 final      = text "final"
 static     = text "static"
 
-jint,jStringBuilder,jboolean,jObject,jIntrospector,jVisitFailure,jSCombinator,jStrategy :: Doc
-jVisitable,jShared,jSharedId,jVisitableArray :: Doc
+jint,jStringBuilder,jboolean,jObject :: Doc
+jSCombinator,jStrategy, jVisitable :: Doc
+jShared,jSharedId,jVisitableArray :: Doc
 jint            = text "int"
 jboolean        = text "boolean"
 jStringBuilder  = text "java.lang.StringBuilder"
 jObject         = text "Object"
 jVisitable      = text "tom.library.sl.Visitable"
-jIntrospector   = text "tom.library.sl.Introspector"
 jStrategy       = text "tom.library.sl.Strategy"
-jVisitFailure   = text "tom.library.sl.VisitFailure"
 jSCombinator    = text "tom.library.sl.AbstractStrategyCombinator"
 jShared         = text "shared.SharedObject"
 jSharedId       = text "shared.SharedObjectWithID"
@@ -129,7 +127,6 @@ rMethodDef md ty mn args exceptions body =
   md <+> ty <+> mn <> encloseCommas args <+> r exceptions <+> ibraces body
   where r [] = empty
         r l  = text "throws" <+> hsep (punctuate comma l)
-
 
 -- | Renders @object.method(arg_1,...,arg_n)@.
 rMethodCall

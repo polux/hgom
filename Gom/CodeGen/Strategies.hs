@@ -45,75 +45,73 @@ compCongruence c =
 -- the method @public int visit(Introspector introspector) { ... }@
 -- for class @_C@.
 compVisit :: CtorId -> Gen Doc
-compVisit c = do qc <- qualifiedCtor c
-                 return $ rMethodDef public (text "int") (text "visit") 
-                                  [jIntrospector <+> text "introspector"] [] (body qc)
+compVisit c = body `liftM` qualifiedCtor c
   where body qc = vcat $ map text 
-          ["environment.setIntrospector(introspector);",
-           "Object any = environment.getSubject();",
-           "if (any instanceof " ++ show qc ++ ") {",
-           "  int childCount = introspector.getChildCount(any);",
-           "  Object[] childs = null;",
-           "  for(int i = 0; i < childCount; i++) {",
-           "    Object oldChild = introspector.getChildAt(any,i);",
-           "    environment.down(i+1);",
-           "    int status = arguments[i].visit(introspector);",
-           "    if(status != tom.library.sl.Environment.SUCCESS) {",
+          ["public int visit(tom.library.sl.Introspector introspector) {",
+           "  environment.setIntrospector(introspector);",
+           "  Object any = environment.getSubject();",
+           "  if (any instanceof " ++ show qc ++ ") {",
+           "    int childCount = introspector.getChildCount(any);",
+           "    Object[] childs = null;",
+           "    for(int i = 0; i < childCount; i++) {",
+           "      Object oldChild = introspector.getChildAt(any,i);",
+           "      environment.down(i+1);",
+           "      int status = arguments[i].visit(introspector);",
+           "      if(status != tom.library.sl.Environment.SUCCESS) {",
+           "        environment.upLocal();",
+           "        return status;",
+           "      }",
+           "      Object newChild = environment.getSubject();",
+           "      if(childs != null) {",
+           "        childs[i] = newChild;",
+           "      } else if(newChild != oldChild) {",
+           "        // allocate the array, and fill it",
+           "        childs = introspector.getChildren(any);",
+           "        childs[i] = newChild;",
+           "      } ",
            "      environment.upLocal();",
-           "      return status;",
            "    }",
-           "    Object newChild = environment.getSubject();",
-           "    if(childs != null) {",
-           "      childs[i] = newChild;",
-           "    } else if(newChild != oldChild) {",
-           "      // allocate the array, and fill it",
-           "      childs = introspector.getChildren(any);",
-           "      childs[i] = newChild;",
-           "    } ",
-           "    environment.upLocal();",
+           "    if(childs!=null) {",
+           "      environment.setSubject(introspector.setChildren(any,childs));",
+           "    }",
+           "    return tom.library.sl.Environment.SUCCESS;",
+           "  } else {",
+           "    return tom.library.sl.Environment.FAILURE;",
            "  }",
-           "  if(childs!=null) {",
-           "    environment.setSubject(introspector.setChildren(any,childs));",
-           "  }",
-           "  return tom.library.sl.Environment.SUCCESS;",
-           "} else {",
-           "  return tom.library.sl.Environment.FAILURE;",
            "}"]
-
 
 -- | Given a non-variadic constructor @C@, generates
 -- the method @public int visitLight(Introspector introspector) { ... }@
 -- for class @_C@.
 compVisitLight :: CtorId -> Gen Doc
-compVisitLight c = do qc <- qualifiedCtor c
-                      return $ 
-                        rMethodDef public typeGenericT (text "visitLight") 
-                        [typeT <+> text "any", jIntrospector <+> text "introspector"] [jVisitFailure] (body qc)
-  where typeT = text "T"
-        typeGenericT = text "<T> T"
-        body qc = vcat $ map text 
-          ["if(any instanceof " ++ show qc ++ ") {",
-          "   T result = any;",
-          "   Object[] childs = null;",
-          "   for (int i = 0, nbi = 0; i < 1; i++) {",
-          "       Object oldChild = introspector.getChildAt(any,nbi);",
-          "       Object newChild = arguments[i].visitLight(oldChild,introspector);",
-          "       if(childs != null) {",
-          "         childs[nbi] = newChild;",
-          "       } else if(newChild != oldChild) {",
-          "         // allocate the array, and fill it",
-          "         childs = introspector.getChildren(any);",
-          "         childs[nbi] = newChild;",
-          "       }",
-          "       nbi++;",
-          "   }",
-          "   if(childs!=null) {",
-          "     result = introspector.setChildren(any,childs);",
-          "   }",
-          "   return result;",
-          " } else {",
-          "   throw new tom.library.sl.VisitFailure();",
-          " }"]
+compVisitLight c = body `liftM` qualifiedCtor c
+  where body qc = vcat $ map text 
+          ["public <T> T visitLight(T any,",
+           "  tom.library.sl.Introspector introspector)", 
+           "  throws tom.library.sl.VisitFailure {",
+           "  if(any instanceof " ++ show qc ++ ") {",
+           "    T result = any;",
+           "    Object[] childs = null;",
+           "    for (int i = 0, nbi = 0; i < 1; i++) {",
+           "        Object oldChild = introspector.getChildAt(any,nbi);",
+           "        Object newChild = arguments[i].visitLight(oldChild,introspector);",
+           "        if(childs != null) {",
+           "          childs[nbi] = newChild;",
+           "        } else if(newChild != oldChild) {",
+           "          // allocate the array, and fill it",
+           "          childs = introspector.getChildren(any);",
+           "          childs[nbi] = newChild;",
+           "        }",
+           "        nbi++;",
+           "    }",
+           "    if(childs!=null) {",
+           "      result = introspector.setChildren(any,childs);",
+           "    }",
+           "    return result;",
+           "  } else {",
+           "    throw new tom.library.sl.VisitFailure();",
+           "  }",
+           "}"]
         
 -- | Given a non-variadic constructor @C@, generates
 -- the constructor of @_C@.
