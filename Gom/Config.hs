@@ -89,7 +89,8 @@ options =
   ,Option ['P'] ["pretty"] (NoArg  cpretty)
           "pretty-print the module and exit"
   ,Option [] ["test"] (ReqArg cutests "n")
-          "run n tests by test case and exit"
+          (unlines ["run n random tests by test case",
+                    "in the test suite and exit"])
   ,Option ['p'] ["package"] (ReqArg cpackage "packageName") 
           "specify package name"
   ,Option ['c'] ["congruence"] (ReqArg ccongr "(same|sep)")

@@ -156,12 +156,12 @@ instance Arbitrary SortId  where arbitrary = SortId  `fmap` genId
 instance Arbitrary FieldId where arbitrary = FieldId `fmap` genId
 instance Arbitrary CtorId  where arbitrary = CtorId  `fmap` genId
 
-genId :: Gen [Char]
+genId :: Gen String
 genId = listOf1 $ oneof [choose ('a','z'), choose ('A','Z')]
 
 allDiff :: (Eq t) => [t] -> Bool
 allDiff []     = True
-allDiff (x:xs) = not (x `elem` xs) && allDiff xs
+allDiff (x:xs) = x `notElem` xs && allDiff xs
 
 instance Arbitrary Module where
   arbitrary = do
