@@ -46,7 +46,7 @@ are valid files, other ones demonstrate `hgom` error messages.
 ## Test ##
 
 Simply run `hgom --test n` where `n` is the number of random inputs generated
-for each test. 
+for each test, or run `cabal test` for `n=100`.
 
 ### Code Coverage ###
 
@@ -76,8 +76,9 @@ It takes some time. The generated files can be plotted using
 ### Better ###
 
  * faster !
- * smaller code, almost 100% code coverage,
-   compiles much faster
+ * smaller code, compiles much faster
+ * almost 100% code coverage,
+ * consistency checks using QuickCheck
  * more things optional: visitable, checker, ...
  * `toHaskell`, `makeRandom`, `depth` and `size`
     methods generation (optional)
