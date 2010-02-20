@@ -47,6 +47,7 @@ import Data.List(foldl',nub,sort)
 import Test.QuickCheck
 import Test.Framework (Test, testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
+import qualified Data.Set as S -- for unit testing
 
 -- | A private datatype implemented by maps from sorts to constructors, from
 -- constructors to codomains, etc.
@@ -259,7 +260,14 @@ propCodomConsistent st = sort assocs == sort (M.toList $ codom st)
   where assocs = toAssoc (sctors st) ++ toAssoc (vctors st)
         toAssoc amap = [(c,s) | (s,l) <- M.toList amap, c <- l]
 
+propBaseConsistent :: SymbolTable -> Bool
+propBaseConsistent st = basectors `subset` variadics
+  where basectors  = M.elems (baseCtor st)
+        variadics  = concat . M.elems . vctors $ st
+        subset x y = S.fromList x `S.isSubsetOf` S.fromList y
+
 -- | test suite for the module
 testSuite :: Test
 testSuite = testGroup "symbol table" 
-  [testProperty "codom consistency" propCodomConsistent]
+  [testProperty "codomain consistency" propCodomConsistent
+  ,testProperty "base ctors consistency" propBaseConsistent]
