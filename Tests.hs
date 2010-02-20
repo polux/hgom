@@ -21,7 +21,7 @@ import Gom.Pretty
 import Gom.Sig
 
 propParsePretty :: Module -> Bool
-propParsePretty m = parseModule (show m)
+propParsePretty m = parseModule (show m) == m
 
 -- | list of @(test_name, test_io_action)@
 tests ::  [([Char], IO ())]
