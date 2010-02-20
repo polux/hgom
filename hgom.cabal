@@ -16,16 +16,16 @@ license:           GPL
 license-file:      COPYING
 cabal-version:     >= 1.6.0
 build-type:        Simple
-tested-with:       GHC == 6.10
-data-files:        tests/examples/*.gom
-                   tests/coverage/coverage.sh
-                   tests/coverage/*.gom
-                   tests/bench/bench.sh 
-                   tests/bench/Gen.hs
-                   tests/bench/Makefile
-                   README.markdown
+tested-with:       GHC >= 6.10
 
 extra-source-files: Tests.hs
+                    tests/examples/*.gom
+                    tests/coverage/coverage.sh
+                    tests/coverage/*.gom
+                    tests/bench/bench.sh 
+                    tests/bench/Gen.hs
+                    tests/bench/Makefile
+                    README.markdown
 
 executable hgom
   main-is:       Gom.hs
