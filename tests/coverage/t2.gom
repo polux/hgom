@@ -1,8 +1,0 @@
-module Foo
-imports
-abstract syntax
-
-T1 = F(x:T2,y:T1) | A(x:T2)
-T2 = G(x:T1,y:T2) | B()
-
-List = List(T1*)

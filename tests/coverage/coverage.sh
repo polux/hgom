@@ -1,28 +1,29 @@
 #!/bin/sh
 
 HGOM=../../dist/build/hgom/hgom
+DATA=../data
 
-for i in t*.gom; do
+for i in $DATA/t*.gom; do
   $HGOM $i
 done 
 
 $HGOM --help
-$HGOM -P t1.gom 
-$HGOM -c no t1.gom 
-$HGOM -c sep t1.gom 
-$HGOM -c same t1.gom 
-$HGOM -c foo t1.gom 
-$HGOM -h t1.gom 
-$HGOM --test 3 t1.gom 
-$HGOM --compact t1.gom 
-$HGOM --random t1.gom 
-$HGOM --size t1.gom 
-$HGOM --depth t1.gom 
-$HGOM --noVisitable t1.gom
-$HGOM --noSharing t1.gom
-$HGOM --noCheck t1.gom
-$HGOM --noParsers t1.gom
-$HGOM -p aa.bb.cc t1.gom 
+$HGOM -P $DATA/t1.gom 
+$HGOM -c no $DATA/t1.gom 
+$HGOM -c sep $DATA/t1.gom 
+$HGOM -c same $DATA/t1.gom 
+$HGOM -c foo $DATA/t1.gom 
+$HGOM -h $DATA/t1.gom 
+$HGOM --test 3 $DATA/t1.gom 
+$HGOM --compact $DATA/t1.gom 
+$HGOM --random $DATA/t1.gom 
+$HGOM --size $DATA/t1.gom 
+$HGOM --depth $DATA/t1.gom 
+$HGOM --noVisitable $DATA/t1.gom
+$HGOM --noSharing $DATA/t1.gom
+$HGOM --noCheck $DATA/t1.gom
+$HGOM --noParsers $DATA/t1.gom
+$HGOM -p aa.bb.cc $DATA/t1.gom 
 $HGOM -V
 $HGOM aa -p 
 $HGOM

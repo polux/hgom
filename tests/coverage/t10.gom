@@ -1,4 +1,0 @@
-module Foo
-abstract syntax
-
-T1 = f(x:T2,y:T1) |a()

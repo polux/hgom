@@ -1,5 +1,0 @@
-module Foo
-imports int String char
-abstract syntax
-
-T1 = f(x:T2,y:T1) |

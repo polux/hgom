@@ -18,13 +18,14 @@ cabal-version:     >= 1.6.0
 build-type:        Custom
 tested-with:       GHC >= 6.10
 
+data-fild: test/data
 extra-source-files: Tests.hs
-                    tests/examples/*.gom
-                    tests/coverage/coverage.sh
-                    tests/coverage/*.gom
-                    tests/bench/bench.sh 
-                    tests/bench/Gen.hs
-                    tests/bench/Makefile
+                    examples/*.gom
+                    test/coverage/coverage.sh
+                    test/coverage/*.gom
+                    test/bench/bench.sh 
+                    test/bench/Gen.hs
+                    test/bench/Makefile
                     README.markdown
 
 executable hgom
