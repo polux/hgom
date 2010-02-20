@@ -42,7 +42,8 @@ data Config =
     parsers :: Bool, -- ^ generate @from*@ methods ? 
     random  :: Bool, -- ^ generate @makeRandom@ methods ?
     depth   :: Bool, -- ^ generate @depth@ methods ?
-    size    :: Bool  -- ^ generate @size@ methods ?
+    size    :: Bool, -- ^ generate @size@ methods ?
+    utests  :: Maybe Int -- ^ run unit tests ? how many by test case ?
   } 
 
 -- | Default configuration.
@@ -62,7 +63,8 @@ defaultConfig =
     parsers = True,
     random  = False,
     depth   = False,
-    size    = False
+    size    = False,
+    utests  = Nothing
   }
 
 -- | Represents the three options values for @--withCongruenceStrategies@
@@ -86,6 +88,8 @@ options =
           "show version number and exit"
   ,Option ['P'] ["pretty"] (NoArg  cpretty)
           "pretty-print the module and exit"
+  ,Option [] ["test"] (ReqArg cutests "n")
+          "run n tests by test case and exit"
   ,Option ['p'] ["package"] (ReqArg cpackage "packageName") 
           "specify package name"
   ,Option ['c'] ["congruence"] (ReqArg ccongr "(same|sep)")
@@ -97,7 +101,7 @@ options =
           "generate depth methods"
   ,Option ['s'] ["size"] (NoArg csize)
           "generate size methods"
-  ,Option ['h'] ["haskell"] (NoArg  chaskell)                
+  ,Option ['h'] ["haskell"] (NoArg chaskell)                
           "generate 'toHaskell' methods"
   ,Option [] ["noSharing"] (NoArg csharing)
           "don't share structurally equal terms"
@@ -122,6 +126,7 @@ options =
         crandom    c = return $ c { random  = True  }
         cdepth     c = return $ c { depth   = True  }
         csize      c = return $ c { size    = True  }
+        cutests  s c = return $ c { utests = Just (read s) }
         cpackage p c = return $ c { package = Just (split '.' p) }
 
         ccongr "same" c = return $ c { congr = SameFile }

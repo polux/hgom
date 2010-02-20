@@ -13,6 +13,7 @@ $HGOM -c sep t1.gom
 $HGOM -c same t1.gom 
 $HGOM -c foo t1.gom 
 $HGOM -h t1.gom 
+$HGOM --test 3 t1.gom 
 $HGOM --compact t1.gom 
 $HGOM --random t1.gom 
 $HGOM --size t1.gom 

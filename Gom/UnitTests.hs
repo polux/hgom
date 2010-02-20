@@ -1,6 +1,6 @@
 ------------------------------------------------------------------
 -- |
--- Module      : Tests
+-- Module      : Gom.UnitTests
 -- Copyright   : (c) Paul Brauner 2009
 --               (c) Emilie Balland 2009
 --               (c) INRIA 2009
@@ -10,23 +10,29 @@
 -- Stability   : provisional
 -- Portability : non-portable (requires generalized newtype deriving)
 --
--- Run all QuickCheck tests
+-- Run all unit tests
 --------------------------------------------------------------------
 
-import Test.QuickCheck
+module Gom.UnitTests(testSuite) where
 
-import Gom.SymbolTable
+import Test.Framework (Test,testGroup)
+import Test.Framework.Providers.QuickCheck2 (testProperty)
+
+import qualified Gom.SymbolTable
+import Gom.Pretty ()
 import Gom.Parser
-import Gom.Pretty
 import Gom.Sig
 
+-- | checks that @parse . pretty = id@
 propParsePretty :: Module -> Bool
 propParsePretty m = parseModule (show m) == m
 
--- | list of @(test_name, test_io_action)@
-tests ::  [([Char], IO ())]
-tests = [("codom_consistent", quickCheck propCodomConsistent)
-        ,("parse/pretty    ", quickCheck propParsePretty    )]
+-- | cross modules tests
+localTestSuite :: Test
+localTestSuite = testGroup "cross module tests" 
+  [testProperty "parse . pretty = id" propParsePretty]
 
--- | run quickCheck tests 
-main = mapM_ (\(s,a) -> putStr (s ++ ": ") >> a) tests
+-- | all tests
+testSuite :: [Test]
+testSuite = [localTestSuite,Gom.SymbolTable.testSuite]
+

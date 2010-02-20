@@ -34,8 +34,8 @@ module Gom.SymbolTable (
   addCtor,
   -- ** Table completion
   completeVariadics,
-  -- * Consitency Checks (to be quickChecked)
-  propCodomConsistent
+  -- * Tests
+  testSuite
 ) where
 
 import Gom.Sig
@@ -45,6 +45,8 @@ import Data.Either(partitionEithers)
 import Data.List(foldl',nub,sort)
 
 import Test.QuickCheck
+import Test.Framework (Test, testGroup)
+import Test.Framework.Providers.QuickCheck2 (testProperty)
 
 -- | A private datatype implemented by maps from sorts to constructors, from
 -- constructors to codomains, etc.
@@ -257,4 +259,7 @@ propCodomConsistent st = sort assocs == sort (M.toList $ codom st)
   where assocs = toAssoc (sctors st) ++ toAssoc (vctors st)
         toAssoc amap = [(c,s) | (s,l) <- M.toList amap, c <- l]
 
-
+-- | test suite for the module
+testSuite :: Test
+testSuite = testGroup "symbol table" 
+  [testProperty "codom consistency" propCodomConsistent]
