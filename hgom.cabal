@@ -15,7 +15,7 @@ category:          Compilers
 license:           GPL
 license-file:      COPYING
 cabal-version:     >= 1.6.0
-build-type:        Simple
+build-type:        Custom
 tested-with:       GHC >= 6.10
 
 extra-source-files: Tests.hs

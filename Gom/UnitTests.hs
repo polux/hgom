@@ -29,7 +29,7 @@ propParsePretty m = parseModule (show m) == m
 
 -- | cross modules tests
 localTestSuite :: Test
-localTestSuite = testGroup "cross module tests" 
+localTestSuite = testGroup "cross module:" 
   [testProperty "parse . pretty = id" propParsePretty]
 
 -- | all tests
