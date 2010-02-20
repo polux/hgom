@@ -298,10 +298,10 @@ propFieldsSortConsistent st =  all sortOk $ M.elems (sctors st)
 -- | test suite for the module
 testSuite :: Test
 testSuite = testGroup "symbol table consistency after completion" 
-  [testProperty "codomain consistency   " $ go propCodomConsistent
-  ,testProperty "base ctors consistency " $ go propBaseConsistent
-  ,testProperty "domains consistency    " $ go propDomainsConsistent
-  ,testProperty "no ctors duplicates    " $ go propCtorsAllDiff
-  ,testProperty "same fields sames sorts" $ go propFieldsSortConsistent]
+  [testProperty "codomain consistency  " $ go propCodomConsistent
+  ,testProperty "base ctors consistency" $ go propBaseConsistent
+  ,testProperty "domains consistency   " $ go propDomainsConsistent
+  ,testProperty "no ctor duplicates    " $ go propCtorsAllDiff
+  ,testProperty "same fields same sorts" $ go propFieldsSortConsistent]
 
   where go f = f . ast2st
