@@ -41,3 +41,4 @@ instance Pretty Module where
                           <$$> text "abstract syntax" <> lb
                           <$$> vcat (punctuate lb (map pretty d))
 
+instance Show Module where show = show . pretty

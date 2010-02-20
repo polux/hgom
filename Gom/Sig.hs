@@ -14,6 +14,8 @@
 -- after parsing, and several helper functions.
 --------------------------------------------------------------------
 
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+
 module Gom.Sig (
   SortId(),
   FieldId(),
@@ -39,6 +41,7 @@ module Gom.Sig (
 
 import Data.Char(toLower)
 import Text.PrettyPrint.Leijen
+import Test.QuickCheck
 
 -- | Sort name (e.g. @Expr@) identifier.
 newtype SortId     = SortId String 
@@ -63,7 +66,7 @@ data Module = Module {
   moduleName :: String,    -- ^ module name
   imports    :: [SortId],  -- ^ list of imported sorts
   sortDefs   :: [SortDef]  -- ^ sort definitions
-}
+} deriving (Eq)
 
 -- | Represents a sort definition, 
 -- e.g. @List = nil() | cons(x:int, xs:List)@.
@@ -71,7 +74,7 @@ data SortDef = SortDef {
   sortName :: SortId,      -- ^ sort name (e.g. @List@)
   ctors    :: [Ctor]       -- ^ constructors
                            -- (e.g. @nil()@ and @cons(x:int, xs:List)@)
-}
+} deriving (Eq)
 
 -- | Represents a constructor definition.
 data Ctor = 
@@ -85,6 +88,7 @@ data Ctor =
       ctorName :: CtorId, -- ^ constructor name (e.g. @plus@)
       field :: SortId     -- ^ sort of the only field (e.g. @Expr@)
     }
+ deriving (Eq)
 
 makeSortId :: String -> SortId
 makeSortId = SortId
@@ -145,3 +149,65 @@ definedSorts sig = imports sig ++ map sortName (sortDefs sig)
 -- in @m@.
 constructorNames :: Module -> [CtorId]
 constructorNames = map ctorName . concatMap ctors . sortDefs
+
+-- QuickCheck --
+
+instance Arbitrary SortId  where arbitrary = SortId  `fmap` genId
+instance Arbitrary FieldId where arbitrary = FieldId `fmap` genId
+instance Arbitrary CtorId  where arbitrary = CtorId  `fmap` genId
+
+genId :: Gen [Char]
+genId = listOf1 $ oneof [choose ('a','z'), choose ('A','Z')]
+
+allDiff :: (Eq t) => [t] -> Bool
+allDiff []     = True
+allDiff (x:xs) = not (x `elem` xs) && allDiff xs
+
+instance Arbitrary Module where
+  arbitrary = do
+    modul <- genId
+    sorts <- arbitrary `suchThat` allDiff
+    -- We need at least one constructor per sort
+    cidss <- listOf (listOf1 arbitrary) `suchThat` (allDiff . concat)
+    let mix = zip sorts cidss
+    defs  <- mapM (genSortDef (map fst mix)) mix
+    return $ Module modul [] defs
+  shrink (Module m i d) = do
+    d' <- shrink d
+    return $ Module m i d'
+
+genTypedFields ::  (Arbitrary a, Eq a) => [a1] -> Gen [(a, a1)]
+genTypedFields sorts = do
+  flds <- listOf1 arbitrary `suchThat` allDiff
+  doms <- listOf1 (elements sorts)
+  return $ zip flds doms
+
+instance Arbitrary SortDef where
+  shrink (SortDef s l) = do
+    l' <- shrink l
+    return $ SortDef s l' 
+
+genSortDef ::  [SortId] -> (SortId, [CtorId]) -> Gen SortDef
+genSortDef sorts (sid,cids) = do
+  flds   <- genTypedFields sorts
+  ctrs   <- mapM (genCtor sorts flds) cids
+  return $ SortDef sid ctrs
+
+instance Arbitrary Ctor where
+  shrink (Simple c l) = do l' <- shrink l
+                           return $ Simple c l' 
+  shrink x            = return x 
+
+genCtor :: [SortId] -> [(FieldId, SortId)] -> CtorId -> Gen Ctor
+genCtor sorts flds cname =
+  oneof [genSCtor flds cname, genVCtor sorts cname]
+
+genSCtor :: [(FieldId, SortId)] -> CtorId -> Gen Ctor
+genSCtor flds cname = do
+  fis <- listOf (elements flds) `suchThat` allDiff
+  return $ Simple cname fis
+
+genVCtor :: [SortId] -> CtorId -> Gen Ctor
+genVCtor sorts cname = do
+  sort <- elements sorts
+  return $ Variadic cname sort

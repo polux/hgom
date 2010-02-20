@@ -33,14 +33,18 @@ module Gom.SymbolTable (
   -- They take AST bits of "Gom.Sig" as arguments.
   addCtor,
   -- ** Table completion
-  completeVariadics
+  completeVariadics,
+  -- * Consitency Checks (to be quickChecked)
+  propCodomConsistent
 ) where
 
 import Gom.Sig
 import Control.Monad.State
 import qualified Data.Map as M
 import Data.Either(partitionEithers)
-import Data.List(foldl',nub)
+import Data.List(foldl',nub,sort)
+
+import Test.QuickCheck
 
 -- | A private datatype implemented by maps from sorts to constructors, from
 -- constructors to codomains, etc.
@@ -60,9 +64,9 @@ data SymbolTable =
     vfield :: M.Map CtorId SortId,
     -- | codomain of the constructor (redundant information)
     codom :: M.Map CtorId SortId,
-    -- | maps generated constructors to original ones (redundant info)
+    -- | maps generated constructors to original ones
     baseCtor :: M.Map CtorId CtorId
-  }
+  } deriving (Show)
 
 -- | Name of the module encoded by the symbol table.
 modName :: SymbolTable -> String
@@ -239,5 +243,18 @@ completeVariadics st = foldl' add st res
                   in (co, ci, [toNil ci, toCons ci co dom])
         add st' (co,ci,l) = 
           (insertGeneratedCtors (map ctorName l) ci . addCtors co l) st'
+
+-- | generates an arbitrary Symboltable from an arbitrary signature
+instance Arbitrary SymbolTable where
+  arbitrary = do
+    sig <- arbitrary
+    return $ ast2st sig 
+
+-- | checks that redundant information about constructor domains is consistent
+-- with the rest of the table
+propCodomConsistent :: SymbolTable -> Bool
+propCodomConsistent st = sort assocs == sort (M.toList $ codom st)
+  where assocs = toAssoc (sctors st) ++ toAssoc (vctors st)
+        toAssoc amap = [(c,s) | (s,l) <- M.toList amap, c <- l]
 
 
