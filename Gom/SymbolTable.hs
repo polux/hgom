@@ -45,7 +45,6 @@ import Data.Either(partitionEithers)
 import Data.List(foldl',nub,sort)
 
 -- required by tests only
-import Test.QuickCheck
 import Test.Framework (Test, testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
 import qualified Data.Set as S
@@ -251,12 +250,6 @@ completeVariadics st = foldl' add st res
         add st' (co,ci,l) = 
           (insertGeneratedCtors (map ctorName l) ci . addCtors co l) st'
 
--- | generates an arbitrary Symboltable from an arbitrary signature
-instance Arbitrary SymbolTable where
-  arbitrary = do
-    sig <- arbitrary
-    return $ ast2st sig 
-
 -- | tests for list inclusion modulo AC
 subset ::  (Ord a) => [a] -> [a] -> Bool
 subset x y = S.fromList x `S.isSubsetOf` S.fromList y
@@ -304,9 +297,11 @@ propFieldsSortConsistent st =  all sortOk $ M.elems (sctors st)
 
 -- | test suite for the module
 testSuite :: Test
-testSuite = testGroup "symbol table" 
-  [testProperty "codomain consistency"    propCodomConsistent
-  ,testProperty "base ctors consistency"  propBaseConsistent
-  ,testProperty "domains consistency"     propDomainsConsistent
-  ,testProperty "no ctors duplicates"     propCtorsAllDiff
-  ,testProperty "same fields sames sorts" propFieldsSortConsistent]
+testSuite = testGroup "symbol table consistency after completion" 
+  [testProperty "codomain consistency"    $ go propCodomConsistent
+  ,testProperty "base ctors consistency"  $ go propBaseConsistent
+  ,testProperty "domains consistency"     $ go propDomainsConsistent
+  ,testProperty "no ctors duplicates"     $ go propCtorsAllDiff
+  ,testProperty "same fields sames sorts" $ go propFieldsSortConsistent]
+
+  where go f = f . ast2st
