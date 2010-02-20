@@ -1,2 +1,3 @@
  * generate fromAterm
  * generate congruence strategies [emilie]
+ * write non-regression tests using the content of "examples" an HUnit
