@@ -26,7 +26,7 @@ propParsePretty m = parseModule (show m) == m
 -- | list of @(test_name, test_io_action)@
 tests ::  [([Char], IO ())]
 tests = [("codom_consistent", quickCheck propCodomConsistent)
-        ,("parse/pretty    ",     quickCheck propParsePretty)]
+        ,("parse/pretty    ", quickCheck propParsePretty    )]
 
 -- | run quickCheck tests 
 main = mapM_ (\(s,a) -> putStr (s ++ ": ") >> a) tests
