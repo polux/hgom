@@ -44,10 +44,14 @@ import qualified Data.Map as M
 import Data.Either(partitionEithers)
 import Data.List(foldl',nub,sort)
 
+-- required by tests only
 import Test.QuickCheck
 import Test.Framework (Test, testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
-import qualified Data.Set as S -- for unit testing
+import qualified Data.Set as S
+import qualified Data.List as L
+import Gom.Pretty ()
+import Data.Maybe(catMaybes)
 
 -- | A private datatype implemented by maps from sorts to constructors, from
 -- constructors to codomains, etc.
@@ -253,6 +257,10 @@ instance Arbitrary SymbolTable where
     sig <- arbitrary
     return $ ast2st sig 
 
+-- | tests for list inclusion modulo AC
+subset ::  (Ord a) => [a] -> [a] -> Bool
+subset x y = S.fromList x `S.isSubsetOf` S.fromList y
+
 -- | checks that redundant information about constructor domains is consistent
 -- with the rest of the table
 propCodomConsistent :: SymbolTable -> Bool
@@ -260,14 +268,45 @@ propCodomConsistent st = sort assocs == sort (M.toList $ codom st)
   where assocs = toAssoc (sctors st) ++ toAssoc (vctors st)
         toAssoc amap = [(c,s) | (s,l) <- M.toList amap, c <- l]
 
+-- | checks that the base constructors actually exist
 propBaseConsistent :: SymbolTable -> Bool
 propBaseConsistent st = basectors `subset` variadics
   where basectors  = M.elems (baseCtor st)
         variadics  = concat . M.elems . vctors $ st
-        subset x y = S.fromList x `S.isSubsetOf` S.fromList y
+
+-- | checks that all constructor domains exist
+propDomainsConsistent :: SymbolTable -> Bool
+propDomainsConsistent st = doms `subset` allSorts
+  where doms = sdoms ++ vdoms
+        sdoms = map snd . concat . M.elems $ sfields st
+        vdoms = M.elems $ vfield st
+        allSorts = M.keys (sctors st) ++ 
+                   M.keys (vctors st) ++ 
+                   imported st
+
+-- | checks that all constructors have different names
+propCtorsAllDiff :: SymbolTable -> Bool
+propCtorsAllDiff st = allDiff allCtors
+  where allCtors  = concat $ M.elems (sctors st) ++ M.elems (vctors st)
+        allDiff l = l == nub l
+
+-- | helper function to determine if some relation is a function
+isFun :: (Eq a, Eq b) => [(a, b)] -> Bool
+isFun []         = True
+isFun ((x,y):as) = let (xs,nxs) = L.partition ((== x) . fst) as
+                   in all ((== y) . snd) xs && isFun nxs
+
+-- | checks that all fields appearing in the constructor of a same sort
+-- have same sort if they have same name
+propFieldsSortConsistent :: SymbolTable -> Bool
+propFieldsSortConsistent st =  all sortOk $ M.elems (sctors st)
+  where sortOk = isFun . concat . catMaybes . map (`M.lookup` sfields st) 
 
 -- | test suite for the module
 testSuite :: Test
 testSuite = testGroup "symbol table" 
-  [testProperty "codomain consistency" propCodomConsistent
-  ,testProperty "base ctors consistency" propBaseConsistent]
+  [testProperty "codomain consistency"    propCodomConsistent
+  ,testProperty "base ctors consistency"  propBaseConsistent
+  ,testProperty "domains consistency"     propDomainsConsistent
+  ,testProperty "no ctors duplicates"     propCtorsAllDiff
+  ,testProperty "same fields sames sorts" propFieldsSortConsistent]
