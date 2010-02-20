@@ -45,8 +45,8 @@ are valid files, other ones demonstrate `hgom` error messages.
 
 ## Test ##
 
-There is no unit test at the moment, but there are some code coverage and
-benchmark scripts.
+Simply run `hgom --test n` where `n` is the number of random inputs generated
+for each test. 
 
 ### Code Coverage ###
 
