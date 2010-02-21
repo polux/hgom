@@ -15,10 +15,10 @@ category:          Compilers
 license:           GPL
 license-file:      COPYING
 cabal-version:     >= 1.6.0
-build-type:        Custom
+build-type:        Simple
 tested-with:       GHC >= 6.10
 
-data-fild: test/data
+data-files: test/data/*.gom
 extra-source-files: Tests.hs
                     examples/*.gom
                     test/coverage/coverage.sh

@@ -38,34 +38,34 @@ Run `hgom --help` to get some basic help.
 You can test the behaviour of `hgom` by running it as follows. Some examples
 are valid files, other ones demonstrate `hgom` error messages.
 
-    hgom tests/examples/test.gom
-    hgom tests/examples/simple.gom
-    hgom tests/examples/big.gom
+    hgom examples/test.gom
+    hgom examples/simple.gom
+    hgom examples/big.gom
     ...
 
 ## Test ##
 
 Simply run `hgom --test n` where `n` is the number of random inputs generated
-for each test, or run `cabal test` for `n=100`.
+for each test.
 
 ### Code Coverage ###
 
 Code coverage can be tested as follows.
 
     cabal build --ghc-options "-fhpc -fforce-recomp"
-    cd tests/coverage
+    cd test/coverage
     ./coverage.sh
 
-The documentation is generated in `tests/coverage/html`.
+The documentation is generated in `test/coverage/html`.
 
 ### Benchmark ###
 
-There is some benchmark in `tests/bench` that generates bigger and bigger gom
+There is some benchmark in `test/bench` that generates bigger and bigger gom
 files and runs `hgom` and `gom` on them, measuring the gom/hgom ratio
 concerning the number of generated lines (using
 [sloccount](http://www.dwheeler.com/sloccount)) and the elapsed time.
 
-    cd tests/bench
+    cd test/bench
     make
 
 It takes some time. The generated files can be plotted using
