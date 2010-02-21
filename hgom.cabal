@@ -19,10 +19,8 @@ build-type:        Simple
 tested-with:       GHC >= 6.10
 
 data-files: test/data/*.gom
-extra-source-files: Tests.hs
-                    examples/*.gom
+extra-source-files: examples/*.gom
                     test/coverage/coverage.sh
-                    test/coverage/*.gom
                     test/bench/bench.sh 
                     test/bench/Gen.hs
                     test/bench/Makefile
@@ -47,7 +45,8 @@ executable hgom
                  Gom.CodeGen.Strategies,
                  Gom.CodeGen.Sorts,
                  Gom.SymbolTable,
-                 Gom.Sig
+                 Gom.Sig,
+                 Gom.UnitTests,
                  Paths_hgom
   build-depends: base >= 4 && < 5, containers >= 0.2,
                  parsec >= 3.0.0, wl-pprint >= 1.0,

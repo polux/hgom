@@ -32,12 +32,14 @@ defs = javaStyle {
 lexer :: P.TokenParser a
 lexer = P.makeTokenParser defs 
 
+white    :: Parser ()
 parens   :: Parser a -> Parser a
 ident    :: Parser String
 res      :: String -> Parser ()
 resOp    :: String -> Parser ()
 comma    :: Parser String
 
+white    = P.whiteSpace lexer
 parens   = P.parens     lexer
 ident    = P.identifier lexer
 res      = P.reserved   lexer
@@ -92,7 +94,7 @@ fieldP = do x <- fieldidP
          <?> "field declaration"
 
 run :: Parser a -> String -> Either ParseError a
-run p input = parse p "" input
+run p input = parse (white *> p) "" input
 
 -- | Parses a gom module.
 parseModule :: String -> Either ParseError Module
