@@ -91,11 +91,9 @@ fieldP = do x <- fieldidP
             return (x,ty)
          <?> "field declaration"
 
-run :: Parser a -> String -> a
-run p input = case (parse p "" input) of
-                Left err -> error ("parse error at " ++ show err)
-                Right x  -> x
+run :: Parser a -> String -> Either ParseError a
+run p input = parse p "" input
 
 -- | Parses a gom module.
-parseModule :: String -> Module
+parseModule :: String -> Either ParseError Module
 parseModule = run sigP

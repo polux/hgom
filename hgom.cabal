@@ -48,11 +48,14 @@ executable hgom
                  Gom.CodeGen.Sorts,
                  Gom.SymbolTable,
                  Gom.Sig
+                 Paths_hgom
   build-depends: base >= 4 && < 5, containers >= 0.2,
                  parsec >= 3.0.0, wl-pprint >= 1.0,
                  mtl >= 1.1.0.2, directory >= 1.0.0.2,
                  filepath >= 1.1.0.2, QuickCheck >= 2,
                  test-framework >= 0.2.4, 
-                 test-framework-quickcheck2 >= 0.2.5
+                 test-framework-quickcheck2 >= 0.2.5,
+                 test-framework-hunit >= 0.2.4,
+                 HUnit >= 1.2.2.1
   extensions:    
   ghc-options:   -Wall -fno-warn-orphans

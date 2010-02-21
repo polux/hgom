@@ -6,7 +6,7 @@
 --               (c) INRIA 2009
 -- Licence     : GPL (see COPYING)
 --
--- Maintainer  : paul.brauner\@inria.fr
+-- Maintainer  : paul.brauner@inria.fr
 -- Stability   : provisional
 -- Portability : non-portable (requires GeneralizedNewtypeDeriving)
 --
@@ -15,7 +15,7 @@
 
 {-# LANGUAGE PatternGuards #-}
 
-module Main (main) where
+module Main (main,entryPoint) where
 
 import Gom.Sig
 import Gom.Parser
@@ -37,17 +37,25 @@ import qualified Gom.UnitTests as T
 hgomVersion :: String
 hgomVersion = "Version 0.4 - January 2009"
 
+-- | @main = getArgs >>= entryPoint@
 main ::  IO ()
-main = do args <- getArgs 
-          case gomOpts args of 
-            Left err -> paramsError err
-            Right (c,n) -> go1 c n
+main = getArgs >>= entryPoint
+
+-- | entry poiny of hgom, separated from @main@ in order 
+-- to make it callable by other programs
+entryPoint :: [String] -> IO ()
+entryPoint args =
+  case gomOpts args of 
+    Left err    -> paramsError err
+    Right (c,n) -> go1 c n
 
 -- | options for the test framework
 opts :: Int -> RunnerOptions' Maybe
 opts n = RunnerOptions Nothing (Just topts) Nothing
   where topts = TestOptions Nothing (Just n) Nothing Nothing
 
+-- | before parsing: checks all \"... and exit\" functions 
+-- that don't require parsing
 go1 :: Config -> [String] -> IO ()
 go1 c n | help c              = putStrLn usage
         | version c           = putStrLn hgomVersion
@@ -57,14 +65,27 @@ go1 c n | help c              = putStrLn usage
             []  -> paramsError "No input file specified.\n"
             _   -> paramsError "Too many input files specified.\n"
 
-go2 :: String -> Config -> IO ()
-go2 f c = go2' =<< parseModule `fmap` readFile f
-  where go2' sig | prprint c = print $ pretty sig
-                 | checker c = case checkEverything sig of
-                     Nothing -> chain sig c
-                     Just d  -> error (f ++ " contains errors:\n" ++ show d)
-                 | otherwise = chain sig c
+-- | parsing: checks that all went well and calls @go3@
+go2 :: FilePath -> Config -> IO ()
+go2 f c = do em <- parseModule `fmap` readFile f
+             case em of Left err -> error ("parse error at " ++ show err)
+                        Right m  -> go3 f c m
 
+-- | after parsing:
+--
+--    * checks all \"... and exit\" functions that require parsing
+--
+--    * checks well-formedness
+--
+--    * runs compilation chain
+go3 :: FilePath -> Config -> Module -> IO ()
+go3 f c sig | prprint c = print $ pretty sig
+            | checker c = case checkEverything sig of
+                Nothing -> chain sig c
+                Just d  -> error (f ++ " contains errors:\n" ++ show d)
+            | otherwise = chain sig c
+
+-- | compilation chain
 chain :: Module -> Config -> IO ()
 chain m conf = generateFileHierarchy (compact conf) . 
                flip st2java conf . 
