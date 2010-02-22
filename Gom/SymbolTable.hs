@@ -50,7 +50,7 @@ import Test.Framework.Providers.QuickCheck2 (testProperty)
 import qualified Data.Set as S
 import qualified Data.List as L
 import Gom.Pretty ()
-import Data.Maybe(catMaybes)
+import Data.Maybe(mapMaybe)
 
 -- | A private datatype implemented by maps from sorts to constructors, from
 -- constructors to codomains, etc.
@@ -293,7 +293,7 @@ isFun ((x,y):as) = let (xs,nxs) = L.partition ((== x) . fst) as
 -- have same sort if they have same name
 propFieldsSortConsistent :: SymbolTable -> Bool
 propFieldsSortConsistent st =  all sortOk $ M.elems (sctors st)
-  where sortOk = isFun . concat . catMaybes . map (`M.lookup` sfields st) 
+  where sortOk = isFun . concat . mapMaybe (`M.lookup` sfields st) 
 
 -- | test suite for the module
 testSuite :: Test
