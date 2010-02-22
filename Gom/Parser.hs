@@ -13,7 +13,7 @@
 -- Parser for gom modules.
 --------------------------------------------------------------------
 
-module Gom.Parser(parseModule) where
+module Gom.Parser (parseModule) where
 
 import Text.Parsec
 import Text.Parsec.String(Parser)

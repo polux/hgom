@@ -152,12 +152,15 @@ constructorNames = map ctorName . concatMap ctors . sortDefs
 
 -- QuickCheck --
 
-instance Arbitrary SortId  where arbitrary = SortId  `fmap` genId
+instance Arbitrary SortId  where arbitrary = SortId  `fmap` genUId
+instance Arbitrary CtorId  where arbitrary = CtorId  `fmap` genUId
 instance Arbitrary FieldId where arbitrary = FieldId `fmap` genId
-instance Arbitrary CtorId  where arbitrary = CtorId  `fmap` genId
 
 genId :: Gen String
 genId = listOf1 $ oneof [choose ('a','z'), choose ('A','Z')]
+
+genUId :: Gen String
+genUId = do c  <- choose ('A','Z') ; cs <- genId ; return $ c:cs
 
 allDiff :: (Eq t) => [t] -> Bool
 allDiff []     = True
