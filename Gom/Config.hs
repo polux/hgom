@@ -37,6 +37,7 @@ data Config =
     visit   :: Bool, -- ^ implement @Visitable@ ? 
     checker :: Bool, -- ^ perform checks ?
     congr   :: CongrOpt, -- ^ generate congruence strategies ?
+    oomapping :: Bool, -- ^ generate oo mappings?
     sharing :: Bool, -- ^ maximally share terms ?
     compact :: Bool, -- ^ generate compact code ?
     parsers :: Bool, -- ^ generate @from*@ methods ? 
@@ -58,6 +59,7 @@ defaultConfig =
     visit   = True,
     checker = True,
     congr   = NoCongr,
+    oomapping   = False,
     sharing = True,
     compact = False,
     parsers = True,
@@ -97,7 +99,9 @@ options =
           (unlines ["generate congruence strategies in",
                     "the same or in a separate .tom file"])
   ,Option ['r'] ["random"] (NoArg crandom)
-          "genarate makeRamdom methods"
+          "generate makeRamdom methods"
+  ,Option ['J'] ["oomappings"] (NoArg coomapping)
+          "generate only Java OO mappings"
   ,Option ['d'] ["depth"] (NoArg cdepth)
           "generate depth methods"
   ,Option ['s'] ["size"] (NoArg csize)
@@ -125,6 +129,7 @@ options =
         ccompact   c = return $ c { compact = True  }
         cparsers   c = return $ c { parsers = False }
         crandom    c = return $ c { random  = True  }
+        coomapping c = return $ c { oomapping = True  }
         cdepth     c = return $ c { depth   = True  }
         csize      c = return $ c { size    = True  }
         cutests  s c = return $ c { utests = Just (read s) }

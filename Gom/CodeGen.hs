@@ -25,6 +25,7 @@ import Gom.CodeGen.Common.Constants
 import Gom.CodeGen.Common.GenMonad
 import Gom.CodeGen.Abstract
 import Gom.CodeGen.Mappings
+import Gom.CodeGen.OOMappings
 import Gom.CodeGen.Strategies
 import Gom.CodeGen.Sorts
 
