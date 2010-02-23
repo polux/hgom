@@ -15,14 +15,11 @@
 
 module Gom.OOMappingGen (st2oomapping) where
 
-import Control.Monad.Reader
-
 import Gom.Sig
 import Gom.SymbolTable
 import Gom.Config
 import Gom.FileGen
 import Gom.CodeGen.Common
-import Gom.CodeGen.Common.GenMonad
 
 import Text.PrettyPrint.Leijen
 import Control.Arrow((***))
