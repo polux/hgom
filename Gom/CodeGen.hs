@@ -25,13 +25,12 @@ import Gom.CodeGen.Common.Constants
 import Gom.CodeGen.Common.GenMonad
 import Gom.CodeGen.Abstract
 import Gom.CodeGen.Mappings
-import Gom.CodeGen.OOMappings
 import Gom.CodeGen.Strategies
 import Gom.CodeGen.Sorts
 
 -- | Compiles a symbol table into a Java hierarchy
 st2java :: SymbolTable -> Config -> FileHierarchy
-st2java = runGen compSt
+st2java =  runGen  compSt
 
 -- | Generates the whole file hierarchy of the \"global\" symbol table.
 compSt :: Gen FileHierarchy
@@ -39,7 +38,7 @@ compSt = do mn <- map toLower `liftM` askSt modName
             ds <- askSt definedSortsIds
             hs <- mapM compSort ds
             ac <- compAbstract
-            tf <- compTomFile
+            tf <- compTomFile 
             pr <- askConf package
             cs <- mapM compStrategy ds
             pc <- ifP $ Class "Parser" absParser

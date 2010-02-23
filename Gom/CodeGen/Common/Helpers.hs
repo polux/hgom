@@ -30,8 +30,10 @@ module Gom.CodeGen.Common.Helpers (
   jVisitableArray, jSCombinator, jStrategy,
   -- ** Classes
   rClass,
+  -- ** Classes
+  rInterface,
   -- ** Methods
-  rMethodDef, rMethodCall, rWrapBuiltin, rConstructorCall,
+  rMethodDef, rMethodCall, rWrapBuiltin, rConstructorCall, rMethodDecl,
   -- ** Control structures
   rIfThen, rIfThenElse, rWhile, rSwitch,
   -- * Tom pretty-printing
@@ -113,6 +115,33 @@ rClass md cn ex im body =
         r1 (Just d) = text "extends" <+> d
         r2 [] = empty
         r2 l  = text "implements" <+> hsep (punctuate comma l)
+
+
+-- | Renders @modifier interface name { body }@.
+rInterface
+ :: Doc   -- ^ modifier (public, private..)
+ -> Doc   -- ^ interface name
+ -> [Doc]   -- ^ extends
+ -> Doc   -- ^ body
+ -> Doc
+
+rInterface md cn ex body = 
+  md <+> text "interface" <+> cn <+> r1 ex <+> ibraces body
+  where r1 [] = empty
+        r1 l  = text "extends" <+> hsep (punctuate comma l)
+
+-- | Renders @modifier type name(arg_1,...,arg_n);@.
+rMethodDecl
+ :: Doc   -- ^ modifier
+ -> Doc   -- ^ return type
+ -> Doc   -- ^ method name
+ -> [Doc] -- ^ arguments
+ -> [Doc] -- ^ exceptions
+ -> Doc
+rMethodDecl md ty mn args exceptions = 
+  md <+> ty <+> mn <> encloseCommas args <+> r exceptions <> text ";"
+  where r [] = empty
+        r l  = text "throws" <+> hsep (punctuate comma l)
 
 -- | Renders @modifier type name(arg_1,...,arg_n) { body }@.
 rMethodDef

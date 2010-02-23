@@ -1,6 +1,6 @@
-------------------------------------------------------------------
+-------------------------------------------------------------------
 -- |
--- Module      : Gom.CodeGen.OOMappings
+-- Module      : Gom.CodeGen
 -- Copyright   : (c) Paul Brauner 2009
 --               (c) Emilie Balland 2009
 --               (c) INRIA 2009
@@ -9,32 +9,48 @@
 -- Maintainer  : emilie.balland@inria.fr
 -- Stability   : provisional
 -- Portability : non-portable (requires generalized newtype deriving)
---------------------------------------------------------------------
+--
+-- Generation of a file hierarchy from a symbol table.
+-------------------------------------------------------------------- 
 
-module Gom.CodeGen.OOMappings (
-  compOOMapping
-) where
+module Gom.OOMappingGen (st2oomapping) where
+
+import Control.Monad.Reader
 
 import Gom.Sig
+import Gom.SymbolTable
 import Gom.Config
 import Gom.FileGen
-import Gom.SymbolTable
 import Gom.CodeGen.Common
+import Gom.CodeGen.Common.GenMonad
 
 import Text.PrettyPrint.Leijen
 import Control.Arrow((***))
 
+-- | Compiles a symbol table into OO Mapping
+st2oomapping :: SymbolTable -> Config -> FileHierarchy
+st2oomapping =  runGen compOOMapping
+
+
 -- | Generates the @Mod.tom@ tom mapping file for module @Mod@ based
--- on OO mappings
+-- on OO mappings and the OOMapping interface class
 compOOMapping :: Gen FileHierarchy
 
-compOOMapping = do mn    <- askSt modName
+compOOMapping = do mn <- askSt modName
+                   pr <- askConf package
                    ctrs  <- askSt simpleConstructorsIds
                    srts  <- askSt definedSortsIds
-                   isig  <- compISignature ctrs
                    tyts  <- mapM compTypeTerm srts
                    ops   <- mapM compOp ctrs
-                   return $ Tom mn (vsep $ (isig:(tyts++ops)))
+                   isig  <- compISignature ctrs
+                   let mapping = Tom mn (vsep $ (tyts++ops))
+                   return . wrap pr $ Package mn [mapping,isig]
+                where 
+                   -- wraps the package in the user-provided prefix hierarchy (-p option)
+                   wrap Nothing  h = h
+                   wrap (Just l) h = foldr w h l
+                   w p h = Package p [h]
+                 
 
 -- | Given a sort @S@, generates
 --
@@ -70,9 +86,7 @@ compOp c = do slots   <- iterOverFields compSlot vcat c
               return $ rOp (pretty s) (pretty c) pfis
                            (vcat [isfsym,slots,make])
   where mapping = text "getSignature().getMapping_" <> pretty c <> text "()"
-        isfsym  = mapping <> text ".isInstanceOf($t)"
-        compIsFsym   = do qc <- qualifiedCtor c
-                          return $ rIsFsym qc
+        isfsym  = text "is_fsym(t) {" <>  mapping <> text ".isInstanceOf($t) }"
         compSlot x _ = 
           return $ (text "get_slot(" <> (pretty x) <> text ",t) {" <> mapping <> text ".get" <> (pretty x) <> text "() }")
         compMake as =
@@ -82,7 +96,17 @@ compOp c = do slots   <- iterOverFields compSlot vcat c
                 args  = gen as
                 iargs = gen (map inline as)
 
--- | Given a list of sorts @S@ of constructors @Ci@, 
--- generates the Tom mapping of new oo mappings.
-compISignature :: [CtorId] -> Gen Doc
-compISignature s = return $ text "// ISignature needs to be generated"
+-- | Given a list of constructors @Ci@, 
+-- generates the ISignature of new oo mappings.
+compISignature :: [CtorId] -> Gen FileHierarchy
+compISignature s = do methDecls <- mapM compMDecl s
+                      let code = rInterface public (text "ISignature") [] (rBody methDecls)
+                      return $ Class "ISignature" code 
+
+compMDecl :: CtorId -> Gen Doc
+compMDecl c = do cfields <- askSt (fieldsOf c)
+                 let arity = length cfields
+                 cfieldsSort <- mapM (qualifiedSort . snd) cfields
+                 let types  =  gen cfieldsSort
+                 return $ text "tom.library.oomapping.Mapping"<> pretty arity <> types <> text "getMapping_" <> pretty c <> text "()"
+              where gen   =  angles . hcat . punctuate comma
