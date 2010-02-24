@@ -1,0 +1,31 @@
+%typeterm T1 {
+  implement { T1 }
+  is_sort(t) { ($t instanceof T1) }
+  equals(t1,t2) { ($t1 == $t2) }
+}
+%typeterm T2 {
+  implement { T2 }
+  is_sort(t) { ($t instanceof T2) }
+  equals(t1,t2) { ($t1 == $t2) }
+}
+%op T1 a() {
+  is_fsym(t) {getSignature().getMapping_a().isInstanceOf($t) }
+  
+  make() { (getSignature().getMapping_a().make()) }
+}
+%op T1 f(s1:T1, s2:T2) {
+  is_fsym(t) {getSignature().getMapping_f().isInstanceOf($t) }
+  get_slot(s1,t) {getSignature().getMapping_f().gets1() }
+  get_slot(s2,t) {getSignature().getMapping_f().gets2() }
+  make(s1,s2) { (getSignature().getMapping_f().make($s1,$s2)) }
+}
+%op T2 b() {
+  is_fsym(t) {getSignature().getMapping_b().isInstanceOf($t) }
+  
+  make() { (getSignature().getMapping_b().make()) }
+}
+%op T2 g(s2:T2) {
+  is_fsym(t) {getSignature().getMapping_g().isInstanceOf($t) }
+  get_slot(s2,t) {getSignature().getMapping_g().gets2() }
+  make(s2) { (getSignature().getMapping_g().make($s2)) }
+}

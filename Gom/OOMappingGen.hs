@@ -62,9 +62,8 @@ compOOMapping = do mn <- map toLower `liftM` askSt modName
 -- generats @$t1.equals($t2)@ if @--noSharing@ has been
 -- toggled
 compTypeTerm :: SortId -> Gen Doc
-compTypeTerm s = do qs <- qualifiedSort s
-                    sh <- askConf sharing 
-                    return $ rTypeterm (pretty s) qs sh
+compTypeTerm s = do sh <- askConf sharing 
+                    return $ rTypeterm (pretty s) (pretty s) sh
 
 -- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@
 -- of codomain @Co@, generates
@@ -104,8 +103,9 @@ compISignature s = do methDecls <- mapM compMDecl s
 
 compMDecl :: CtorId -> Gen Doc
 compMDecl c = do cfields <- askSt (fieldsOf c)
+                 s       <- askSt (codomainOf c)
                  let arity = length cfields
-                 cfieldsSort <- mapM (qualifiedSort . snd) cfields
-                 let types  =  gen cfieldsSort
-                 return $ text "tom.library.oomapping.Mapping"<> pretty arity <> types <> text "getMapping_" <> pretty c <> text "()"
+                 let cfieldsSort = map (pretty . snd) cfields
+                 let types  =  gen (cfieldsSort ++ [pretty s]) 
+                 return $ text "tom.library.oomapping.Mapping"<> pretty arity <> types <> text " getMapping_" <> pretty c <> text "()"
               where gen   =  angles . hcat . punctuate comma
