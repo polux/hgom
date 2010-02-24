@@ -38,11 +38,13 @@ compOOMapping :: Gen FileHierarchy
 compOOMapping = do mn <- map toLower `liftM` askSt modName
                    pr <- askConf package
                    ctrs  <- askSt simpleConstructorsIds
+                   vctrs <- askSt variadicConstructorsIds
                    srts  <- askSt definedSortsIds
                    tyts  <- mapM compTypeTerm srts
                    ops   <- mapM compOp ctrs
+                   vops  <- mapM compVOp vctrs
                    isig  <- compISignature ctrs
-                   let mapping = Tom mn (vsep $ (tyts++ops))
+                   let mapping = Tom mn (vsep $ (tyts++ops++vops))
                    return . wrap pr $ Package mn [mapping,isig]
                 where 
                    -- wraps the package in the user-provided prefix hierarchy (-p option)
@@ -96,6 +98,28 @@ compOp c = do slots   <- compSlots
         compSlots = do fis  <- askSt (fieldsOf c)
                        fis' <- mapM compSlot [(i,fst (fis!!i)) | i <- [0..length fis-1]]
                        return $ vcat fis'
+
+-- | Given a variadic constructor @L(T*)@
+-- of codomain @Co@, generates
+-- %oplist Co L(T*) {
+--  is_fsym(l)       { getSignature().getMapping_L().isInstanceOf($l) }
+--  make_empty()     { getSignature().getMapping_L().makeEmpty() } 
+--  make_insert(o,l) { getSignature().getMapping_L().makeInsert($o,$l) }
+--  get_head(l)      { getSignature().getMapping_L().getHead($l) }
+--  get_tail(l)      { getSignature().getMapping_L().getTail($l) }
+--  is_empty(l)      { getSignature().getMapping_L().isEmpty($l) }
+--}
+compVOp :: CtorId -> Gen Doc
+compVOp c = do codom  <- askSt (codomainOf c)
+               dom  <- askSt (fieldOf c)
+               return $ text "%oplist" <+> pretty codom <+> pretty c <> parens (pretty dom <> text "*") <+> ibraces (vcat $ map text 
+                   [" is_fsym(l)       { " ++ mapping ++ ".isInstanceOf($l) }",
+                    " make_empty()     { " ++ mapping ++ ".getMapping_L().makeEmpty() }",
+                    " make_insert(o,l) { " ++ mapping ++ ".getMapping_L().makeInsert($o,$l) }",
+                    " get_head(l)      { " ++ mapping ++ ".getMapping_L().getHead($l) }",
+                    " get_tail(l)      { " ++ mapping ++ ".getMapping_L().getTail($l) }",
+                    " is_empty(l)      { " ++ mapping ++ ".getMapping_L().isEmpty($l) }"])
+              where  mapping = "getSignature().getMapping_" ++ show c ++ "()"
 
 
 -- | Given a list of constructors @Ci@, 
