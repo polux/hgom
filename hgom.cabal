@@ -35,6 +35,7 @@ executable hgom
                  Gom.FileGen,
                  Gom.CodeGen,
                  Gom.OOMappingGen,
+                 Gom.Random,
                  Gom.CodeGen.Common,
                  Gom.CodeGen.Common.Constants,
                  Gom.CodeGen.Common.Builtins,

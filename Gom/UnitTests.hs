@@ -16,9 +16,10 @@
 module Gom.UnitTests (testSuite) where
 
 import Gom.Pretty ()
+import Gom.Random ()
+import Gom.Sig
 import Gom.Parser
 import Gom.Checker
-import Gom.Sig
 
 -- imported test suites
 import qualified Gom.SymbolTable
@@ -68,7 +69,8 @@ regressionSuite = testGroup "regression tests" $
             ("t5.gom",  Parsing ), ("t6.gom",  Parsing ),
             ("t7.gom",  Parsing ), ("t8.gom",  Parsing ),
             ("t9.gom",  Parsing ), ("t10.gom", Checking),
-            ("t11.gom", Never   ), ("t12.gom", Never   )]
+            ("t11.gom", Never   ), ("t12.gom", Never   ),
+            ("t13.gom", Checking)]
 
   where cook (s,f) = testCase (msg s f) (test s f)
         test s f = fileFailsDuring (prefix s) >>= (@?= f)
@@ -126,8 +128,8 @@ propGenParsePretty = do
 -- | cross modules quickcheck tests
 crossModuleSuite :: Test
 crossModuleSuite = testGroup "cross module properties:" 
-  [testProperty "parse . pretty = id" propParsePretty,
-   testCase "generated parse/pretty (10 sigs x 10 terms)" propGenParsePretty]
+  [testProperty "parse . pretty = id" propParsePretty--,
+  ]--   testCase "generated parse/pretty (10 sigs x 10 terms)" propGenParsePretty]
 
 -- | all tests
 testSuite :: [Test]

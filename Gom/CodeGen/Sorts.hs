@@ -40,7 +40,7 @@ compSort s = do ac    <- compAbstractSort s
                 ctrs  <- askSt (sCtorsOf s)
                 avs   <- mapM compAbstractVariadic vctrs
                 ccs   <- mapM compConstructor ctrs
-                return [ac, Package (show $ lowerSortId s) (avs ++ ccs)] 
+                return [ac, Package (show $ lowerId s) (avs ++ ccs)] 
 
 -- | Given a sort @S@, generates an abstract class @S.java@.
 compAbstractSort :: SortId -> Gen FileHierarchy
@@ -140,8 +140,8 @@ compParseSort s = do
 
 -- | Given a sort @S@, generates
 --
--- > public static mod.types.S fromString(String s) {
--- >   return mod.types.S.parse(new mod.Parser(s));
+-- > public static mod.types.S fromString(String _s) {
+-- >   return mod.types.S.parse(new mod.Parser(_s));
 -- > }
 compFromStringSort :: SortId -> Gen Doc
 compFromStringSort s = do
@@ -149,8 +149,8 @@ compFromStringSort s = do
   pr <- packagePrefix
   let pa = pr <> dot <> text "Parser"
   return $ vcat
-    [text "public static" <+> qs <+> text "fromString(String s) {",
-     text "  return" <+> qs <> text ".parse(new" <+> pa <> text "(s));",
+    [text "public static" <+> qs <+> text "fromString(String _s) {",
+     text "  return" <+> qs <> text ".parse(new" <+> pa <> text "(_s));",
      text "}"]
 
 -- | Given a sort @T = f1(...) | ... | fn(...)@, generates

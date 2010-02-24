@@ -29,7 +29,7 @@ import Control.Monad.Reader
 compStrategy :: SortId -> Gen FileHierarchy
 compStrategy s = do ctrs  <- askSt (sCtorsOf s)
                     cs <- mapM compCongruence ctrs
-                    return $ Package (show $ lowerSortId s) cs 
+                    return $ Package (show $ lowerId s) cs 
 
 -- | Given a non-variadic constructor @C@, 
 -- generates a congruence strategy class @_C.java@.

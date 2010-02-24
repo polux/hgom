@@ -25,7 +25,7 @@ import Gom.Sig
 
 defs :: P.LanguageDef a
 defs = javaStyle { 
-  P.reservedOpNames = ["=","|",":"], 
+  P.reservedOpNames = ["=","|",":"],
   P.reservedNames = ["module","abstract","syntax","imports"]
 }
 

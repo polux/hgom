@@ -23,6 +23,7 @@ module Gom.Sig (
   Module(..),
   SortDef(..),
   Ctor(..),
+  GomId(..),
   -- * Building identifiers
   makeSortId,
   makeFieldId,
@@ -31,17 +32,17 @@ module Gom.Sig (
   prependCons,
   prependHead,
   prependTail,
-  lowerSortId,
+  lowerId,
   -- * Recovering information in a module
-  simpleFields,
   definedSorts,
   constructorNames,
-  vconstructorNames
+  vconstructorNames,
+  simpleFieldsNames,
+  simpleFieldsOf
 ) where
 
 import Data.Char(toLower)
 import Text.PrettyPrint.Leijen
-import Test.QuickCheck
 
 -- | Sort name (e.g. @Expr@) identifier.
 newtype SortId     = SortId String 
@@ -60,6 +61,22 @@ instance Show CtorId  where show (CtorId s)    = s
 instance Pretty SortId  where pretty = text . show
 instance Pretty FieldId where pretty = text . show
 instance Pretty CtorId  where pretty = text . show
+
+class GomId a where
+  idStr :: a -> String
+  mapId  :: (String -> String) -> a -> a 
+
+instance GomId SortId where
+  idStr (SortId x)   = x
+  mapId f (SortId x) = SortId $ f x
+
+instance GomId FieldId where
+  idStr (FieldId x)   = x
+  mapId f (FieldId x) = FieldId $ f x
+
+instance GomId CtorId where
+  idStr (CtorId x)   = x
+  mapId f (CtorId x) = CtorId $ f x
 
 -- | Represents a gom module.
 data Module = Module {
@@ -116,13 +133,13 @@ prependTail :: CtorId -> FieldId
 prependTail (CtorId s) = FieldId ("Tail" ++ s)
 
 -- | Turns the id into lowercase
-lowerSortId :: SortId -> SortId
-lowerSortId (SortId s) = SortId (map toLower s)
+lowerId :: (GomId a) => a -> a
+lowerId = mapId (map toLower)
 
--- | @simpleFields def@ is the list of fields of non-variadic constructors of
--- @def@, along with their sorts.
-simpleFields :: SortDef -> [(FieldId, SortId)]
-simpleFields def = concatMap getfields $ ctors def
+-- | @simpleFields def@ is the list of fields of non-variadic 
+-- constructors of @def@, along with their sorts.
+simpleFieldsOf :: SortDef -> [(FieldId, SortId)]
+simpleFieldsOf def = ctors def >>= getfields
   where getfields (Simple _ f) = f
         getfields _            = []
 
@@ -136,7 +153,7 @@ simpleFields def = concatMap getfields $ ctors def
 --
 -- it returns @A@ and @C@.
 vconstructorNames :: Module -> [CtorId]
-vconstructorNames = concatMap (concatMap getvtors . ctors) . sortDefs
+vconstructorNames m = sortDefs m >>= ctors >>= getvtors
   where getvtors (Variadic f _) = [f]
         getvtors _              = []
 
@@ -146,71 +163,14 @@ definedSorts :: Module -> [SortId]
 definedSorts sig = imports sig ++ map sortName (sortDefs sig)
 
 -- | @constructorNames m@ returns the list of all the constructors declared
--- in @m@.
+-- in @m@ (variadic or not).
 constructorNames :: Module -> [CtorId]
 constructorNames = map ctorName . concatMap ctors . sortDefs
 
--- QuickCheck --
+-- | All declared simple fields, duplicates removed
+simpleFieldsNames :: Module -> [FieldId]
+simpleFieldsNames m = sortDefs m >>= ctors >>= getfields
+  where getfields (Simple _ fs) = map fst fs
+        getfields _             = []
 
-instance Arbitrary SortId  where arbitrary = SortId  `fmap` genUId
-instance Arbitrary CtorId  where arbitrary = CtorId  `fmap` genUId
-instance Arbitrary FieldId where arbitrary = FieldId `fmap` genId
 
-genId :: Gen String
-genId = listOf1 $ oneof [choose ('a','z'), choose ('A','Z')]
-
-genUId :: Gen String
-genUId = do c  <- choose ('A','Z') ; cs <- genId ; return $ c:cs
-
-allDiff :: (Eq t) => [t] -> Bool
-allDiff []     = True
-allDiff (x:xs) = x `notElem` xs && allDiff xs
-
-instance Arbitrary Module where
-  arbitrary = do
-    modul <- genId
-    sorts <- arbitrary `suchThat` allDiff
-    -- We need at least one constructor per sort
-    cidss <- listOf (listOf1 arbitrary) `suchThat` (allDiff . concat)
-    let mix = zip sorts cidss
-    defs  <- mapM (genSortDef (map fst mix)) mix
-    return $ Module modul [] defs
-  shrink (Module m i d) = do
-    d' <- shrink d
-    return $ Module m i d'
-
-genTypedFields ::  (Arbitrary a, Eq a) => [a1] -> Gen [(a, a1)]
-genTypedFields sorts = do
-  flds <- listOf1 arbitrary `suchThat` allDiff
-  doms <- listOf1 (elements sorts)
-  return $ zip flds doms
-
-instance Arbitrary SortDef where
-  shrink (SortDef s l) = do
-    l' <- shrink l
-    return $ SortDef s l' 
-
-genSortDef ::  [SortId] -> (SortId, [CtorId]) -> Gen SortDef
-genSortDef sorts (sid,cids) = do
-  flds   <- genTypedFields sorts
-  ctrs   <- mapM (genCtor sorts flds) cids
-  return $ SortDef sid ctrs
-
-instance Arbitrary Ctor where
-  shrink (Simple c l) = do l' <- shrink l
-                           return $ Simple c l' 
-  shrink x            = return x 
-
-genCtor :: [SortId] -> [(FieldId, SortId)] -> CtorId -> Gen Ctor
-genCtor sorts flds cname =
-  oneof [genSCtor flds cname, genVCtor sorts cname]
-
-genSCtor :: [(FieldId, SortId)] -> CtorId -> Gen Ctor
-genSCtor flds cname = do
-  fis <- listOf (elements flds) `suchThat` allDiff
-  return $ Simple cname fis
-
-genVCtor :: [SortId] -> CtorId -> Gen Ctor
-genVCtor sorts cname = do
-  sort <- elements sorts
-  return $ Variadic cname sort

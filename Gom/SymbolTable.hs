@@ -39,6 +39,7 @@ module Gom.SymbolTable (
 ) where
 
 import Gom.Sig
+import Gom.Random ()
 import Control.Monad.State
 import qualified Data.Map as M
 import Data.Either(partitionEithers)

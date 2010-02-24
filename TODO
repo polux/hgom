@@ -1,2 +1,4 @@
  * generate fromAterm
  * generate congruence strategies [emilie]
+
+ * clash between fields and module name

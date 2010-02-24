@@ -130,7 +130,7 @@ qualifiedSort s
 qualifiedCtor :: CtorId -> Gen Doc
 qualifiedCtor c = 
   do p <- packagePrefix
-     lows <- lowerSortId `liftM` askSt (codomainOf c)
+     lows <- lowerId `liftM` askSt (codomainOf c)
      return $ p <> dot <> text "types" <> dot <> 
               pretty lows <> dot <> pretty c
 
