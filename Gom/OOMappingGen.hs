@@ -23,6 +23,8 @@ import Gom.CodeGen.Common
 
 import Text.PrettyPrint.Leijen
 import Control.Arrow((***))
+import Data.Char(toLower)
+import Control.Monad.Reader
 
 -- | Compiles a symbol table into OO Mapping
 st2oomapping :: SymbolTable -> Config -> FileHierarchy
@@ -33,7 +35,7 @@ st2oomapping =  runGen compOOMapping
 -- on OO mappings and the OOMapping interface class
 compOOMapping :: Gen FileHierarchy
 
-compOOMapping = do mn <- askSt modName
+compOOMapping = do mn <- map toLower `liftM` askSt modName
                    pr <- askConf package
                    ctrs  <- askSt simpleConstructorsIds
                    srts  <- askSt definedSortsIds
