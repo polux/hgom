@@ -449,7 +449,7 @@ compToHaskellBuilder c = do rcalls <- iterOverFields rcall id c
         close      = bapp $ dquotes rparen
         rcall x s  = return $
           if isBuiltin s then renderBuiltin s x (text "_buf")
-                         else rMethodCall (this <> dot <> pretty x)
+                         else rMethodCall (this <> dot <> _u (pretty x))
                                           (text "toHaskellBuilder") 
                                           [text "_buf"]
 
