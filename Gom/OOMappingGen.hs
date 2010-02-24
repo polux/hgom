@@ -108,8 +108,11 @@ compISignature s = do methDecls <- mapM compMDecl s
 compMDecl :: CtorId -> Gen Doc
 compMDecl c = do cfields <- askSt (fieldsOf c)
                  s       <- askSt (codomainOf c)
+                 cs      <- askSt (concreteTypeOf s) 
                  let arity = length cfields
-                 let cfieldsSort = map (pretty . snd) cfields
-                 let types  =  gen (pretty s:cfieldsSort) 
+                 classes <- mapM (prettyConcreteType . snd) cfields
+                 let types  =  gen (pretty cs:classes) 
                  return $ text "tom.library.oomapping.Mapping"<> pretty arity <> types <> text " getMapping_" <> pretty c <> text "()"
               where gen   =  angles . hcat . punctuate comma
+                    prettyConcreteType s = do cs <- askSt (concreteTypeOf s)
+                                              return $ pretty cs
