@@ -35,6 +35,7 @@ module Gom.Sig (
   lowerId,
   -- * Recovering information in a module
   definedSorts,
+  exportedSorts,
   constructorNames,
   vconstructorNames,
   simpleFieldsNames,
@@ -157,10 +158,16 @@ vconstructorNames m = sortDefs m >>= ctors >>= getvtors
   where getvtors (Variadic f _) = [f]
         getvtors _              = []
 
+-- | @exportedSorts m@ returns the list of sort names exported by @m@,
+-- i.e. the sorts that appear in the left-hand sides of definitions
+-- and the imported sorts.
+exportedSorts :: Module -> [SortId]
+exportedSorts sig = imports sig ++ definedSorts sig
+
 -- | @definedSorts m@ returns the list of sort names defined by @m@,
 -- i.e. the sorts that appear in the left-hand sides of definitions.
 definedSorts :: Module -> [SortId]
-definedSorts sig = imports sig ++ map sortName (sortDefs sig)
+definedSorts sig = map sortName (sortDefs sig)
 
 -- | @constructorNames m@ returns the list of all the constructors declared
 -- in @m@ (variadic or not).

@@ -150,7 +150,7 @@ checkNameConsistency = pack NCE . mapMaybe check . sortDefs
 -- the function will report that @int@ and @A@ are not defined. 
 checkUndefSorts :: Module -> Maybe UndefSortError
 checkUndefSorts sig = pack USE $ mapMaybe f (sortDefs sig)
-  where def = definedSorts sig
+  where def = exportedSorts sig
         f (SortDef n ctrs) = 
           case mapMaybe g ctrs of
             [] -> Nothing
@@ -208,7 +208,7 @@ checkMultipleCtorDecl = pack MCD . count . constructorNames
 --
 -- the function will report that @List@ is defined twice.
 checkMultipleSortDecl :: Module -> Maybe MultipleSortDecl
-checkMultipleSortDecl = pack MSD . count . definedSorts
+checkMultipleSortDecl = pack MSD . count . exportedSorts
 
 -- | Checks that constructor names that will be generated for
 -- every variadic constructor don't collide with user-declared
@@ -248,11 +248,8 @@ javaKeywords = S.fromList
    "public","throws","case","enum","instanceof","return","transient",
    "catch","extends","try","final","interface",
    "static","void","class","finally","strictfp","volatile","const",
-   "native","super","while"]
-
-javaBuiltins :: S.Set String
-javaBuiltins = S.fromList
-  ["boolean","double","byte","int","short","long","float","char"]
+   "native","super","while",
+   "boolean","double","byte","int","short","long","float","char"]
 
 -- | Looks for module, sorts, ctors and fields names that would clash
 -- with java keywords.
@@ -264,11 +261,10 @@ checkJavaKeywordClash m = pack4 (filter checkMod  $ [moduleName m])
   where pack4 [] [] [] [] = Nothing
         pack4 l1 l2 l3 l4 = Just $ JKC l1 l2 l3 l4
         isJkw      = (`S.member` javaKeywords)
-        isJkwBlt x = isJkw x || x `S.member` javaBuiltins
-        checkMod   = isJkwBlt . map toLower
+        checkMod   = isJkw . map toLower
         checkSort  = isJkw . map toLower . idStr
-        checkCtor  = isJkwBlt . idStr 
-        checkFld   = isJkwBlt . idStr
+        checkCtor  = isJkw . idStr 
+        checkFld   = isJkw . idStr
 
 -- | Reports, in this order, the results of:
 --    - 'checkJavaKeywordClash'
