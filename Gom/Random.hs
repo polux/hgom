@@ -19,15 +19,15 @@ module Gom.Random () where
 import Gom.Sig
 import Test.QuickCheck
 
-instance Arbitrary SortId  where arbitrary = makeSortId  `fmap` genId
-instance Arbitrary CtorId  where arbitrary = makeCtorId  `fmap` genId
-instance Arbitrary FieldId where arbitrary = makeFieldId `fmap` genId
-
 genId :: Gen String
 genId = listOf1 $ oneof [choose ('a','z'), choose ('A','Z')]
 
 genUId :: Gen String
 genUId = do c  <- choose ('A','Z') ; cs <- genId ; return $ c:cs
+
+instance Arbitrary SortId  where arbitrary = makeSortId  `fmap` genUId
+instance Arbitrary CtorId  where arbitrary = makeCtorId  `fmap` genId
+instance Arbitrary FieldId where arbitrary = makeFieldId `fmap` genId
 
 allDiff :: (Eq t) => [t] -> Bool
 allDiff []     = True

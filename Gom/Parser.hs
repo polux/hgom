@@ -46,9 +46,18 @@ res      = P.reserved   lexer
 resOp    = P.reservedOp lexer
 comma    = P.comma      lexer
 
-sortidP :: Parser SortId
-sortidP = makeSortId <$> ident 
-          <?> "sort name"
+uident :: Parser String
+uident = (:) <$> upper <*> option [] ident
+
+-- sorts defined by the user start with a capital letter
+lhsSortidP :: Parser SortId
+lhsSortidP = makeSortId <$> uident 
+             <?> "sort name"
+
+-- ... but not necessarily the imported ones
+rhsSortidP :: Parser SortId
+rhsSortidP = makeSortId <$> ident 
+             <?> "sort name"
 
 fieldidP :: Parser FieldId
 fieldidP = makeFieldId <$> ident
@@ -60,7 +69,7 @@ ctoridP = makeCtorId <$> ident
 
 sigP :: Parser Module
 sigP = Module <$> (res "module" *> ident)
-              <*> option [] (res "imports" *> sortidP `sepBy` spaces)
+              <*> option [] (res "imports" *> rhsSortidP `sepBy` spaces)
               <*  res "abstract" 
               <*  res "syntax"
               <*> sortP `sepBy` spaces
@@ -68,7 +77,7 @@ sigP = Module <$> (res "module" *> ident)
               <?> "module definition"
 
 sortP ::  Parser SortDef
-sortP = do n <- sortidP
+sortP = do n <- lhsSortidP
            resOp "=" 
            c <- ctorP `sepBy` resOp "|"
            return $ SortDef n c
@@ -79,7 +88,7 @@ ctorP = try variadicP <|> simpleP
         <?> "constructor declaration"
 
 variadicP :: Parser Ctor
-variadicP = Variadic <$> ctoridP <*> parens (sortidP <* resOp "*")
+variadicP = Variadic <$> ctoridP <*> parens (rhsSortidP <* resOp "*")
             <?> "variadic constructor"
 
 simpleP :: Parser Ctor
@@ -89,7 +98,7 @@ simpleP = Simple <$> ctoridP <*> parens (fieldP `sepBy` comma)
 fieldP :: Parser (FieldId, SortId)
 fieldP = do x <- fieldidP
             resOp ":"
-            ty <- sortidP
+            ty <- rhsSortidP
             return (x,ty)
          <?> "field declaration"
 
