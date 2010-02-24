@@ -22,19 +22,23 @@ import qualified Text.Parsec.Token as P
 import Control.Applicative((<$>),(<*),(*>),(<*>))
 
 import Gom.Sig
+import Control.Monad.Identity(Identity)
 
-defs :: P.LanguageDef a
-defs = javaStyle { 
+defs :: ParsecT String u Identity Char-> LanguageDef u
+defs start = javaStyle { 
   P.reservedOpNames = ["=","|",":"],
-  P.reservedNames = ["module","abstract","syntax","imports"]
+  P.reservedNames = ["module","abstract","syntax","imports"],
+  P.identStart = start
 }
 
-lexer :: P.TokenParser a
-lexer = P.makeTokenParser defs 
+lexer, ulexer :: P.TokenParser a
+lexer  = P.makeTokenParser $ defs letter
+ulexer = P.makeTokenParser $ defs upper
 
 white    :: Parser ()
 parens   :: Parser a -> Parser a
 ident    :: Parser String
+uident   :: Parser String
 res      :: String -> Parser ()
 resOp    :: String -> Parser ()
 comma    :: Parser String
@@ -42,12 +46,10 @@ comma    :: Parser String
 white    = P.whiteSpace lexer
 parens   = P.parens     lexer
 ident    = P.identifier lexer
+uident   = P.identifier ulexer
 res      = P.reserved   lexer
 resOp    = P.reservedOp lexer
 comma    = P.comma      lexer
-
-uident :: Parser String
-uident = (:) <$> upper <*> option [] ident
 
 -- sorts defined by the user start with a capital letter
 lhsSortidP :: Parser SortId
