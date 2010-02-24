@@ -19,8 +19,8 @@ module Gom.Random () where
 import Gom.Sig
 import Test.QuickCheck
 
-instance Arbitrary SortId  where arbitrary = makeSortId  `fmap` genUId
-instance Arbitrary CtorId  where arbitrary = makeCtorId  `fmap` genUId
+instance Arbitrary SortId  where arbitrary = makeSortId  `fmap` genId
+instance Arbitrary CtorId  where arbitrary = makeCtorId  `fmap` genId
 instance Arbitrary FieldId where arbitrary = makeFieldId `fmap` genId
 
 genId :: Gen String

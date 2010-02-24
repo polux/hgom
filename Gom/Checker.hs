@@ -22,6 +22,7 @@ module Gom.Checker (
   GeneratedConstructorsClash(),
   -- * Individual features checking
   checkJavaKeywordClash,
+  checkSortModuleClash,
   checkMultipleSortDecl,
   checkMultipleCtorDecl,
   checkDuplicateFields,
@@ -92,13 +93,19 @@ instance Pretty GeneratedConstructorsClash where
 data JavaKeywordClash = JKC [String] [SortId] [CtorId] [FieldId]
 
 instance Pretty JavaKeywordClash where
-  pretty (JKC m s c f ) = vcat [p "module name"       m,
-                                p "sort name"         s, 
-                                p "constructors name" c, 
-                                p "field name"        f]
+  pretty (JKC m s c f) = vcat [p "Module name"       m,
+                               p "Sort name"         s, 
+                               p "Constructors name" c, 
+                               p "Field name"        f]
     where p mes xs = vcat $ map (er mes) xs 
           er mes x = text mes <+> dquotes (pretty x) <+> 
-                     text "clashes with java keywords"
+                     text "clashes with java keywords."
+
+data SortModuleClash = SMC [SortId]
+
+instance Pretty SortModuleClash where
+  pretty (SMC cs) = vcat (map f cs)
+    where f c = text "Sort" <+> pretty c <+> text "clashes with module's name."
 
 -- | helper function to pack checkers results into Maybes
 pack :: ([t] -> a) -> [t] -> Maybe a
@@ -232,6 +239,7 @@ checkGenClashes m = pack GCG $ mapMaybe check vcs
 
 checkers :: [Module -> Maybe Doc]
 checkers = [w checkJavaKeywordClash,
+            w checkSortModuleClash,
             w checkMultipleSortDecl,
             w checkMultipleCtorDecl,
             w checkDuplicateFields,
@@ -266,8 +274,16 @@ checkJavaKeywordClash m = pack4 (filter checkMod  $ [moduleName m])
         checkCtor  = isJkw . idStr 
         checkFld   = isJkw . idStr
 
+checkSortModuleClash :: Module -> Maybe SortModuleClash
+checkSortModuleClash m = pack SMC $ clashes
+  where low     = map toLower
+        lowmn   = low (moduleName m)
+        clashes = filter ((== lowmn) . low . idStr) (exportedSorts m)
+
 -- | Reports, in this order, the results of:
 --    - 'checkJavaKeywordClash'
+--
+--    - 'checkSortModuleClash'
 --
 --    - 'checkMultipleSortDecl'
 --
