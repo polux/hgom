@@ -1,2 +1,3 @@
  * generate fromAterm
  * generate congruence strategies [emilie]
+ * generate oo mappings for congruence strategies and variadic constructors
