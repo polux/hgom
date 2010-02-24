@@ -137,10 +137,10 @@ compParseConstructor c = do
         call f s = do 
           qs  <- qualifiedSort s
           rec <- parseRecCall arg s
-          return $ qs <+> pretty f <+> equals <+> rec
+          return $ qs <+> _u (pretty f) <+> equals <+> rec
         pre      = rMethodCall arg (text "parseLpar") []
         postM    = do qc <- qualifiedCtor c
-                      fis <- map (pretty . fst) `liftM` askSt (fieldsOf c)
+                      fis <- map (_u . pretty . fst) `liftM` askSt (fieldsOf c)
                       return [rMethodCall arg (text "parseRpar") [], 
                               jreturn <+> rMethodCall qc (text "make") fis]
 
@@ -284,7 +284,7 @@ compConstructor c = do mem  <- compMembersOfConstructor c
 compMembersOfConstructor :: CtorId -> Gen Doc
 compMembersOfConstructor c = iterOverFields rdr rBody c
   where rdr f s = do qs <- qualifiedSort s
-                     return $ private <+> qs <+> pretty f
+                     return $ private <+> qs <+> _u (pretty f)
 
 -- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@,
 -- generates:
@@ -321,8 +321,9 @@ compCtorOfConstructor c = ifConfM sharing ctorShr ctorNoShr
                        let b = rBody $ map rdr2 fis
                        return $ rMethodDef private empty (pretty c) a [] b
           where rdr1 (f,s) = do qs <- qualifiedSort s
-                                return $ qs <+> pretty f
-                rdr2 (f,_) = this <> dot <> pretty f <+> equals <+> pretty f
+                                return $ qs <+> _u (pretty f)
+                rdr2 (f,_) = this <> dot <> _u (pretty f) <+>
+                             equals <+> _u (pretty f)
 
 -- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@,
 -- generates the make method:
@@ -372,7 +373,7 @@ compGettersOfConstructor :: CtorId -> Gen Doc
 compGettersOfConstructor = iterOverFields getter vcat
   where getter f s = do qs <- qualifiedSort s
                         let fun = text "get" <> pretty f
-                        let b = rBody [jreturn <+> pretty f]
+                        let b = rBody [jreturn <+> _u (pretty f)]
                         return $ rMethodDef public qs fun [] [] b 
 
 -- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@,
@@ -387,9 +388,9 @@ compSettersOfConstructor :: CtorId -> Gen Doc
 compSettersOfConstructor = iterOverFields setter vcat
   where setter f s = do qs <- qualifiedSort s
                         let fun = text "set" <> pretty f
-                        let a = [pretty qs <+> pretty f]
-                        let b = rBody [this <> dot <> pretty f 
-                                       <+> equals <+> pretty f]
+                        let a = [pretty qs <+> _u (pretty f)]
+                        let b = rBody [this <> dot <> _u (pretty f) 
+                                       <+> equals <+> _u (pretty f)]
                         return $ rMethodDef public void fun a [] b 
 
 -- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@,
@@ -417,7 +418,7 @@ compToStringBuilder c = do rcalls <- iterOverFields rcall id c
         close      = bapp $ dquotes rparen
         rcall x s  = return $
           if isBuiltin s then renderBuiltin s x (text "_buf")
-                         else rMethodCall (this <> dot <> pretty x)
+                         else rMethodCall (this <> dot <> _u (pretty x))
                                           (text "toStringBuilder") 
                                           [text "_buf"]
 
@@ -500,8 +501,8 @@ compEquals = compEqAux meth comb jObject
 compDuplicate :: CtorId -> Gen Doc
 compDuplicate c = rdr `liftM` askSt (fieldsOf c)
   where pc  = pretty c
-        cl  = text "clone"
-        th  = (text "this." <>) . pretty . fst
+        cl  = text "_clone"
+        th  = (text "this." <>) . _u . pretty . fst
         rdr = rMethodDef public jShared (text "duplicate") [] [] . body
         body fis = rBody 
           [pc <+> cl <+> equals <+> rConstructorCall pc [],
@@ -523,8 +524,8 @@ compInit c = do cfs <- askSt $ fieldsOf c
                 let body = rBody $ map ass cfs ++ [lastLine]
                 return $ rMethodDef private void (text "init") args [] body
   where rdr (f,s) = do qs <- qualifiedSort s
-                       return $ qs <+> pretty f
-        ass (f,s) = let pf = pretty f 
+                       return $ qs <+> _u (pretty f)
+        ass (f,s) = let pf = _u (pretty f)
                     in this <> dot <> pf <+> equals <+> 
                        if isString s then pf <> text ".intern()" else pf
         lastLine  = text "this.hashCode = _hashCode"
@@ -544,8 +545,8 @@ compInitHash c = do cfs <- askSt $ fieldsOf c
                     return $ rMethodDef private void 
                                         (text "initHashCode") args [] body
   where rdr (f,s) = do qs <- qualifiedSort s
-                       return $ qs <+> pretty f
-        ass (f,s) = let pf = pretty f 
+                       return $ qs <+> _u (pretty f)
+        ass (f,s) = let pf = _u (pretty f)
                     in this <> dot <> pf <+> equals <+> 
                        if isString s then pf <> text ".intern()" else pf
         lastLine  = text "this.hashCode = hashFunction()"
@@ -572,7 +573,7 @@ hashArg idx fid sid = let res d = char accum <+> text "+=" <+> parens d in
         accum = "aaaabbbbcccc" !! (idx `mod` 12)
         isILFC s = any ($ s) [isInt,isLong,isFloat,isChar]
         toLong x = text "java.lang.Double.doubleToLongBits" <> parens x
-        pfid = this <> dot <> pretty fid
+        pfid = this <> dot <> _u (pretty fid)
 
 -- | Given a constructor @C(x1:T1,..,xn:Tn)@, generates
 --
@@ -645,7 +646,7 @@ compGetChildAt c = do fis <- askSt (fieldsOf c)
                       return $ rMethodDef 
                                  public jVisitable (text "getChildAt")
                                  [jint <+> arg] [] (body arg cs)
-  where cook (f,s)  = jreturn <+> wrap (this <> dot <> pretty f) s <> semi 
+  where cook (f,s)  = jreturn <+> wrap (this <> dot <> _u (pretty f)) s <> semi 
         body n cs   = rSwitch n cs (Just outOfBounds)
         outOfBounds = text "throw new IndexOutOfBoundsException();"
         wrap f s | isBuiltin s = rConstructorCall (rWrapBuiltin qs) [f]
@@ -671,7 +672,7 @@ compGetChildren c = do fis <- askSt (fieldsOf c)
         child (f,s) =
           if isBuiltin s then rConstructorCall (rWrapBuiltin qs) [df] else df
             where qs = qualifiedBuiltin s
-                  df = this <> dot <> pretty f
+                  df = this <> dot <> _u (pretty f)
 
 -- | Given a constructor @c@ of fields @x1,..,xn@ generates
 --
@@ -697,7 +698,7 @@ compSetChildAt c = do fis  <- askSt (fieldsOf c)
   where body cs     = rSwitch (text "_n") cs (Just outOfBounds)
         outOfBounds = text "throw new IndexOutOfBoundsException();"
         set (xs1,(_,t),xs2) = 
-          let f (x,_) = this <> dot <> pretty x
+          let f (x,_) = this <> dot <> _u (pretty x)
               dxs1    = map f xs1
               dxs2    = map f xs2
           in do dx <- cast t
@@ -805,8 +806,8 @@ compEqAux meth comb ty c = do rcalls <- iterOverFields rcall id c
         branch1 b  = rBody [l1,l2 (true:b)]
         l1 = cdoc <+> text "_typed_o" <+> equals <+> parens cdoc <+> text "_o"
         l2 b = jreturn <+> (align . fillSep $ intersperse (text "&&") b)
-        rcall x s = let lhs = this <> dot <> pretty x
-                        rhs = text "_typed_o." <> pretty x 
+        rcall x s = let lhs = this <> dot <> _u (pretty x)
+                        rhs = text "_typed_o." <> _u (pretty x)
                     in return $ if isBuiltin s
                                   then lhs <+> text "==" <+> rhs
                                   else lhs `comb` rhs
@@ -865,9 +866,10 @@ compDepthConstructor :: CtorId -> Gen Doc
 compDepthConstructor c = do
   fis <- askSt (fieldsOf c)
   return .wrap $ if null fis then text "return 0;" else pack fis
-  where call (f,s) | isBuiltin s = []
-                   | otherwise = [this <> dot <> pretty f <> text ".depth();",
-                                  text "if (_cd > _max) _max = _cd;"]
+  where call (f,s) 
+          | isBuiltin s = []
+          | otherwise = [this <> dot <> _u (pretty f) <> text ".depth();",
+                         text "if (_cd > _max) _max = _cd;"]
         pack l = vcat ([pre] ++ mid ++ [post]) 
            where pre  = text "int _max = 0; int _cd = 0;"
                  mid  = concatMap call l
@@ -884,7 +886,7 @@ compSizeConstructor c = do
   where add = align . fillSep . intersperse (text "+")
         one = text "1"
         call (f,s) | isBuiltin s = one
-                   | otherwise   = this <> dot <> pretty f 
+                   | otherwise   = this <> dot <> _u (pretty f)
                                    <> text ".size()"
         pack d = text "final public int size()" 
                  <+> ibraces (jreturn <+> d <> semi)
