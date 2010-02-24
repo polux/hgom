@@ -19,13 +19,13 @@ module Gom.SymbolTable (
   emptySt, ast2st,
   -- * Consulting tables
   definedSortsIds, simpleConstructorsIds, variadicConstructorsIds,
-  modName, importedSorts, sCtorsOf, vCtorsOf, fieldsOf, fieldOf, codomainOf,
+  modName, importedSorts, concreteTypeOf, sCtorsOf, vCtorsOf, fieldsOf, fieldOf, codomainOf,
   isGenerated, importsString,
   -- * Modifying tables
   -- ** Modifying mappings
   -- | These functions allow to change the constructor names (resp. fields)
   -- associated to a sort (resp. constructor) in a 'SymbolTable'.
-  insertSctors, insertVctors, insertSfields, insertVfield,
+  insertSctors, insertVctors, insertSfields, insertVfield, insertJavaType,
   addToSctors, addToVctors,
   -- ** Adding whole definitions
   -- | These functions perform higher-level modifications of the table than
@@ -61,6 +61,8 @@ data SymbolTable =
     mName :: String,
     -- | sorts imported by the module
     imported :: [SortId],
+    -- | concrete type associated to a sort
+    javatype :: M.Map SortId ClassId,
     -- | non-variadic constructors associated to a sort
     sctors :: M.Map SortId [CtorId],
     -- | variadic constructors associated to a sort
@@ -82,6 +84,14 @@ modName = mName
 -- | Sorts imported by the module.
 importedSorts :: SymbolTable -> [SortId]
 importedSorts = imported
+
+-- | Concrete Java Type associated to a sort.
+concreteTypeOf :: SortId -> SymbolTable -> ClassId
+concreteTypeOf s st = 
+  case s `M.lookup` javatype st of
+    Just c  -> c
+    Nothing -> error $ "sort" ++ show s ++ "has no concrete type"
+
 
 -- | Non-variadic constructors associated to a sort.
 sCtorsOf :: SortId -> SymbolTable -> [CtorId]
@@ -130,7 +140,7 @@ importsString st = "String" `elem` map idStr (importedSorts st)
 -- | @emptySt m is@ is an empty symbol table (no sorts nor constructors) that
 -- encodes a module of name @m@ which imports sorts @is@.
 emptySt :: String -> [SortId] -> SymbolTable
-emptySt m i = SymbolTable m i M.empty M.empty M.empty M.empty M.empty M.empty
+emptySt m i = SymbolTable m i M.empty M.empty M.empty M.empty M.empty M.empty M.empty
 
 -- | The ids of the sorts present in st.
 definedSortsIds :: SymbolTable -> [SortId]
@@ -170,6 +180,12 @@ insertSfields c fs st = st { sfields = M.insert c fs (sfields st) }
 insertVfield :: CtorId -> SortId -> SymbolTable -> SymbolTable
 insertVfield c s st = st { vfield = M.insert c s (vfield st) }
 
+-- | @insertJavaType s cs st@ inserts, or replaces, the mapping @(s,cs)@ in 
+-- @'javatype' st@.
+insertJavaType :: SortId -> Maybe ClassId -> SymbolTable -> SymbolTable
+insertJavaType s (Just cs) st = st { javatype = M.insert s cs (javatype st) }
+insertJavaType _ Nothing st = st
+
 -- | @addToSctors s cs st@ appends @cs@ to the non-variadic constructors
 -- already associated to @s@ in @st@. If there are no non-variadic constructors
 -- associated to @s@, an entry is created.
@@ -193,10 +209,12 @@ ast2st (Module m i defs) = execState (conv defs) (emptySt m i)
         conv = mapM_ convdef 
 
         convdef :: SortDef -> State SymbolTable ()
-        convdef (SortDef n cs) = do 
+        convdef (SortDef n cn cs) = do
+           modify $ insertJavaType n cn
            (ss,vs) <- partitionEithers `liftM` mapM convctor cs
            modify $ insertSctors n ss
            modify $ insertVctors n vs
+           
 
         convctor :: Ctor -> State SymbolTable (Either CtorId CtorId)
         convctor (Simple n fis) = do modify $ insertSfields n fis

@@ -23,6 +23,8 @@ import Gom.CodeGen.Common
 
 import Text.PrettyPrint.Leijen
 import Control.Arrow((***))
+import Data.Char(toLower)
+import Control.Monad.Reader
 
 -- | Compiles a symbol table into OO Mapping
 st2oomapping :: SymbolTable -> Config -> FileHierarchy
@@ -33,7 +35,7 @@ st2oomapping =  runGen compOOMapping
 -- on OO mappings and the OOMapping interface class
 compOOMapping :: Gen FileHierarchy
 
-compOOMapping = do mn <- askSt modName
+compOOMapping = do mn <- map toLower `liftM` askSt modName
                    pr <- askConf package
                    ctrs  <- askSt simpleConstructorsIds
                    srts  <- askSt definedSortsIds
@@ -60,9 +62,8 @@ compOOMapping = do mn <- askSt modName
 -- generats @$t1.equals($t2)@ if @--noSharing@ has been
 -- toggled
 compTypeTerm :: SortId -> Gen Doc
-compTypeTerm s = do qs <- qualifiedSort s
-                    sh <- askConf sharing 
-                    return $ rTypeterm (pretty s) qs sh
+compTypeTerm s = do sh <- askConf sharing 
+                    return $ rTypeterm (pretty s) (pretty s) sh
 
 -- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@
 -- of codomain @Co@, generates
@@ -75,7 +76,7 @@ compTypeTerm s = do qs <- qualifiedSort s
 -- >   make (t1,..,tn) { (getSignature().getMapping_f().make($s1, $s2)) }
 -- > }
 compOp :: CtorId -> Gen Doc
-compOp c = do slots   <- iterOverFields compSlot vcat c
+compOp c = do slots   <- compSlots 
               s       <- askSt (codomainOf c)
               fis     <- askSt (fieldsOf c)
               let pfis = map (pretty *** pretty) fis
@@ -84,14 +85,18 @@ compOp c = do slots   <- iterOverFields compSlot vcat c
                            (vcat [isfsym,slots,make])
   where mapping = text "getSignature().getMapping_" <> pretty c <> text "()"
         isfsym  = text "is_fsym(t) {" <>  mapping <> text ".isInstanceOf($t) }"
-        compSlot x _ = 
-          return $ (text "get_slot(" <> (pretty x) <> text ",t) {" <> mapping <> text ".get" <> (pretty x) <> text "() }")
+        compSlot (i,s) = 
+          return $ (text "get_slot(" <> (pretty s) <> text ",t) {" <> mapping <> text ".get" <> text (show i) <> text "($t) }")
         compMake as =
           text "make" <> args <+> (sbraces . parens) 
                 (mapping <> text ".make" <> iargs)
           where gen   = parens . hcat . punctuate comma
                 args  = gen as
                 iargs = gen (map inline as)
+        compSlots = do fis  <- askSt (fieldsOf c)
+                       fis' <- mapM compSlot [(i,fst (fis!!i)) | i <- [0..length fis-1]]
+                       return $ vcat fis'
+
 
 -- | Given a list of constructors @Ci@, 
 -- generates the ISignature of new oo mappings.
@@ -102,8 +107,12 @@ compISignature s = do methDecls <- mapM compMDecl s
 
 compMDecl :: CtorId -> Gen Doc
 compMDecl c = do cfields <- askSt (fieldsOf c)
+                 s       <- askSt (codomainOf c)
+                 cs      <- askSt (concreteTypeOf s) 
                  let arity = length cfields
-                 cfieldsSort <- mapM (qualifiedSort . snd) cfields
-                 let types  =  gen cfieldsSort
-                 return $ text "tom.library.oomapping.Mapping"<> pretty arity <> types <> text "getMapping_" <> pretty c <> text "()"
+                 classes <- mapM (prettyConcreteType . snd) cfields
+                 let types  =  gen (pretty cs:classes) 
+                 return $ text "tom.library.oomapping.Mapping"<> pretty arity <> types <> text " getMapping_" <> pretty c <> text "()"
               where gen   =  angles . hcat . punctuate comma
+                    prettyConcreteType s = do cs <- askSt (concreteTypeOf s)
+                                              return $ pretty cs

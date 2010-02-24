@@ -18,6 +18,7 @@
 
 module Gom.Sig (
   SortId(),
+  ClassId(),
   FieldId(),
   CtorId(),
   Module(..),
@@ -26,6 +27,7 @@ module Gom.Sig (
   GomId(..),
   -- * Building identifiers
   makeSortId,
+  makeClassId,
   makeFieldId,
   makeCtorId,
   prependEmpty,
@@ -48,6 +50,9 @@ import Text.PrettyPrint.Leijen
 -- | Sort name (e.g. @Expr@) identifier.
 newtype SortId     = SortId String 
   deriving (Ord,Eq)
+-- | Java Class name (e.g. @p1.p2.c@) identifier.
+newtype ClassId     = ClassId [String] 
+  deriving (Ord,Eq)
 -- | Field name (e.g. @x@) identifier.
 newtype FieldId    = FieldId String 
   deriving (Ord,Eq)
@@ -56,10 +61,12 @@ newtype CtorId     = CtorId String
   deriving (Ord,Eq)
 
 instance Show SortId  where show (SortId s)    = s
+instance Show ClassId  where show (ClassId s)  = show ((hcat . punctuate dot) (map text s))
 instance Show FieldId where show (FieldId s)   = s
 instance Show CtorId  where show (CtorId s)    = s
 
 instance Pretty SortId  where pretty = text . show
+instance Pretty ClassId  where pretty = text . show
 instance Pretty FieldId where pretty = text . show
 instance Pretty CtorId  where pretty = text . show
 
@@ -81,6 +88,7 @@ data Module = Module {
 -- e.g. @List = nil() | cons(x:int, xs:List)@.
 data SortDef = SortDef {
   sortName :: SortId,      -- ^ sort name (e.g. @List@)
+  concreteSortName :: Maybe ClassId,      -- ^ sort name (e.g. @List@)
   ctors    :: [Ctor]       -- ^ constructors
                            -- (e.g. @nil()@ and @cons(x:int, xs:List)@)
 } deriving (Eq)
@@ -101,6 +109,9 @@ data Ctor =
 
 makeSortId :: String -> SortId
 makeSortId = SortId
+
+makeClassId :: [String] -> ClassId
+makeClassId = ClassId
 
 makeFieldId :: String -> FieldId
 makeFieldId = FieldId
@@ -170,5 +181,4 @@ simpleFieldsNames :: Module -> [FieldId]
 simpleFieldsNames m = sortDefs m >>= ctors >>= getfields
   where getfields (Simple _ fs) = map fst fs
         getfields _             = []
-
 

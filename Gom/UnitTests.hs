@@ -107,17 +107,19 @@ propGenParsePretty = do
   sigs <- sample' $ arbitrary `suchThat` hasSort
   sigs `forM_` \sig -> doInTempDir $
     case sig of
-      Module m _ (SortDef s _:_) -> do
+      Module m _ (SortDef s _ _:_) -> do
+        let pack = map toLower m
         writeFile "Test.gom" $ show sig
         _ <- rawSystem "hgom" ["-r","Test.gom"]
-        writeFile "Test.java" $ template m (show s)
+        writeFile "Test.java" $ template pack (show s)
         st <- rawSystem "javac" ["Test.java"]
         st @?= ExitSuccess
+        removeDirectoryRecursive pack
       _ -> error "never happens"
 
   where hasSort = not . null . sortDefs
-        template m s = unlines
-          ["import " ++ map toLower m ++ ".types.*;",
+        template pack s = unlines
+          ["import " ++ pack ++ ".types.*;",
            "public class Test {",
            "  public static void main(String[] args) {",
            "    for(int i=0; i<10; i++) {",

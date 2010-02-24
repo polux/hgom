@@ -53,15 +53,15 @@ genTypedFields sorts = do
   return $ zip flds doms
 
 instance Arbitrary SortDef where
-  shrink (SortDef s l) = do
+  shrink (SortDef s c l) = do
     l' <- shrink l
-    return $ SortDef s l' 
+    return $ SortDef s c l' 
 
 genSortDef :: [SortId] -> (SortId, [CtorId]) -> Gen SortDef
 genSortDef sorts (sid,cids) = do
   flds   <- genTypedFields sorts
   ctrs   <- mapM (genCtor sorts flds) cids
-  return $ SortDef sid ctrs
+  return $ SortDef sid Nothing ctrs
 
 instance Arbitrary Ctor where
   shrink (Simple c l) = do l' <- shrink l ; return $ Simple c l' 
