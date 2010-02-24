@@ -132,7 +132,6 @@ testChecker :: [String] -> IO ()
 testChecker opts = do
   sigs <- sample' $ arbitrary `suchThat` checks
   sigs `forM_` \sig -> doInTempDir $ do
-    putStr "."
     case sig of
       Module m _ _ -> do
         let pack = map toLower m
@@ -152,7 +151,7 @@ testChecker2 = testChecker ["--noSharing"]
 
 -- | cross modules quickcheck tests
 crossModuleSuite :: Test
-crossModuleSuite = testGroup "cross module properties:" 
+crossModuleSuite = testGroup "cross module properties" 
   [testCase "check ok => compilable java (1)" testChecker1,
    testCase "check ok => compilable java (2)" testChecker2,
    testProperty "parse . pretty = id" propParsePretty,
