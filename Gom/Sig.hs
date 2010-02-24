@@ -18,6 +18,7 @@
 
 module Gom.Sig (
   SortId(),
+  ClassId(),
   FieldId(),
   CtorId(),
   Module(..),
@@ -25,6 +26,7 @@ module Gom.Sig (
   Ctor(..),
   -- * Building identifiers
   makeSortId,
+  makeClassId,
   makeFieldId,
   makeCtorId,
   prependEmpty,
@@ -46,6 +48,9 @@ import Test.QuickCheck
 -- | Sort name (e.g. @Expr@) identifier.
 newtype SortId     = SortId String 
   deriving (Ord,Eq)
+-- | Java Class name (e.g. @p1.p2.c@) identifier.
+newtype ClassId     = ClassId [String] 
+  deriving (Ord,Eq)
 -- | Field name (e.g. @x@) identifier.
 newtype FieldId    = FieldId String 
   deriving (Ord,Eq)
@@ -54,10 +59,12 @@ newtype CtorId     = CtorId String
   deriving (Ord,Eq)
 
 instance Show SortId  where show (SortId s)    = s
+instance Show ClassId  where show (ClassId s)  = show ((hcat . punctuate dot) (map text s))
 instance Show FieldId where show (FieldId s)   = s
 instance Show CtorId  where show (CtorId s)    = s
 
 instance Pretty SortId  where pretty = text . show
+instance Pretty ClassId  where pretty = text . show
 instance Pretty FieldId where pretty = text . show
 instance Pretty CtorId  where pretty = text . show
 
@@ -72,6 +79,7 @@ data Module = Module {
 -- e.g. @List = nil() | cons(x:int, xs:List)@.
 data SortDef = SortDef {
   sortName :: SortId,      -- ^ sort name (e.g. @List@)
+  concreteSortName :: Maybe ClassId,      -- ^ sort name (e.g. @List@)
   ctors    :: [Ctor]       -- ^ constructors
                            -- (e.g. @nil()@ and @cons(x:int, xs:List)@)
 } deriving (Eq)
@@ -92,6 +100,9 @@ data Ctor =
 
 makeSortId :: String -> SortId
 makeSortId = SortId
+
+makeClassId :: [String] -> ClassId
+makeClassId = ClassId
 
 makeFieldId :: String -> FieldId
 makeFieldId = FieldId
@@ -172,7 +183,7 @@ instance Arbitrary Module where
     sorts <- arbitrary `suchThat` allDiff
     -- We need at least one constructor per sort
     cidss <- listOf (listOf1 arbitrary) `suchThat` (allDiff . concat)
-    let mix = zip sorts cidss
+    let mix = zip sorts cidss 
     defs  <- mapM (genSortDef (map fst mix)) mix
     return $ Module modul [] defs
   shrink (Module m i d) = do
@@ -186,15 +197,15 @@ genTypedFields sorts = do
   return $ zip flds doms
 
 instance Arbitrary SortDef where
-  shrink (SortDef s l) = do
+  shrink (SortDef s cs l) = do
     l' <- shrink l
-    return $ SortDef s l' 
+    return $ SortDef s cs l' 
 
 genSortDef ::  [SortId] -> (SortId, [CtorId]) -> Gen SortDef
 genSortDef sorts (sid,cids) = do
   flds   <- genTypedFields sorts
   ctrs   <- mapM (genCtor sorts flds) cids
-  return $ SortDef sid ctrs
+  return $ SortDef sid Nothing ctrs
 
 instance Arbitrary Ctor where
   shrink (Simple c l) = do l' <- shrink l

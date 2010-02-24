@@ -136,7 +136,7 @@ checkNameConsistency = pack NCE . mapMaybe check . sortDefs
 checkUndefSorts :: Module -> Maybe UndefSortError
 checkUndefSorts sig = pack USE $ mapMaybe f (sortDefs sig)
   where def = definedSorts sig
-        f (SortDef n ctrs) = 
+        f (SortDef n _ ctrs) = 
           case mapMaybe g ctrs of
             [] -> Nothing
             cs -> Just (n,cs)
@@ -163,7 +163,7 @@ count = mapMaybe multi . L.group . L.sort
 -- the function will report that @Plus@ contains two fields named @e@. 
 checkDuplicateFields :: Module -> Maybe MultipleFieldsError
 checkDuplicateFields sig = pack MFE $ mapMaybe f (sortDefs sig)
-  where f (SortDef n ctrs) = 
+  where f (SortDef n _ ctrs) = 
           case mapMaybe g ctrs of
             [] -> Nothing
             cs -> Just (n,cs)

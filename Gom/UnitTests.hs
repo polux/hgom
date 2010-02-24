@@ -102,7 +102,7 @@ propGenParsePretty = do
   sigs <- sample' $ arbitrary `suchThat` hasSort
   sigs `forM_` \sig -> doInTempDir $
     case sig of
-      Module m _ (SortDef s _:_) -> do
+      Module m _ (SortDef s _ _:_) -> do
         writeFile "Test.gom" $ show sig
         _ <- rawSystem "hgom" ["-r","Test.gom"]
         writeFile "Test.java" $ template m (show s)

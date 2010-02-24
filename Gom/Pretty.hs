@@ -30,7 +30,7 @@ instance Pretty Ctor where
   pretty (Variadic n t) = text (show n) <> parens (text (show t) <> char '*')
 
 instance Pretty SortDef where
-  pretty (SortDef n cs) = text (show n) <+> align (char '=' <+> prettycs)
+  pretty (SortDef n cn cs) = text (show n) <+> text ("[" ++ show cn ++ "]") <+> align (char '=' <+> prettycs)
     where prettycs = fillSep $ withPipes (map pretty cs)  
           withPipes (x:y:xs) = x:withPipes ((char '|' <+> y):xs)
           withPipes l        = l

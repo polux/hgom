@@ -192,7 +192,7 @@ ast2st (Module m i defs) = execState (conv defs) (emptySt m i)
         conv = mapM_ convdef 
 
         convdef :: SortDef -> State SymbolTable ()
-        convdef (SortDef n cs) = do 
+        convdef (SortDef n _ cs) = do 
            (ss,vs) <- partitionEithers `liftM` mapM convctor cs
            modify $ insertSctors n ss
            modify $ insertVctors n vs

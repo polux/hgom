@@ -49,6 +49,10 @@ comma    = P.comma      lexer
 sortidP :: Parser SortId
 sortidP = makeSortId <$> ident 
           <?> "sort name"
+classidP :: Parser (Maybe ClassId)
+classidP =  do c <- ident `sepBy` (resOp ".")
+               return $ Just (makeClassId c) 
+               <?> "class name"
 
 fieldidP :: Parser FieldId
 fieldidP = makeFieldId <$> ident
@@ -69,9 +73,10 @@ sigP = Module <$> (res "module" *> ident)
 
 sortP ::  Parser SortDef
 sortP = do n <- sortidP
+           cn <- option Nothing (res "implemented by" *> classidP)
            resOp "=" 
            c <- ctorP `sepBy` resOp "|"
-           return $ SortDef n c
+           return $ SortDef n cn c
            <?> "sort definition"
 
 ctorP :: Parser Ctor
