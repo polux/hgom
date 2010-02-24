@@ -321,7 +321,7 @@ compCtorOfConstructor c = ifConfM sharing ctorShr ctorNoShr
                        let b = rBody $ map rdr2 fis
                        return $ rMethodDef private empty (pretty c) a [] b
           where rdr1 (f,s) = do qs <- qualifiedSort s
-                                return $ qs <+> (text . show) f
+                                return $ qs <+> pretty f
                 rdr2 (f,_) = this <> dot <> pretty f <+> equals <+> pretty f
 
 -- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@,
@@ -523,7 +523,7 @@ compInit c = do cfs <- askSt $ fieldsOf c
                 let body = rBody $ map ass cfs ++ [lastLine]
                 return $ rMethodDef private void (text "init") args [] body
   where rdr (f,s) = do qs <- qualifiedSort s
-                       return $ qs <+> (text . show) f
+                       return $ qs <+> pretty f
         ass (f,s) = let pf = pretty f 
                     in this <> dot <> pf <+> equals <+> 
                        if isString s then pf <> text ".intern()" else pf
@@ -544,7 +544,7 @@ compInitHash c = do cfs <- askSt $ fieldsOf c
                     return $ rMethodDef private void 
                                         (text "initHashCode") args [] body
   where rdr (f,s) = do qs <- qualifiedSort s
-                       return $ qs <+> (text . show) f
+                       return $ qs <+> pretty f
         ass (f,s) = let pf = pretty f 
                     in this <> dot <> pf <+> equals <+> 
                        if isString s then pf <> text ".intern()" else pf
