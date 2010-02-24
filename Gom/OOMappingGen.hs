@@ -76,7 +76,7 @@ compTypeTerm s = do sh <- askConf sharing
 -- >   make (t1,..,tn) { (getSignature().getMapping_f().make($s1, $s2)) }
 -- > }
 compOp :: CtorId -> Gen Doc
-compOp c = do slots   <- iterOverFields compSlot vcat c
+compOp c = do slots   <- compSlots 
               s       <- askSt (codomainOf c)
               fis     <- askSt (fieldsOf c)
               let pfis = map (pretty *** pretty) fis
@@ -85,14 +85,18 @@ compOp c = do slots   <- iterOverFields compSlot vcat c
                            (vcat [isfsym,slots,make])
   where mapping = text "getSignature().getMapping_" <> pretty c <> text "()"
         isfsym  = text "is_fsym(t) {" <>  mapping <> text ".isInstanceOf($t) }"
-        compSlot x _ = 
-          return $ (text "get_slot(" <> (pretty x) <> text ",t) {" <> mapping <> text ".get" <> (pretty x) <> text "() }")
+        compSlot (i,s) = 
+          return $ (text "get_slot(" <> (pretty s) <> text ",t) {" <> mapping <> text ".get" <> text (show i) <> text "($t) }")
         compMake as =
           text "make" <> args <+> (sbraces . parens) 
                 (mapping <> text ".make" <> iargs)
           where gen   = parens . hcat . punctuate comma
                 args  = gen as
                 iargs = gen (map inline as)
+        compSlots = do fis  <- askSt (fieldsOf c)
+                       fis' <- mapM compSlot [(i,fst (fis!!i)) | i <- [0..length fis-1]]
+                       return $ vcat fis'
+
 
 -- | Given a list of constructors @Ci@, 
 -- generates the ISignature of new oo mappings.
@@ -106,6 +110,6 @@ compMDecl c = do cfields <- askSt (fieldsOf c)
                  s       <- askSt (codomainOf c)
                  let arity = length cfields
                  let cfieldsSort = map (pretty . snd) cfields
-                 let types  =  gen (cfieldsSort ++ [pretty s]) 
+                 let types  =  gen (pretty s:cfieldsSort) 
                  return $ text "tom.library.oomapping.Mapping"<> pretty arity <> types <> text " getMapping_" <> pretty c <> text "()"
               where gen   =  angles . hcat . punctuate comma
