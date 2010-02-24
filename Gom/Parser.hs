@@ -22,19 +22,23 @@ import qualified Text.Parsec.Token as P
 import Control.Applicative((<$>),(<*),(*>),(<*>))
 
 import Gom.Sig
+import Control.Monad.Identity(Identity)
 
-defs :: P.LanguageDef a
-defs = javaStyle { 
-  P.reservedOpNames = ["=","|",":"], 
-  P.reservedNames = ["module","abstract","syntax","imports"]
+defs :: ParsecT String u Identity Char-> LanguageDef u
+defs start = javaStyle { 
+  P.reservedOpNames = ["=","|",":"],
+  P.reservedNames = ["module","abstract","syntax","imports"],
+  P.identStart = start
 }
 
-lexer :: P.TokenParser a
-lexer = P.makeTokenParser defs 
+lexer, ulexer :: P.TokenParser a
+lexer  = P.makeTokenParser $ defs letter
+ulexer = P.makeTokenParser $ defs upper
 
 white    :: Parser ()
 parens   :: Parser a -> Parser a
 ident    :: Parser String
+uident   :: Parser String
 res      :: String -> Parser ()
 resOp    :: String -> Parser ()
 comma    :: Parser String
@@ -42,13 +46,20 @@ comma    :: Parser String
 white    = P.whiteSpace lexer
 parens   = P.parens     lexer
 ident    = P.identifier lexer
+uident   = P.identifier ulexer
 res      = P.reserved   lexer
 resOp    = P.reservedOp lexer
 comma    = P.comma      lexer
 
-sortidP :: Parser SortId
-sortidP = makeSortId <$> ident 
-          <?> "sort name"
+-- sorts defined by the user start with a capital letter
+lhsSortidP :: Parser SortId
+lhsSortidP = makeSortId <$> uident 
+             <?> "sort name"
+
+-- ... but not necessarily the imported ones
+rhsSortidP :: Parser SortId
+rhsSortidP = makeSortId <$> ident 
+             <?> "sort name"
 classidP :: Parser (Maybe ClassId)
 classidP =  do c <- ident `sepBy` (resOp ".")
                return $ Just (makeClassId c) 
@@ -64,7 +75,7 @@ ctoridP = makeCtorId <$> ident
 
 sigP :: Parser Module
 sigP = Module <$> (res "module" *> ident)
-              <*> option [] (res "imports" *> sortidP `sepBy` spaces)
+              <*> option [] (res "imports" *> rhsSortidP `sepBy` spaces)
               <*  res "abstract" 
               <*  res "syntax"
               <*> sortP `sepBy` spaces
@@ -72,7 +83,7 @@ sigP = Module <$> (res "module" *> ident)
               <?> "module definition"
 
 sortP ::  Parser SortDef
-sortP = do n <- sortidP
+sortP = do n <- lhsSortidP
            cn <- option Nothing (res "implemented by" *> classidP)
            resOp "=" 
            c <- ctorP `sepBy` resOp "|"
@@ -84,7 +95,7 @@ ctorP = try variadicP <|> simpleP
         <?> "constructor declaration"
 
 variadicP :: Parser Ctor
-variadicP = Variadic <$> ctoridP <*> parens (sortidP <* resOp "*")
+variadicP = Variadic <$> ctoridP <*> parens (rhsSortidP <* resOp "*")
             <?> "variadic constructor"
 
 simpleP :: Parser Ctor
@@ -94,7 +105,7 @@ simpleP = Simple <$> ctoridP <*> parens (fieldP `sepBy` comma)
 fieldP :: Parser (FieldId, SortId)
 fieldP = do x <- fieldidP
             resOp ":"
-            ty <- sortidP
+            ty <- rhsSortidP
             return (x,ty)
          <?> "field declaration"
 

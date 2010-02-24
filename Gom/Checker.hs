@@ -21,6 +21,8 @@ module Gom.Checker (
   MultipleFieldsError(),
   GeneratedConstructorsClash(),
   -- * Individual features checking
+  checkJavaKeywordClash,
+  checkSortModuleClash,
   checkMultipleSortDecl,
   checkMultipleCtorDecl,
   checkDuplicateFields,
@@ -39,6 +41,7 @@ import qualified Data.Set as S
 import qualified Data.List as L
 import Data.Maybe(mapMaybe)
 import Text.PrettyPrint.Leijen
+import Data.Char(toLower)
 
 newtype NameConsistencyError = NCE [(SortId,[(FieldId,[SortId])])]
 
@@ -84,11 +87,35 @@ newtype GeneratedConstructorsClash = GCG [(CtorId,[CtorId])]
 instance Pretty GeneratedConstructorsClash where
   pretty (GCG l) = vsep $ map f l
     where f (c,cs) = text "Variadic constructor" <+> text (show c) <+>
-                     nest 2 (text "clashes with:" 
-                             </> (hsep . punctuate (text ",")) (map pretty cs))
+                     nest 2 (text "clashes with:" </>
+                            (hsep . punctuate (text ",")) (map pretty cs))
 
+data JavaKeywordClash = JKC [String] [SortId] [CtorId] [FieldId]
+
+instance Pretty JavaKeywordClash where
+  pretty (JKC m s c f) = vcat [p "Module name"       m,
+                               p "Sort name"         s, 
+                               p "Constructors name" c, 
+                               p "Field name"        f]
+    where p mes xs = vcat $ map (er mes) xs 
+          er mes x = text mes <+> dquotes (pretty x) <+> 
+                     text "clashes with java keywords."
+
+data SortModuleClash = SMC [SortId]
+
+instance Pretty SortModuleClash where
+  pretty (SMC cs) = vcat (map f cs)
+    where f c = text "Sort" <+> pretty c <+> text "clashes with module's name."
+
+-- | helper function to pack checkers results into Maybes
+pack :: ([t] -> a) -> [t] -> Maybe a
+pack _ [] = Nothing
+pack c l  = Just (c l)
+
+-- | Auxiliary function for 'checkNameConsistency'
 differentSortsForAName :: SortDef -> [(FieldId, [SortId])]
-differentSortsForAName def = convert . M.filter f . populate M.empty $ simpleFields def
+differentSortsForAName = 
+  convert . M.filter f . populate M.empty . simpleFieldsOf
   where populate m []         = m
         populate m ((x,t):fs) = let ts = S.singleton t
                                     m' = M.insertWith S.union x ts m
@@ -96,13 +123,8 @@ differentSortsForAName def = convert . M.filter f . populate M.empty $ simpleFie
         f s = S.size s > 1
         convert = M.toAscList . M.map S.toList
 
--- | helper function to pack checkers results into Maybes
-pack :: ([t] -> a) -> [t] -> Maybe a
-pack _ [] = Nothing
-pack c l  = Just (c l)
-
--- | Checks that each field name in all the constructors of a sort is assigned
--- the same type everywhere.
+-- | Checks that each field name in all the constructors of a sort 
+-- is assigned the same type everywhere.
 -- 
 -- As an example, for the following signature
 --
@@ -118,8 +140,8 @@ checkNameConsistency = pack NCE . mapMaybe check . sortDefs
           [] -> Nothing
           al -> Just (sortName def, al)
 
--- | Checks that all sorts mentionned in the constructors are either defined or
--- imported.
+-- | Checks that all sorts mentionned in the constructors are either 
+-- defined or imported.
 --
 -- As an example, in the following module
 --
@@ -135,7 +157,7 @@ checkNameConsistency = pack NCE . mapMaybe check . sortDefs
 -- the function will report that @int@ and @A@ are not defined. 
 checkUndefSorts :: Module -> Maybe UndefSortError
 checkUndefSorts sig = pack USE $ mapMaybe f (sortDefs sig)
-  where def = definedSorts sig
+  where def = exportedSorts sig
         f (SortDef n _ ctrs) = 
           case mapMaybe g ctrs of
             [] -> Nothing
@@ -193,7 +215,7 @@ checkMultipleCtorDecl = pack MCD . count . constructorNames
 --
 -- the function will report that @List@ is defined twice.
 checkMultipleSortDecl :: Module -> Maybe MultipleSortDecl
-checkMultipleSortDecl = pack MSD . count . definedSorts
+checkMultipleSortDecl = pack MSD . count . exportedSorts
 
 -- | Checks that constructor names that will be generated for
 -- every variadic constructor don't collide with user-declared
@@ -216,7 +238,9 @@ checkGenClashes m = pack GCG $ mapMaybe check vcs
            
 
 checkers :: [Module -> Maybe Doc]
-checkers = [w checkMultipleSortDecl,
+checkers = [w checkJavaKeywordClash,
+            w checkSortModuleClash,
+            w checkMultipleSortDecl,
             w checkMultipleCtorDecl,
             w checkDuplicateFields,
             w checkNameConsistency,
@@ -224,7 +248,42 @@ checkers = [w checkMultipleSortDecl,
             w checkGenClashes]
   where w check x = pretty `fmap` check x
 
+javaKeywords :: S.Set String
+javaKeywords = S.fromList
+  ["abstract","continue","for","new","switch","assert","default","goto",
+   "package","synchronized","do","if","private","this","break",
+   "implements","protected","throw","else","import",
+   "public","throws","case","enum","instanceof","return","transient",
+   "catch","extends","try","final","interface",
+   "static","void","class","finally","strictfp","volatile","const",
+   "native","super","while",
+   "boolean","double","byte","int","short","long","float","char"]
+
+-- | Looks for module, sorts, ctors and fields names that would clash
+-- with java keywords.
+checkJavaKeywordClash :: Module -> Maybe JavaKeywordClash
+checkJavaKeywordClash m = pack4 (filter checkMod  $ [moduleName m])
+                                (filter checkSort $ definedSorts m)
+                                (filter checkCtor $ constructorNames m)
+                                (filter checkFld  $ simpleFieldsNames m)
+  where pack4 [] [] [] [] = Nothing
+        pack4 l1 l2 l3 l4 = Just $ JKC l1 l2 l3 l4
+        isJkw      = (`S.member` javaKeywords)
+        checkMod   = isJkw . map toLower
+        checkSort  = isJkw . map toLower . idStr
+        checkCtor  = isJkw . idStr 
+        checkFld   = isJkw . idStr
+
+checkSortModuleClash :: Module -> Maybe SortModuleClash
+checkSortModuleClash m = pack SMC $ clashes
+  where low     = map toLower
+        lowmn   = low (moduleName m)
+        clashes = filter ((== lowmn) . low . idStr) (exportedSorts m)
+
 -- | Reports, in this order, the results of:
+--    - 'checkJavaKeywordClash'
+--
+--    - 'checkSortModuleClash'
 --
 --    - 'checkMultipleSortDecl'
 --

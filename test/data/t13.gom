@@ -1,0 +1,6 @@
+module for
+abstract syntax
+
+INt = a()
+B = while()
+C = f(public:B)

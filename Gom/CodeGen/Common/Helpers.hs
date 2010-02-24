@@ -17,7 +17,7 @@
 module Gom.CodeGen.Common.Helpers (
   -- * Java pretty-printing
   -- ** Generic
-  ibraces, sbraces, encloseCommas, rBody,
+  ibraces, sbraces, encloseCommas, rBody, _u,
   -- ** Comments
   rComment,
   -- ** Java keywords
@@ -45,6 +45,10 @@ module Gom.CodeGen.Common.Helpers (
 ) where
 
 import Text.PrettyPrint.Leijen
+
+-- | Adds an underscore in front of an id
+_u :: Doc -> Doc
+_u = (text "_" <>)
 
 -- | Encloses a document into { } and indents the body.
 ibraces :: Doc -> Doc

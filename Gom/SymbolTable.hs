@@ -39,6 +39,7 @@ module Gom.SymbolTable (
 ) where
 
 import Gom.Sig
+import Gom.Random ()
 import Control.Monad.State
 import qualified Data.Map as M
 import Data.Either(partitionEithers)
@@ -134,7 +135,7 @@ isGenerated c = M.lookup c . baseCtor
 
 -- | Returns @True@ if @String@ is imported.
 importsString :: SymbolTable -> Bool
-importsString st = makeSortId "String" `elem` importedSorts st
+importsString st = "String" `elem` map idStr (importedSorts st)
 
 -- | @emptySt m is@ is an empty symbol table (no sorts nor constructors) that
 -- encodes a module of name @m@ which imports sorts @is@.

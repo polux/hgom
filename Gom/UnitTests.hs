@@ -16,9 +16,10 @@
 module Gom.UnitTests (testSuite) where
 
 import Gom.Pretty ()
+import Gom.Random ()
+import Gom.Sig
 import Gom.Parser
 import Gom.Checker
-import Gom.Sig
 
 -- imported test suites
 import qualified Gom.SymbolTable
@@ -40,6 +41,9 @@ import Data.Char(toLower)
 import System.Directory
 import Test.QuickCheck
 import System.Exit
+
+-- for generated java testing
+import System.FilePath.Glob
 
 -- | models at which step of the chain a module failed
 data FailsDuring = Parsing | Checking | Never deriving (Show,Eq)
@@ -68,7 +72,8 @@ regressionSuite = testGroup "regression tests" $
             ("t5.gom",  Parsing ), ("t6.gom",  Parsing ),
             ("t7.gom",  Parsing ), ("t8.gom",  Parsing ),
             ("t9.gom",  Parsing ), ("t10.gom", Checking),
-            ("t11.gom", Never   ), ("t12.gom", Never   )]
+            ("t11.gom", Never   ), ("t12.gom", Never   ),
+            ("t13.gom", Checking)]
 
   where cook (s,f) = testCase (msg s f) (test s f)
         test s f = fileFailsDuring (prefix s) >>= (@?= f)
@@ -103,16 +108,18 @@ propGenParsePretty = do
   sigs `forM_` \sig -> doInTempDir $
     case sig of
       Module m _ (SortDef s _ _:_) -> do
+        let pack = map toLower m
         writeFile "Test.gom" $ show sig
         _ <- rawSystem "hgom" ["-r","Test.gom"]
-        writeFile "Test.java" $ template m (show s)
+        writeFile "Test.java" $ template pack (show s)
         st <- rawSystem "javac" ["Test.java"]
         st @?= ExitSuccess
+        removeDirectoryRecursive pack
       _ -> error "never happens"
 
   where hasSort = not . null . sortDefs
-        template m s = unlines
-          ["import " ++ map toLower m ++ ".types.*;",
+        template pack s = unlines
+          ["import " ++ pack ++ ".types.*;",
            "public class Test {",
            "  public static void main(String[] args) {",
            "    for(int i=0; i<10; i++) {",
@@ -123,10 +130,33 @@ propGenParsePretty = do
            "  }",
            "}"]
 
+testChecker :: [String] -> IO ()
+testChecker opts = do
+  sigs <- sample' $ arbitrary `suchThat` checks
+  sigs `forM_` \sig -> doInTempDir $ do
+    case sig of
+      Module m _ _ -> do
+        let pack = map toLower m
+        writeFile "Test.gom" $ show sig
+        _ <- rawSystem "hgom" ("Test.gom":opts)
+        jfs <- globDir1 (compile $ "**" </> "*.java") pack
+        st <- rawSystem "javac" jfs
+        st @?= ExitSuccess
+        removeDirectoryRecursive pack
+  where checks m = maybe True (const False) (checkEverything m)
+
+testChecker1 :: IO ()
+testChecker1 = testChecker ["-r","-d","-s","-h"]
+
+testChecker2 :: IO ()
+testChecker2 = testChecker ["--noSharing"]
+
 -- | cross modules quickcheck tests
 crossModuleSuite :: Test
-crossModuleSuite = testGroup "cross module properties:" 
-  [testProperty "parse . pretty = id" propParsePretty,
+crossModuleSuite = testGroup "cross module properties" 
+  [testCase "check ok => compilable java (1)" testChecker1,
+   testCase "check ok => compilable java (2)" testChecker2,
+   testProperty "parse . pretty = id" propParsePretty,
    testCase "generated parse/pretty (10 sigs x 10 terms)" propGenParsePretty]
 
 -- | all tests

@@ -100,7 +100,7 @@ options =
                     "the same or in a separate .tom file"])
   ,Option ['r'] ["random"] (NoArg crandom)
           "generate makeRamdom methods"
-  ,Option ['J'] ["oomappings"] (NoArg coomapping)
+  ,Option ['j'] ["oomappings"] (NoArg coomapping)
           "generate only Java OO mappings"
   ,Option ['d'] ["depth"] (NoArg cdepth)
           "generate depth methods"
