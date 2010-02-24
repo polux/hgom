@@ -58,6 +58,6 @@ executable hgom
                  test-framework-quickcheck2 >= 0.2.5,
                  test-framework-hunit >= 0.2.4,
                  HUnit >= 1.2.2.1, unix >= 2.3.0.0,
-                 process >= 1.0.1.1
+                 process >= 1.0.1.1, Glob >= 0.5
   extensions:    
   ghc-options:   -Wall -fno-warn-orphans

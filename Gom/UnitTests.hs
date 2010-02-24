@@ -42,6 +42,9 @@ import System.Directory
 import Test.QuickCheck
 import System.Exit
 
+-- for generated java testing
+import System.FilePath.Glob
+
 -- | models at which step of the chain a module failed
 data FailsDuring = Parsing | Checking | Never deriving (Show,Eq)
 
@@ -125,11 +128,35 @@ propGenParsePretty = do
            "  }",
            "}"]
 
+testChecker :: [String] -> IO ()
+testChecker opts = do
+  sigs <- sample' $ arbitrary `suchThat` checks
+  sigs `forM_` \sig -> doInTempDir $ do
+    putStr "."
+    case sig of
+      Module m _ _ -> do
+        let pack = map toLower m
+        writeFile "Test.gom" $ show sig
+        _ <- rawSystem "hgom" ("Test.gom":opts)
+        jfs <- globDir1 (compile $ "**" </> "*.java") pack
+        st <- rawSystem "javac" jfs
+        st @?= ExitSuccess
+        removeDirectoryRecursive pack
+  where checks m = maybe True (const False) (checkEverything m)
+
+testChecker1 :: IO ()
+testChecker1 = testChecker ["-r","-d","-s","-h"]
+
+testChecker2 :: IO ()
+testChecker2 = testChecker ["--noSharing"]
+
 -- | cross modules quickcheck tests
 crossModuleSuite :: Test
 crossModuleSuite = testGroup "cross module properties:" 
-  [testProperty "parse . pretty = id" propParsePretty--,
-  ]--   testCase "generated parse/pretty (10 sigs x 10 terms)" propGenParsePretty]
+  [testCase "check ok => compilable java (1)" testChecker1,
+   testCase "check ok => compilable java (2)" testChecker2,
+   testProperty "parse . pretty = id" propParsePretty,
+   testCase "generated parse/pretty (10 sigs x 10 terms)" propGenParsePretty]
 
 -- | all tests
 testSuite :: [Test]
