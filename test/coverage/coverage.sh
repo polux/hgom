@@ -13,8 +13,10 @@ $HGOM -c no $DATA/t1.gom
 $HGOM -c sep $DATA/t1.gom 
 $HGOM -c same $DATA/t1.gom 
 $HGOM -c foo $DATA/t1.gom 
+$HGOM -j $DATA/t1.gom 
+$HGOM -j -p aa.bb.cc $DATA/t1.gom 
 $HGOM -h $DATA/t1.gom 
-$HGOM --test 3 $DATA/t1.gom 
+$HGOM --test 5 $DATA/t1.gom 
 $HGOM --compact $DATA/t1.gom 
 $HGOM --random $DATA/t1.gom 
 $HGOM --size $DATA/t1.gom 
@@ -31,4 +33,4 @@ $HGOM aa bb
 
 hpc markup --srcdir=../.. --destdir=html hgom.tix 
 
-rm -rf hgom.tix foo aa
+rm -rf hgom.tix foo aa Foo

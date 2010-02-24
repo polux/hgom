@@ -65,19 +65,10 @@ instance Pretty CtorId  where pretty = text . show
 
 class GomId a where
   idStr :: a -> String
-  mapId  :: (String -> String) -> a -> a 
 
-instance GomId SortId where
-  idStr (SortId x)   = x
-  mapId f (SortId x) = SortId $ f x
-
-instance GomId FieldId where
-  idStr (FieldId x)   = x
-  mapId f (FieldId x) = FieldId $ f x
-
-instance GomId CtorId where
-  idStr (CtorId x)   = x
-  mapId f (CtorId x) = CtorId $ f x
+instance GomId SortId where idStr (SortId x)   = x
+instance GomId FieldId where idStr (FieldId x)   = x
+instance GomId CtorId where idStr (CtorId x)   = x
 
 -- | Represents a gom module.
 data Module = Module {
@@ -134,8 +125,8 @@ prependTail :: CtorId -> FieldId
 prependTail (CtorId s) = FieldId ("Tail" ++ s)
 
 -- | Turns the id into lowercase
-lowerId :: (GomId a) => a -> a
-lowerId = mapId (map toLower)
+lowerId :: SortId -> SortId
+lowerId (SortId x) = SortId (map toLower x)
 
 -- | @simpleFields def@ is the list of fields of non-variadic 
 -- constructors of @def@, along with their sorts.
