@@ -38,15 +38,26 @@ Run `hgom --help` to get some basic help.
 You can test the behaviour of `hgom` by running it as follows. Some examples
 are valid files, other ones demonstrate `hgom` error messages.
 
-    hgom examples/test.gom
     hgom examples/simple.gom
     hgom examples/big.gom
+    hgom examples/many_errors.gom
     ...
 
 ## Test ##
 
-Simply run `hgom --test n` where `n` is the number of random inputs generated
-for each test.
+The test suite is compiled only if the `test` flag is
+set. For instance, run
+
+    cabal configure -ftest
+    cabal build
+    ./dist/build/hgom/hgom --test n
+
+or
+
+    cabal install -ftest
+    hgom --test n 
+
+where `n` is the number of random inputs generated for each test.
 
 ### Code Coverage ###
 
