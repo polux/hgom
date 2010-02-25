@@ -164,5 +164,5 @@ crossModuleSuite = testGroup "cross module properties"
 -- | all tests
 testSuite :: [Test]
 testSuite = [regressionSuite,
-             crossModuleSuite,
-             Gom.SymbolTable.testSuite]
+             Gom.SymbolTable.testSuite,
+             crossModuleSuite]
