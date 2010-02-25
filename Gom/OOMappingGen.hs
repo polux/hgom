@@ -35,7 +35,8 @@ st2oomapping =  runGen compOOMapping
 -- on OO mappings and the OOMapping interface class
 compOOMapping :: Gen FileHierarchy
 
-compOOMapping = do mn <- map toLower `liftM` askSt modName
+compOOMapping = do m <- askSt modName
+                   let mn = map toLower m 
                    pr <- askConf package
                    ctrs  <- askSt simpleConstructorsIds
                    vctrs <- askSt variadicConstructorsIds
@@ -44,7 +45,7 @@ compOOMapping = do mn <- map toLower `liftM` askSt modName
                    ops   <- mapM compOp ctrs
                    vops  <- mapM compVOp vctrs
                    isig  <- compISignature ctrs vctrs 
-                   let mapping = Tom mn (vsep $ (tyts++ops++vops))
+                   let mapping = Tom m (vsep $ (tyts++ops++vops))
                    return . wrap pr $ Package mn [mapping,isig]
                 where 
                    -- wraps the package in the user-provided prefix hierarchy (-p option)

@@ -45,6 +45,7 @@ import Control.Monad.State
 import qualified Data.Map as M
 import Data.Either(partitionEithers)
 import Data.List(foldl',nub)
+import Gom.CodeGen.Common.Builtins
 
 #if TEST
 import Gom.Random ()
@@ -91,11 +92,13 @@ importedSorts = imported
 
 -- | Concrete Java Type associated to a sort.
 concreteTypeOf :: SortId -> SymbolTable -> ClassId
-concreteTypeOf s st = 
-  case s `M.lookup` javatype st of
-    Just c  -> c
-    Nothing -> error $ "sort" ++ show s ++ "has no concrete type"
-
+concreteTypeOf s st 
+  | isBuiltin s = makeClassId (show (qualifiedBuiltin s), "")
+  | otherwise = 
+    case s `M.lookup` javatype st of
+      Just c  -> c
+      Nothing -> error $ "sort " ++ show s ++ " has no concrete type" 
+   
 
 -- | Non-variadic constructors associated to a sort.
 sCtorsOf :: SortId -> SymbolTable -> [CtorId]

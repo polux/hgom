@@ -1,0 +1,42 @@
+module EL
+imports String
+abstract syntax
+
+Expr implemented by org.jboss.el.parser.Node =
+    CompositeExpression(exprs:ExprList)
+    | DeferredExpression(expr:Expr)
+    | FunctionCall(ids:ExprList, name:String, args:ExprList)
+    | ArrayAccess(ids:ExprList, arg:Expr)
+    | If(cond:Expr, left:Expr, right:Expr)
+
+    // arithmetic
+    | Plus(left:Expr, right:Expr)
+    | Minus(left:Expr, right:Expr)
+    | Mod(left:Expr, right:Expr)
+    | Mult(left:Expr, right:Expr)
+    | Div(left:Expr, right:Expr)
+
+    // boolean
+    | And(opleft:Expr, opright:Expr)
+    | Or(opleft:Expr, opright:Expr)
+    | Equal(left:Expr, right:Expr)
+    | NotEqual(left:Expr, right:Expr)
+    | GreaterThan(left:Expr, right:Expr)
+    | GreaterThanEqual(left:Expr, right:Expr)
+    | LessThan(left:Expr, right:Expr)
+    | LessThanEqual(left:Expr, right:Expr)
+    | Not_(expr:Expr)
+    | Empty(expr:Expr)
+    | True()
+    | False()
+
+    | Str(value:String)
+    | FloatingPoint(value:String)
+    | Literal(value:String)
+    | Integer(value:String)
+    | Identifier(name:String)
+    | PropertySuffix(name:String)
+    | Value(values:ExprList)
+    | Null()
+
+ExprList implemented by java.util.List<org.jboss.el.parser.Node> = concExpr(Expr*)

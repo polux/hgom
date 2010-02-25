@@ -1,6 +1,6 @@
-package base.hand.types.t2;
+package simple.hand.types.t2;
 
-import base.hand.types.T2;
+import simple.hand.types.T2;
 
 /**
  * @author nvintila

@@ -1,12 +1,12 @@
-package oomapping;
+package simple;
 
-import base.hand.types.T1;
-import base.hand.types.T2;
-import base.hand.types.t1.a;
-import base.hand.types.t1.f;
-import base.hand.types.t2.b;
-import base.hand.types.t2.g;
-import base.hand.types.t2.h;
+import simple.hand.types.T1;
+import simple.hand.types.T2;
+import simple.hand.types.t1.a;
+import simple.hand.types.t1.f;
+import simple.hand.types.t2.b;
+import simple.hand.types.t2.g;
+import simple.hand.types.t2.h;
 
 import java.util.ArrayList;
 import java.util.Arrays;

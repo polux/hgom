@@ -1,4 +1,4 @@
-package base.hand.types;
+package simple.hand.types;
 
 /**
  * @author nvintila

@@ -1,4 +1,4 @@
-package oomapping;
+package simple;
 
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
@@ -6,13 +6,13 @@ import junit.framework.Assert;
 
 import java.util.List;
 
-import base.hand.types.*;
-import base.hand.types.t1.*;
-import base.hand.types.t2.*;
+import simple.hand.types.*;
+import simple.hand.types.t1.*;
+import simple.hand.types.t2.*;
 import tom.library.sl.*;
-import oomapping.signature.ISignature;
+import simple.signature.ISignature;
 
-public class OOMappingTest extends TestCase {
+public class Test extends TestCase {
   
   %include { sl.tom }
   %include { signature/Signature.tom }
@@ -43,7 +43,7 @@ public class OOMappingTest extends TestCase {
 
 
   public static void main(String[] args) {
-    junit.textui.TestRunner.run(new TestSuite(OOMappingTest.class));
+    junit.textui.TestRunner.run(new TestSuite(Test.class));
   }
 
   public void testMatch() {
