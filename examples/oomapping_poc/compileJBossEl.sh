@@ -1,5 +1,5 @@
 #!/bin/sh
 
 hgom -p jboss_el --oomapping jboss_el/EL.gom
-tom jboss_el/TestEL.t
-javac -cp ../../test/data/tom-runtime-full.jar:lib/jboss-el.jar:lib/el-api.jar:lib/tomcat-piece.jar jboss_el/TestEL.java
+tom --genIntrospector jboss_el/TestEL.t
+javac -cp ../../test/data/tom-runtime-full.jar:lib/jboss-el.jar:lib/el-api.jar:lib/tomcat-piece.jar: jboss_el/TestEL.java

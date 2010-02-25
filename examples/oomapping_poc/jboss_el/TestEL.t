@@ -19,6 +19,12 @@ public class TestEL extends TestCase {
   %include { java/util/types/Collection.tom }
   %include { java/util/HashSet.tom }
 
+  public static jboss_el.el.ISignature getSignature() {
+    //TODO: to be implemented (by Nick)
+    // the interface ISignature has been generated from EL.gom
+    return null;
+  }
+
   public static void main(String[] args) {
     junit.textui.TestRunner.run(new TestSuite(TestEL.class));
   }
