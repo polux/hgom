@@ -41,7 +41,8 @@ module Gom.Sig (
   constructorNames,
   vconstructorNames,
   simpleFieldsNames,
-  simpleFieldsOf
+  simpleFieldsOf,
+  getClassName
 ) where
 
 import Data.Char(toLower)
@@ -50,8 +51,8 @@ import Text.PrettyPrint.Leijen
 -- | Sort name (e.g. @Expr@) identifier.
 newtype SortId     = SortId String 
   deriving (Ord,Eq)
--- | Java Class name (e.g. @p1.p2.c@) identifier.
-newtype ClassId     = ClassId [String] 
+-- | Java Class name (e.g. @p.c<...>@) identifier.
+newtype ClassId     = ClassId (String,String) 
   deriving (Ord,Eq)
 -- | Field name (e.g. @x@) identifier.
 newtype FieldId    = FieldId String 
@@ -61,7 +62,7 @@ newtype CtorId     = CtorId String
   deriving (Ord,Eq)
 
 instance Show SortId  where show (SortId s)    = s
-instance Show ClassId  where show (ClassId s)  = show ((hcat . punctuate dot) (map text s))
+instance Show ClassId  where show (ClassId (s1,s2))  = s1 ++ s2
 instance Show FieldId where show (FieldId s)   = s
 instance Show CtorId  where show (CtorId s)    = s
 
@@ -110,7 +111,7 @@ data Ctor =
 makeSortId :: String -> SortId
 makeSortId = SortId
 
-makeClassId :: [String] -> ClassId
+makeClassId :: (String,String) -> ClassId
 makeClassId = ClassId
 
 makeFieldId :: String -> FieldId
@@ -138,6 +139,10 @@ prependTail (CtorId s) = FieldId ("Tail" ++ s)
 -- | Turns the id into lowercase
 lowerId :: SortId -> SortId
 lowerId (SortId x) = SortId (map toLower x)
+
+
+getClassName :: ClassId -> String
+getClassName (ClassId (qualifiedname,_)) = qualifiedname
 
 -- | @simpleFields def@ is the list of fields of non-variadic 
 -- constructors of @def@, along with their sorts.

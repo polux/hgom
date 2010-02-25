@@ -94,4 +94,4 @@ go3 f c sig | prprint c = print $ pretty sig
 
 -- | compilation chain
 chain :: Module -> Config -> IO ()
-chain m conf = generateFileHierarchy (compact conf) .  flip (if oomapping conf then st2oomapping else st2java) conf .  completeVariadics .  ast2st $ m
+chain m conf = generateFileHierarchy (compact conf) .  flip (if oomapping conf then st2oomapping else st2java) conf .  (if oomapping conf then id else completeVariadics) .  ast2st $ m

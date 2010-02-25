@@ -23,6 +23,7 @@ import Control.Applicative((<$>),(<*),(*>),(<*>))
 
 import Gom.Sig
 import Control.Monad.Identity(Identity)
+import Data.List
 
 defs :: ParsecT String u Identity Char-> LanguageDef u
 defs start = javaStyle { 
@@ -37,6 +38,7 @@ ulexer = P.makeTokenParser $ defs upper
 
 white    :: Parser ()
 parens   :: Parser a -> Parser a
+angles   :: Parser a -> Parser a
 ident    :: Parser String
 uident   :: Parser String
 res      :: String -> Parser ()
@@ -45,6 +47,7 @@ comma    :: Parser String
 
 white    = P.whiteSpace lexer
 parens   = P.parens     lexer
+angles   = P.angles     lexer
 ident    = P.identifier lexer
 uident   = P.identifier ulexer
 res      = P.reserved   lexer
@@ -60,10 +63,13 @@ lhsSortidP = makeSortId <$> uident
 rhsSortidP :: Parser SortId
 rhsSortidP = makeSortId <$> ident 
              <?> "sort name"
-classidP :: Parser (Maybe ClassId)
-classidP =  do c <- ident `sepBy` (resOp ".")
-               return $ Just (makeClassId c) 
+
+classidP :: Parser (String,String)
+classidP =  do qname <- intercalate "." <$> ident `sepBy1` resOp "."  
+               gparams <- option "" (helper <$> angles (classidP `sepBy` comma))
+               return (qname, gparams)
                <?> "class name"
+  where helper s = "<" ++ (intercalate "," (map (\(s1,s2) -> s1++s2) s)) ++ ">"
 
 fieldidP :: Parser FieldId
 fieldidP = makeFieldId <$> ident
@@ -84,7 +90,7 @@ sigP = Module <$> (res "module" *> ident)
 
 sortP ::  Parser SortDef
 sortP = do n <- lhsSortidP
-           cn <- option Nothing (res "implemented by" *> classidP)
+           cn <- option Nothing (Just . makeClassId <$> (res "implemented by" *> classidP))
            resOp "=" 
            c <- ctorP `sepBy` resOp "|"
            return $ SortDef n cn c

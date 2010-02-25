@@ -43,7 +43,7 @@ compOOMapping = do mn <- map toLower `liftM` askSt modName
                    tyts  <- mapM compTypeTerm srts
                    ops   <- mapM compOp ctrs
                    vops  <- mapM compVOp vctrs
-                   isig  <- compISignature (ctrs++vctrs)
+                   isig  <- compISignature ctrs vctrs 
                    let mapping = Tom mn (vsep $ (tyts++ops++vops))
                    return . wrap pr $ Package mn [mapping,isig]
                 where 
@@ -64,8 +64,9 @@ compOOMapping = do mn <- map toLower `liftM` askSt modName
 -- generats @$t1.equals($t2)@ if @--noSharing@ has been
 -- toggled
 compTypeTerm :: SortId -> Gen Doc
-compTypeTerm s = do sh <- askConf sharing 
-                    return $ rTypeterm (pretty s) (pretty s) sh
+compTypeTerm s = do sh <- askConf sharing
+                    cs <- askSt (concreteTypeOf s)
+                    return $ rTypeterm (pretty s) (text (getClassName cs)) sh
 
 -- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@
 -- of codomain @Co@, generates
@@ -114,20 +115,22 @@ compVOp c = do codom  <- askSt (codomainOf c)
                dom  <- askSt (fieldOf c)
                return $ text "%oplist" <+> pretty codom <+> pretty c <> parens (pretty dom <> text "*") <+> ibraces (vcat $ map text 
                    [" is_fsym(l)       { " ++ mapping ++ ".isInstanceOf($l) }",
-                    " make_empty()     { " ++ mapping ++ ".getMapping_L().makeEmpty() }",
-                    " make_insert(o,l) { " ++ mapping ++ ".getMapping_L().makeInsert($o,$l) }",
-                    " get_head(l)      { " ++ mapping ++ ".getMapping_L().getHead($l) }",
-                    " get_tail(l)      { " ++ mapping ++ ".getMapping_L().getTail($l) }",
-                    " is_empty(l)      { " ++ mapping ++ ".getMapping_L().isEmpty($l) }"])
+                    " make_empty()     { " ++ mapping ++ ".makeEmpty() }",
+                    " make_insert(o,l) { " ++ mapping ++ ".makeInsert($o,$l) }",
+                    " get_head(l)      { " ++ mapping ++ ".getHead($l) }",
+                    " get_tail(l)      { " ++ mapping ++ ".getTail($l) }",
+                    " is_empty(l)      { " ++ mapping ++ ".isEmpty($l) }"])
               where  mapping = "getSignature().getMapping_" ++ show c ++ "()"
 
 
--- | Given a list of constructors @Ci@, 
+-- | Given a list of constructors @cs@ and a list of var constructors
+-- @vcs@, 
 -- generates the ISignature of new oo mappings.
-compISignature :: [CtorId] -> Gen FileHierarchy
-compISignature s = do methDecls <- mapM compMDecl s
-                      let code = rInterface public (text "ISignature") [] (rBody methDecls)
-                      return $ Class "ISignature" code 
+compISignature :: [CtorId] -> [CtorId] -> Gen FileHierarchy
+compISignature cs vcs = do methDecls <- mapM compMDecl cs
+                           vmethDecls <- mapM compMVDecl vcs
+                           let code = rInterface public (text "ISignature") [] (rBody (methDecls ++ vmethDecls))
+                           return $ Class "ISignature" code 
 
 compMDecl :: CtorId -> Gen Doc
 compMDecl c = do cfields <- askSt (fieldsOf c)
@@ -140,3 +143,10 @@ compMDecl c = do cfields <- askSt (fieldsOf c)
               where gen   =  angles . hcat . punctuate comma
                     prettyConcreteType s = do cs <- askSt (concreteTypeOf s)
                                               return $ pretty cs
+
+compMVDecl :: CtorId -> Gen Doc
+compMVDecl c = do dom    <- askSt (fieldOf c)
+                  codom  <- askSt (codomainOf c)
+                  cdom   <- askSt (concreteTypeOf dom) 
+                  ccodom <- askSt (concreteTypeOf codom) 
+                  return $ text "tom.library.oomapping.ListMapping<" <> pretty ccodom <> text "," <> pretty cdom <> text ">" <+> text "getMapping_" <> pretty c <> text "()"
