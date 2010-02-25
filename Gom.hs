@@ -88,10 +88,20 @@ go2 f c = do em <- parseModule `fmap` readFile f
 go3 :: FilePath -> Config -> Module -> IO ()
 go3 f c sig | prprint c = print $ pretty sig
             | checker c = case checkEverything sig of
-                Nothing -> chain sig c
+                Nothing -> gomain
                 Just d  -> error (f ++ " contains errors:\n" ++ show d)
-            | otherwise = chain sig c
+            | otherwise = gomain
+  where gomain = (if oomapping c then ooChain else hgomChain) c sig
 
--- | compilation chain
-chain :: Module -> Config -> IO ()
-chain m conf = generateFileHierarchy (compact conf) .  flip (if oomapping conf then st2oomapping else st2java) conf .  (if oomapping conf then id else completeVariadics) .  ast2st $ m
+-- | compilation chain for hgom
+hgomChain :: Config -> Module -> IO ()
+hgomChain conf = generateFileHierarchy (compact conf) . 
+                 flip st2java conf . 
+                 completeVariadics .  
+                 ast2st
+
+-- | compilation chain for oomapings
+ooChain :: Config -> Module -> IO ()
+ooChain conf = generateFileHierarchy (compact conf) . 
+               flip st2oomapping conf .
+               ast2st 
