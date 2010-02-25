@@ -18,8 +18,6 @@ module Gom.CodeGen.Common.Helpers (
   -- * Java pretty-printing
   -- ** Generic
   ibraces, sbraces, encloseCommas, rBody, _u,
-  -- ** Comments
-  rComment,
   -- ** Java keywords
   abstract, public, protected, private, this,
   jreturn, throw, new, void, instanceof, jif,
@@ -125,14 +123,11 @@ rClass md cn ex im body =
 rInterface
  :: Doc   -- ^ modifier (public, private..)
  -> Doc   -- ^ interface name
- -> [Doc]   -- ^ extends
  -> Doc   -- ^ body
  -> Doc
 
-rInterface md cn ex body = 
-  md <+> text "interface" <+> cn <+> r1 ex <+> ibraces body
-  where r1 [] = empty
-        r1 l  = text "extends" <+> hsep (punctuate comma l)
+rInterface md cn body = 
+  md <+> text "interface" <+> cn <+> ibraces body
 
 -- | Renders @modifier type name(arg_1,...,arg_n) { body }@.
 rMethodDef
@@ -170,10 +165,6 @@ rWrapBuiltin
   -> Doc
 rWrapBuiltin qt =
   text "tom.library.sl.VisitableBuiltin" <> angles qt
-
--- | Renders the string between @\/* \*/@ on one or several lines.
-rComment :: String -> Doc
-rComment s = text "/*" <+> fillSep (map text $ words s) <+> text "*/"
 
 -- | Renders @if(cond) { then body }@.
 rIfThen 

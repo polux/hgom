@@ -7,3 +7,4 @@ T = f(x:A,y:int) | g(z:B) | f(A*) | f(x:B,y:int) | g(x:A,y:String) | f(x:A,y:int
 String = a() | b(w:A) | c(w:B,z:A,w:B,z:A) | Emptyf() | Emptyl()
 T = a() | t() | l(A*) | Consf()
 
+FOo = a()

@@ -126,7 +126,7 @@ compVOp c = do codom  <- askSt (codomainOf c)
 compISignature :: [CtorId] -> [CtorId] -> Gen FileHierarchy
 compISignature cs vcs = do methDecls <- mapM compMDecl cs
                            vmethDecls <- mapM compMVDecl vcs
-                           let code = rInterface public (text "ISignature") [] (rBody (methDecls ++ vmethDecls))
+                           let code = rInterface public (text "ISignature") (rBody (methDecls ++ vmethDecls))
                            return $ Class "ISignature" code 
 
 compMDecl :: CtorId -> Gen Doc
