@@ -64,9 +64,8 @@ compOOMapping = do mn <- map toLower `liftM` askSt modName
 -- generats @$t1.equals($t2)@ if @--noSharing@ has been
 -- toggled
 compTypeTerm :: SortId -> Gen Doc
-compTypeTerm s = do sh <- askConf sharing
-                    cs <- askSt (concreteTypeOf s)
-                    return $ rTypeterm (pretty s) (text (getClassName cs)) sh
+compTypeTerm s = do cs <- askSt (concreteTypeOf s)
+                    return $ rTypeterm (pretty s) (text (getClassName cs)) False 
 
 -- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@
 -- of codomain @Co@, generates
