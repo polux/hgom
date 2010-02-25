@@ -43,7 +43,7 @@ compOOMapping = do mn <- map toLower `liftM` askSt modName
                    tyts  <- mapM compTypeTerm srts
                    ops   <- mapM compOp ctrs
                    vops  <- mapM compVOp vctrs
-                   isig  <- compISignature ctrs
+                   isig  <- compISignature (ctrs++vctrs)
                    let mapping = Tom mn (vsep $ (tyts++ops++vops))
                    return . wrap pr $ Package mn [mapping,isig]
                 where 
