@@ -26,6 +26,7 @@ extra-source-files: examples/*.gom
                     README.markdown
 
 data-files: test/data/*.gom
+            test/data/*.jar
 
 Flag test
   Description: enable test support

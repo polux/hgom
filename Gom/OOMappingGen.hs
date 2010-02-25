@@ -24,17 +24,14 @@ import Gom.CodeGen.Common
 import Text.PrettyPrint.Leijen
 import Control.Arrow((***))
 import Data.Char(toLower)
-import Control.Monad.Reader
 
 -- | Compiles a symbol table into OO Mapping
 st2oomapping :: SymbolTable -> Config -> FileHierarchy
 st2oomapping =  runGen compOOMapping
 
-
 -- | Generates the @Mod.tom@ tom mapping file for module @Mod@ based
 -- on OO mappings and the OOMapping interface class
 compOOMapping :: Gen FileHierarchy
-
 compOOMapping = do m <- askSt modName
                    let mn = map toLower m 
                    pr <- askConf package
