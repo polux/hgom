@@ -76,7 +76,7 @@ regressionSuite = testGroup "regression tests" $
             ("t7.gom",  Parsing ), ("t8.gom",  Parsing ),
             ("t9.gom",  Parsing ), ("t10.gom", Checking),
             ("t11.gom", Never   ), ("t12.gom", Never   ),
-            ("t13.gom", Checking)]
+            ("t13.gom", Checking), ("t14.gom", Never   )]
 
   where cook (s,f) = testCase (msg s f) (test s f)
         test s f = fileFailsDuring (prefix s) >>= (@?= f)
