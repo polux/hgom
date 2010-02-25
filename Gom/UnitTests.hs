@@ -36,14 +36,16 @@ import Paths_hgom (getDataFileName)
 
 -- for generated parser tesing
 import System.Cmd(rawSystem)
-import Control.Monad(forM_)
 import Data.Char(toLower)
 import System.Directory
 import Test.QuickCheck
+import Test.QuickCheck.Monadic
 import System.Exit
 
 -- for generated java testing
 import System.FilePath.Glob
+import Data.List(intercalate)
+import Control.Monad(when)
 
 -- | models at which step of the chain a module failed
 data FailsDuring = Parsing | Checking | Never deriving (Show,Eq)
@@ -102,20 +104,21 @@ doInTempDir a = do
 
 -- | test that the generated parser is correct w.r.t. 
 -- the generated pretty printer 
-propGenParsePretty :: IO ()
-propGenParsePretty = do
-  sigs <- sample' $ arbitrary `suchThat` hasSort
-  sigs `forM_` \sig -> doInTempDir $
-    case sig of
-      Module m _ (SortDef s _ _:_) -> do
-        let pack = map toLower m
+propGenParsePretty :: Property
+propGenParsePretty = monadicIO $ do
+  sig <- pick (arbitrary `suchThat` hasSort)
+  case sig of
+    Module m _ (SortDef s _ _:_) ->
+      let pack = map toLower m 
+      in assert =<< (run . doInTempDir $ do 
         writeFile "Test.gom" $ show sig
         _ <- rawSystem "hgom" ["-r","Test.gom"]
         writeFile "Test.java" $ template pack (show s)
         st <- rawSystem "javac" ["Test.java"]
-        st @?= ExitSuccess
-        removeDirectoryRecursive pack
-      _ -> error "never happens"
+        let res = (st == ExitSuccess)
+        when res $ removeDirectoryRecursive pack
+        return res)
+    _ -> error "never happens"
 
   where hasSort = not . null . sortDefs
         template pack s = unlines
@@ -130,34 +133,33 @@ propGenParsePretty = do
            "  }",
            "}"]
 
-testChecker :: [String] -> IO ()
-testChecker opts = do
-  sigs <- sample' $ arbitrary `suchThat` checks
-  sigs `forM_` \sig -> doInTempDir $ do
-    case sig of
-      Module m _ _ -> do
-        let pack = map toLower m
+testChecker :: [String] -> Property
+testChecker opts = monadicIO $ do
+  sig <- pick (arbitrary `suchThat` checks)
+  case sig of 
+    Module m _ _ ->
+      let pack = map toLower m
+      in assert =<< (run . doInTempDir $ do
         writeFile "Test.gom" $ show sig
         _ <- rawSystem "hgom" ("Test.gom":opts)
         jfs <- globDir1 (compile $ "**" </> "*.java") pack
         st <- rawSystem "javac" jfs
-        st @?= ExitSuccess
-        removeDirectoryRecursive pack
-  where checks m = maybe True (const False) (checkEverything m)
-
-testChecker1 :: IO ()
-testChecker1 = testChecker ["-r","-d","-s","-h"]
-
-testChecker2 :: IO ()
-testChecker2 = testChecker ["--noSharing"]
+        let res = (st == ExitSuccess)
+        when res $ removeDirectoryRecursive pack
+        return res)
+  where checks m = 
+          maybe True (const False) (checkEverything m)
 
 -- | cross modules quickcheck tests
 crossModuleSuite :: Test
 crossModuleSuite = testGroup "cross module properties" 
-  [testCase "check ok => compilable java (1)" testChecker1,
-   testCase "check ok => compilable java (2)" testChecker2,
+  [check flags1, check flags2,
    testProperty "parse . pretty = id" propParsePretty,
-   testCase "generated parse/pretty (10 sigs x 10 terms)" propGenParsePretty]
+   testProperty "generated parse . generated pretty = id" propGenParsePretty]
+  where check fs = testProperty (mes fs) (testChecker fs)
+        flags1 = ["-r","-d","-s","-h"]
+        flags2 = ["--noSharing"]
+        mes fs = "check ok => compilable java (" ++ intercalate " " fs ++ ")"
 
 -- | all tests
 testSuite :: [Test]
