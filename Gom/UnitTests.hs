@@ -45,7 +45,7 @@ import System.Exit
 -- for generated java testing
 import System.FilePath.Glob
 import Data.List(intercalate)
-import Control.Monad(when)
+import Control.Monad(when,liftM2)
 
 -- | models at which step of the chain a module failed
 data FailsDuring = Parsing | Checking | Never deriving (Show,Eq)
@@ -102,11 +102,15 @@ doInTempDir a = do
   setCurrentDirectory cur
   return r
 
+-- | True iff the module passes the check phase
+checks :: Module -> Bool
+checks m = maybe True (const False) (checkEverything m)
+
 -- | test that the generated parser is correct w.r.t. 
 -- the generated pretty printer (@fromString(x.toString()) == x@)
 propGenParsePretty :: Property
 propGenParsePretty = monadicIO $ do
-  sig <- pick (arbitrary `suchThat` hasSort)
+  sig <- pick (arbitrary `suchThat` liftM2 (&&) hasSort checks)
   case sig of
     Module m _ (SortDef s _ _:_) ->
       let pack = map toLower m 
@@ -151,8 +155,6 @@ testChecker opts = monadicIO $ do
         let res = (st == ExitSuccess)
         when res $ removeDirectoryRecursive pack
         return res)
-  where checks m = 
-          maybe True (const False) (checkEverything m)
 
 -- | cross modules quickcheck tests
 crossModuleSuite :: Test
