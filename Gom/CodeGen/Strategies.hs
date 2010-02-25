@@ -120,7 +120,7 @@ compCongruenceConstructor c = do
   fis <- askSt (fieldsOf c)
   let typedArgs = prettyArgs fis jStrategy
       args      = prettyArgs fis empty
-  return $ rMethodDef public empty (text "_" <> pretty c) typedArgs []
+  return $ rMethodDef public empty (text "_" <> pretty c) typedArgs
                       (rBody [rMethodCall this (text "initSubterm") args])
   where prettyArgs fis prefix = map (pre . pretty . fst) fis
           where pre x = prefix <> text " s_" <> x

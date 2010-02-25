@@ -33,7 +33,7 @@ module Gom.CodeGen.Common.Helpers (
   -- ** Classes
   rInterface,
   -- ** Methods
-  rMethodDef, rMethodCall, rWrapBuiltin, rConstructorCall, rMethodDecl,
+  rMethodDef, rMethodCall, rWrapBuiltin, rConstructorCall,
   -- ** Control structures
   rIfThen, rIfThenElse, rWhile, rSwitch,
   -- * Tom pretty-printing
@@ -134,32 +134,16 @@ rInterface md cn ex body =
   where r1 [] = empty
         r1 l  = text "extends" <+> hsep (punctuate comma l)
 
--- | Renders @modifier type name(arg_1,...,arg_n);@.
-rMethodDecl
- :: Doc   -- ^ modifier
- -> Doc   -- ^ return type
- -> Doc   -- ^ method name
- -> [Doc] -- ^ arguments
- -> [Doc] -- ^ exceptions
- -> Doc
-rMethodDecl md ty mn args exceptions = 
-  md <+> ty <+> mn <> encloseCommas args <+> r exceptions <> text ";"
-  where r [] = empty
-        r l  = text "throws" <+> hsep (punctuate comma l)
-
 -- | Renders @modifier type name(arg_1,...,arg_n) { body }@.
 rMethodDef
  :: Doc   -- ^ modifier
  -> Doc   -- ^ return type
  -> Doc   -- ^ method name
  -> [Doc] -- ^ arguments
- -> [Doc] -- ^ exceptions
  -> Doc   -- ^ body
  -> Doc
-rMethodDef md ty mn args exceptions body = 
-  md <+> ty <+> mn <> encloseCommas args <+> r exceptions <+> ibraces body
-  where r [] = empty
-        r l  = text "throws" <+> hsep (punctuate comma l)
+rMethodDef md ty mn args body = 
+  md <+> ty <+> mn <> encloseCommas args <+> ibraces body
 
 -- | Renders @object.method(arg_1,...,arg_n)@.
 rMethodCall

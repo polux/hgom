@@ -79,7 +79,7 @@ compEmptyGettersOfSort = iterOverSortFields getter vcat
   where getter co f t = do qt <- qualifiedSort t
                            let fun = text "get" <> pretty f
                            let b = rBody [hasNotError co f]
-                           return $ rMethodDef public qt fun [] [] b 
+                           return $ rMethodDef public qt fun [] b 
 
 -- | Given a sort S, generates the methods: 
 --
@@ -94,7 +94,7 @@ compEmptySettersOfSort = iterOverSortFields setter vcat
                            let fun = text "set" <> pretty f
                            let a = [pretty qt <+> pretty f]
                            let b = rBody [hasNotError co f]
-                           return $ rMethodDef public void fun a [] b 
+                           return $ rMethodDef public void fun a b 
 
 -- | Given a sort S, generates the methods: 
 --
@@ -108,7 +108,7 @@ compEmptyIsX s = do cs  <- askSt (sCtorsOf s)
                     return . vcat $ map isx cs
   where isx f = let fun = text "is" <> pretty f
                     b   = rBody [jreturn <+> false]
-                in rMethodDef public jboolean fun [] []  b 
+                in rMethodDef public jboolean fun [] b 
 
 -- | Given a sort @T = f1(...) | ... | fn(...)@, generates
 --
@@ -129,7 +129,7 @@ compParseSort s = do
   pr  <- packagePrefix
   let calls = foldr ifsym post (zip cs qcs)
   return $ rMethodDef (static <+> public) qs (text "parse")
-           [pars pr <+> arg] [] (vcat [pre,calls])
+           [pars pr <+> arg] (vcat [pre,calls])
   where pars pr  = pr <> dot <> text "Parser"
         arg      = text "par"
         pre      = text "String id = par.parseId();"
@@ -184,7 +184,7 @@ compMakeRandomSort s = do
   let rcalls1 = map rcall1 qzcs 
   let rcalls2 = map rcall2 qnzcs
   return $ rMethodDef (static <+> public) qs (text "makeRandom")
-                      [text "java.util.Random rand", text "int depth"] []
+                      [text "java.util.Random rand", text "int depth"]
                       (pack rcalls1 (rcalls1 ++ rcalls2))
   where isConst c  = null `liftM` askSt (fieldsOf c) 
         rcall1 qc  = jreturn <+> pretty qc <> text ".make();"
@@ -206,7 +206,7 @@ compMakeRandomSortInit :: SortId -> Gen Doc
 compMakeRandomSortInit s = do
   qs <- qualifiedSort s
   return $ rMethodDef (static <+> public) qs (text "makeRandom") 
-                      [text "int depth"] [] (body qs)
+                      [text "int depth"] (body qs)
   where body qs = jreturn <+> qs <> 
                   text ".makeRandom(new java.util.Random(), depth);"
 
