@@ -68,5 +68,4 @@ executable hgom
                    HUnit >= 1.2.2.1, process >= 1.0.1.1
                    
     other-modules: Gom.UnitTests, Gom.Random
-    ghc-options: -threaded
 
