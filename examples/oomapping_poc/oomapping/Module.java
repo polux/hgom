@@ -97,7 +97,6 @@ public class Module {
 
   }
 
-  /**
   public static class h_Mapping extends Mapping1<T2, List<T1>> {
     public Class getImplementation() {
       return h.class;
@@ -153,8 +152,6 @@ public class Module {
     }
 
   }
-
-  */
 
   /*
    * Not used at present

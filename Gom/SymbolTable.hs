@@ -102,35 +102,35 @@ sCtorsOf :: SortId -> SymbolTable -> [CtorId]
 sCtorsOf s st = 
   case s `M.lookup` sctors st of
     Just l  -> l
-    Nothing -> error $ "sort" ++ show s ++ "not declared"
+    Nothing -> error $ "sort " ++ show s ++ " not declared"
 
 -- | Variadic constructors associated to a sort.
 vCtorsOf :: SortId -> SymbolTable -> [CtorId]
 vCtorsOf s st = 
   case s `M.lookup` vctors st of
     Just l  -> l
-    Nothing -> error $ "sort" ++ show s ++ "not declared" 
+    Nothing -> error $ "sort " ++ show s ++ " not declared" 
 
 -- | Fields associated to a non-variadic constructor.
 fieldsOf :: CtorId -> SymbolTable -> [(FieldId,SortId)]
 fieldsOf c st = 
   case c `M.lookup` sfields st of
     Just l  -> l
-    Nothing -> error $ "non-variadic constructor" ++ show c ++ "not declared" 
+    Nothing -> error $ "non-variadic constructor " ++ show c ++ " not declared" 
 
 -- | Sort of the unique field of a variadic constructor.
 fieldOf :: CtorId -> SymbolTable -> SortId
 fieldOf c st =
   case c `M.lookup` vfield st of
     Just s  -> s
-    Nothing -> error $ "variadic constructor" ++ show c ++ "not declared" 
+    Nothing -> error $ "variadic constructor " ++ show c ++ " not declared" 
 
 -- | Codomain of the constructor.
 codomainOf :: CtorId -> SymbolTable -> SortId
 codomainOf c st =
   case c `M.lookup` codom st of
     Just s  -> s
-    Nothing -> error $ "constructor" ++ show c ++ "not declared" 
+    Nothing -> error $ "constructor " ++ show c ++ " not declared" 
 
 -- | If the field has been generated (e.g. @ConsC@) returns @'Just' C@,
 -- @'Nothing'@ otherwise.

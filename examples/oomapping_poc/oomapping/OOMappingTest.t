@@ -30,15 +30,15 @@ public class OOMappingTest extends TestCase {
     private Module.b_Mapping b_Mapping = new Module.b_Mapping();
     private Module.f_Mapping f_Mapping = new Module.f_Mapping();
     private Module.g_Mapping g_Mapping = new Module.g_Mapping();
-    //private Module.h_Mapping h_Mapping = new Module.h_Mapping();
-    //private Module.concT1_Mapping concT1_Mapping = new Module.concT1_Mapping();
+    private Module.h_Mapping h_Mapping = new Module.h_Mapping();
+    private Module.concT1_Mapping concT1_Mapping = new Module.concT1_Mapping();
 
     public tom.library.oomapping.Mapping0<T1>       getMapping_a() { return a_Mapping; }
     public tom.library.oomapping.Mapping0<T2>       getMapping_b() { return b_Mapping; }
     public tom.library.oomapping.Mapping2<T1,T1,T2> getMapping_f() { return f_Mapping; }
     public tom.library.oomapping.Mapping1<T2,T2>    getMapping_g() { return g_Mapping; }
-    //public tom.library.oomapping.Mapping1<T2,java.util.List<T1>>    getMapping_h() { return h_Mapping; }
-    //public tom.library.oomapping.ListMapping<java.util.List<T1>,T1>    getMapping_concT1() { return concT1_Mapping; }
+    public tom.library.oomapping.Mapping1<T2,java.util.List<T1>>    getMapping_h() { return h_Mapping; }
+    public tom.library.oomapping.ListMapping<java.util.List<T1>,T1>    getMapping_concT1() { return concT1_Mapping; }
   };
 
 
@@ -62,9 +62,9 @@ public class OOMappingTest extends TestCase {
     T1 subject = `f(f(a(),b()),g(b()));
     try {
       T1 res1 = (T1)
-`Repeat(OnceBottomUp(Rule())).visitLight(subject,tom.library.oomapping.Introspector.getInstance());
+        `Repeat(OnceBottomUp(Rule())).visitLight(subject,tom.library.oomapping.Introspector.getInstance());
       T1 res2 = (T1)
-`Repeat(OnceBottomUp(Rule())).visit(subject,tom.library.oomapping.Introspector.getInstance());
+        `Repeat(OnceBottomUp(Rule())).visit(subject,tom.library.oomapping.Introspector.getInstance());
       assertEquals(res1, `a());
       assertEquals(res1, res2);
     } catch(VisitFailure e) {
@@ -72,33 +72,6 @@ public class OOMappingTest extends TestCase {
     }
 
   }
-
-/**
-  public void testCongruence() {
-    T1 subject = `f(f(a(),b()),g(b()));
-    try {
-      T1 res1 = (T1) `_f(Rule(), Rule2()).visitLight(subject,tom.library.oomapping.Introspector.getInstance());
-      T1 res2 = (T1) `_f(Rule(), Rule2()).visit(subject,tom.library.oomapping.Introspector.getInstance());
-      assertEquals(res1, `f(a(),b()));
-      assertEquals(res1, res2);
-    } catch(VisitFailure e) {
-      fail();
-    }
-  }
-
-  public void test_listMatchCongruence() {
-    List<T1> subject = `concT1(f(a(),b()),a(),f(a(),b()));
-    try {
-      List<T1> res1 = (List<T1>) `_concT1(Try(Rule())).visitLight(subject,tom.library.oomapping.Introspector.getInstance());
-      List<T1> res2 = (List<T1>) `_concT1(Try(Rule())).visit(subject,tom.library.oomapping.Introspector.getInstance());
-      //List<T1> res2 = (List<T1>) `_concT1(Try(Sequence(Print(),Rule()))).visit(subject,tom.library.oomapping.Introspector.getInstance());
-      assertEquals(res1, `concT1(a(),a(),a()));
-      //assertEquals(res1, res2);
-    } catch(VisitFailure e) {
-      fail();
-    }
-  }
-*/
 
   %strategy Print() extends Identity() {
     visit T1 {
@@ -123,7 +96,6 @@ public class OOMappingTest extends TestCase {
     }
   }
 
-/**
   public void test_listMatchFirst() {
     List<T1> subject = `concT1(a(), f(a(), b()), f(a(), g(b())));
 
@@ -190,11 +162,37 @@ public class OOMappingTest extends TestCase {
     }
   }
 
-  public void test_congWithListMatch() {
-    T2 subject = `h(concT1(a(), f(a(), b()), f(a(), g(b()))));
+  /**
+    public void testCongruence() {
+    T1 subject = `f(f(a(),b()),g(b()));
+    try {
+    T1 res1 = (T1) `_f(Rule(), Rule2()).visitLight(subject,tom.library.oomapping.Introspector.getInstance());
+    T1 res2 = (T1) `_f(Rule(), Rule2()).visit(subject,tom.library.oomapping.Introspector.getInstance());
+    assertEquals(res1, `f(a(),b()));
+    assertEquals(res1, res2);
+    } catch(VisitFailure e) {
+    fail();
+    }
+    }
 
-    // todo: how to do this?
-    //`_h(_concT1(map(Print()))).visitLight(subject);
+    public void test_listMatchCongruence() {
+    List<T1> subject = `concT1(f(a(),b()),a(),f(a(),b()));
+    try {
+    List<T1> res1 = (List<T1>) `_concT1(Try(Rule())).visitLight(subject,tom.library.oomapping.Introspector.getInstance());
+    List<T1> res2 = (List<T1>) `_concT1(Try(Rule())).visit(subject,tom.library.oomapping.Introspector.getInstance());
+  //List<T1> res2 = (List<T1>) `_concT1(Try(Sequence(Print(),Rule()))).visit(subject,tom.library.oomapping.Introspector.getInstance());
+  assertEquals(res1, `concT1(a(),a(),a()));
+  //assertEquals(res1, res2);
+  } catch(VisitFailure e) {
+  fail();
   }
-*/
+  }
+
+  public void test_congWithListMatch() {
+  T2 subject = `h(concT1(a(), f(a(), b()), f(a(), g(b()))));
+
+// todo: how to do this?
+//`_h(_concT1(map(Print()))).visitLight(subject);
+}
+   */
 }
