@@ -97,7 +97,7 @@ instance Pretty JavaKeywordClash where
                                p "Sort name"         s, 
                                p "Constructors name" c, 
                                p "Field name"        f]
-    where p mes xs = vcat $ map (er mes) xs 
+    where p mes = vcat . map (er mes)
           er mes x = text mes <+> dquotes (pretty x) <+> 
                      text "clashes with java keywords."
 
@@ -262,10 +262,10 @@ javaKeywords = S.fromList
 -- | Looks for module, sorts, ctors and fields names that would clash
 -- with java keywords.
 checkJavaKeywordClash :: Module -> Maybe JavaKeywordClash
-checkJavaKeywordClash m = pack4 (filter checkMod  $ [moduleName m])
+checkJavaKeywordClash m = pack4 (filter checkMod [moduleName m])
                                 (filter checkSort $ definedSorts m)
                                 (filter checkCtor $ constructorNames m)
-                                (filter checkFld  $ simpleFieldsNames m)
+                                (filter checkFld $ simpleFieldsNames m)
   where pack4 [] [] [] [] = Nothing
         pack4 l1 l2 l3 l4 = Just $ JKC l1 l2 l3 l4
         isJkw      = (`S.member` javaKeywords)
@@ -275,7 +275,7 @@ checkJavaKeywordClash m = pack4 (filter checkMod  $ [moduleName m])
         checkFld   = isJkw . idStr
 
 checkSortModuleClash :: Module -> Maybe SortModuleClash
-checkSortModuleClash m = pack SMC $ clashes
+checkSortModuleClash m = pack SMC clashes
   where low     = map toLower
         lowmn   = low (moduleName m)
         clashes = filter ((== lowmn) . low . idStr) (exportedSorts m)

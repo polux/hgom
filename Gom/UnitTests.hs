@@ -46,6 +46,7 @@ import System.Exit
 import System.FilePath.Glob
 import Data.List(intercalate)
 import Control.Monad(when,liftM2)
+import Data.Maybe(isNothing)
 
 -- | models at which step of the chain a module failed
 data FailsDuring = Parsing | Checking | Never deriving (Show,Eq)
@@ -104,7 +105,7 @@ doInTempDir a = do
 
 -- | True iff the module passes the check phase
 checks :: Module -> Bool
-checks m = maybe True (const False) (checkEverything m)
+checks m = isNothing (checkEverything m)
 
 -- | test that the generated parser is correct w.r.t. 
 -- the generated pretty printer (@fromString(x.toString()) == x@)

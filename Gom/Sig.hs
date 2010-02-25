@@ -174,7 +174,7 @@ exportedSorts sig = imports sig ++ definedSorts sig
 -- | @definedSorts m@ returns the list of sort names defined by @m@,
 -- i.e. the sorts that appear in the left-hand sides of definitions.
 definedSorts :: Module -> [SortId]
-definedSorts sig = map sortName (sortDefs sig)
+definedSorts = map sortName . sortDefs
 
 -- | @constructorNames m@ returns the list of all the constructors declared
 -- in @m@ (variadic or not).
