@@ -103,7 +103,7 @@ doInTempDir a = do
   return r
 
 -- | test that the generated parser is correct w.r.t. 
--- the generated pretty printer 
+-- the generated pretty printer (@fromString(x.toString()) == x@)
 propGenParsePretty :: Property
 propGenParsePretty = monadicIO $ do
   sig <- pick (arbitrary `suchThat` hasSort)
@@ -133,6 +133,8 @@ propGenParsePretty = monadicIO $ do
            "  }",
            "}"]
 
+-- | @testChecker opts@ generates a random module that passes the checker
+-- phase, and return True iff javac successes on the generated files
 testChecker :: [String] -> Property
 testChecker opts = monadicIO $ do
   sig <- pick (arbitrary `suchThat` checks)
