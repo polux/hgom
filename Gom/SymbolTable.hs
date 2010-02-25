@@ -34,24 +34,28 @@ module Gom.SymbolTable (
   addCtor,
   -- ** Table completion
   completeVariadics,
+#if TEST
   -- * Tests
   testSuite
+#endif
 ) where
 
 import Gom.Sig
-import Gom.Random ()
 import Control.Monad.State
 import qualified Data.Map as M
 import Data.Either(partitionEithers)
-import Data.List(foldl',nub,sort)
+import Data.List(foldl',nub)
 
--- required by tests only
+#if TEST
+import Gom.Random ()
 import Test.Framework (Test, testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
 import qualified Data.Set as S
 import qualified Data.List as L
 import Gom.Pretty ()
 import Data.Maybe(mapMaybe)
+import Data.List(sort)
+#endif
 
 -- | A private datatype implemented by maps from sorts to constructors, from
 -- constructors to codomains, etc.
@@ -269,6 +273,8 @@ completeVariadics st = foldl' add st res
         add st' (co,ci,l) = 
           (insertGeneratedCtors (map ctorName l) ci . addCtors co l) st'
 
+#if TEST
+
 -- | tests for list inclusion modulo AC
 subset ::  (Ord a) => [a] -> [a] -> Bool
 subset x y = S.fromList x `S.isSubsetOf` S.fromList y
@@ -324,3 +330,5 @@ testSuite = testGroup "symbol table consistency after completion"
   ,testProperty "same fields same sorts" $ go propFieldsSortConsistent]
 
   where go f = f . ast2st
+
+#endif

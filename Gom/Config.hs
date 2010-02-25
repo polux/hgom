@@ -33,6 +33,9 @@ data Config =
     version :: Bool, -- ^ display version information ?
     package :: Maybe [String], -- ^ optional package prefix
     prprint :: Bool,  -- ^ pretty-print module and exit ?
+#if TEST
+    utests  :: Maybe Int, -- ^ run unit tests ? how many by test case ?
+#endif
     haskell :: Bool, -- ^ generate @toHaskell@ methods ?
     visit   :: Bool, -- ^ implement @Visitable@ ? 
     checker :: Bool, -- ^ perform checks ?
@@ -43,8 +46,7 @@ data Config =
     parsers :: Bool, -- ^ generate @from*@ methods ? 
     random  :: Bool, -- ^ generate @makeRandom@ methods ?
     depth   :: Bool, -- ^ generate @depth@ methods ?
-    size    :: Bool, -- ^ generate @size@ methods ?
-    utests  :: Maybe Int -- ^ run unit tests ? how many by test case ?
+    size    :: Bool  -- ^ generate @size@ methods ?
   } 
 
 -- | Default configuration.
@@ -55,6 +57,9 @@ defaultConfig =
     version = False,
     package = Nothing,
     prprint = False,
+#if TEST
+    utests  = Nothing,
+#endif
     haskell = False,
     visit   = True,
     checker = True,
@@ -65,8 +70,7 @@ defaultConfig =
     parsers = True,
     random  = False,
     depth   = False,
-    size    = False,
-    utests  = Nothing
+    size    = False
   }
 
 -- | Represents the three options values for @--withCongruenceStrategies@
@@ -90,9 +94,11 @@ options =
           "show version number and exit"
   ,Option ['P'] ["pretty"] (NoArg  cpretty)
           "pretty-print the module and exit"
+#if TEST
   ,Option [] ["test"] (ReqArg cutests "n")
           (unlines ["run n random tests by test case",
                     "in the test suite and exit"])
+#endif
   ,Option ['p'] ["package"] (ReqArg cpackage "packageName") 
           "specify package name"
   ,Option ['c'] ["congruence"] (ReqArg ccongr "(same|sep)")
@@ -132,7 +138,9 @@ options =
         coomapping c = return $ c { oomapping = True  }
         cdepth     c = return $ c { depth   = True  }
         csize      c = return $ c { size    = True  }
+#if TEST
         cutests  s c = return $ c { utests = Just (read s) }
+#endif
         cpackage p c = return $ c { package = Just (split '.' p) }
 
         ccongr "same" c = return $ c { congr = SameFile }

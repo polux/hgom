@@ -29,11 +29,13 @@ import Gom.FileGen
 
 import System.Environment (getArgs)
 import Text.PrettyPrint.Leijen (pretty)
+
+#if TEST
+import qualified Gom.UnitTests as T
 import Test.Framework (defaultMainWithOpts)
 import Test.Framework.Runners.Options 
 import Test.Framework.Options 
-
-import qualified Gom.UnitTests as T
+#endif
 
 hgomVersion :: String
 hgomVersion = "Version 0.4 - January 2009"
@@ -50,17 +52,21 @@ entryPoint args =
     Left err    -> paramsError err
     Right (c,n) -> go1 c n
 
+#if TEST
 -- | options for the test framework
 opts :: Int -> RunnerOptions' Maybe
 opts n = RunnerOptions Nothing (Just topts) Nothing
   where topts = TestOptions Nothing (Just n) Nothing Nothing
+#endif
 
 -- | before parsing: checks all \"... and exit\" functions 
 -- that don't require parsing
 go1 :: Config -> [String] -> IO ()
 go1 c n | help c              = putStrLn usage
         | version c           = putStrLn hgomVersion
+#if TEST
         | Just k <- utests c  = defaultMainWithOpts T.testSuite (opts k)
+#endif
         | otherwise           = case n of
             [f] -> go2 f c 
             []  -> paramsError "No input file specified.\n"

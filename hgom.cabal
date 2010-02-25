@@ -26,6 +26,10 @@ extra-source-files: examples/*.gom
                     test/bench/Makefile
                     README.markdown
 
+Flag test
+  Description: enable test support
+  Default:     False
+
 executable hgom
   main-is:       Gom.hs
   other-modules: Gom.Config,
@@ -35,7 +39,6 @@ executable hgom
                  Gom.FileGen,
                  Gom.CodeGen,
                  Gom.OOMappingGen,
-                 Gom.Random,
                  Gom.CodeGen.Common,
                  Gom.CodeGen.Common.Constants,
                  Gom.CodeGen.Common.Builtins,
@@ -47,17 +50,21 @@ executable hgom
                  Gom.CodeGen.Strategies,
                  Gom.CodeGen.Sorts,
                  Gom.SymbolTable,
-                 Gom.Sig,
-                 Gom.UnitTests,
+                 Gom.Sig, 
                  Paths_hgom
   build-depends: base >= 4 && < 5, containers >= 0.2,
                  parsec >= 3.0.0, wl-pprint >= 1.0,
                  mtl >= 1.1.0.2, directory >= 1.0.0.2,
-                 filepath >= 1.1.0.2, QuickCheck >= 2,
-                 test-framework >= 0.2.4, 
-                 test-framework-quickcheck2 >= 0.2.5,
-                 test-framework-hunit >= 0.2.4,
-                 HUnit >= 1.2.2.1, unix >= 2.3.0.0,
-                 process >= 1.0.1.1, Glob >= 0.5
-  extensions:    
+                 filepath >= 1.1.0.2
+  extensions:    CPP
   ghc-options:   -Wall -fno-warn-orphans
+
+  if flag(test)
+    cpp-options:   -DTEST
+    build-depends: QuickCheck >= 2, test-framework >= 0.2.4, 
+                   test-framework-quickcheck2 >= 0.2.5,
+                   test-framework-hunit >= 0.2.4,
+                   HUnit >= 1.2.2.1, unix >= 2.3.0.0,
+                   process >= 1.0.1.1, Glob >= 0.5
+    other-modules: Gom.UnitTests, Gom.Random
+
