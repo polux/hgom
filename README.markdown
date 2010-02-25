@@ -38,9 +38,9 @@ Run `hgom --help` to get some basic help.
 You can test the behaviour of `hgom` by running it as follows. Some examples
 are valid files, other ones demonstrate `hgom` error messages.
 
-    hgom examples/test.gom
     hgom examples/simple.gom
     hgom examples/big.gom
+    hgom examples/many_errors.gom
     ...
 
 ## Test ##
