@@ -114,7 +114,8 @@ propGenParsePretty = monadicIO $ do
         writeFile "Test.gom" $ show sig
         _ <- rawSystem "hgom" ["-r","Test.gom"]
         writeFile "Test.java" $ template pack (show s)
-        st <- rawSystem "javac" ["Test.java"]
+        cp <- getDataFileName $ "test" </> "data" </> "tom-runtime-full.jar:"
+        st <- rawSystem "javac" ["-cp",cp,"Test.java"]
         let res = (st == ExitSuccess)
         when res $ removeDirectoryRecursive pack
         return res)
