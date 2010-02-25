@@ -20,7 +20,7 @@ public class TestEL extends TestCase {
   %include { java/util/HashSet.tom }
 
   public static jboss_el.el.ISignature getSignature() {
-    //TODO: to be implemented (by Nick)
+    //TODO: to be implemented by Nick
     // the interface ISignature has been generated from EL.gom
     return null;
   }
