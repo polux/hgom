@@ -18,13 +18,14 @@ cabal-version:     >= 1.6.0
 build-type:        Simple
 tested-with:       GHC >= 6.10
 
-data-files: test/data/*.gom
 extra-source-files: examples/*.gom
                     test/coverage/coverage.sh
                     test/bench/bench.sh 
                     test/bench/Gen.hs
                     test/bench/Makefile
                     README.markdown
+
+data-files: test/data/*.gom
 
 Flag test
   Description: enable test support
@@ -63,8 +64,8 @@ executable hgom
     cpp-options:   -DTEST
     build-depends: QuickCheck >= 2, test-framework >= 0.2.4, 
                    test-framework-quickcheck2 >= 0.2.5,
-                   test-framework-hunit >= 0.2.4,
-                   HUnit >= 1.2.2.1, unix >= 2.3.0.0,
-                   process >= 1.0.1.1, Glob >= 0.5
+                   test-framework-hunit >= 0.2.4, Glob >= 0.5,
+                   HUnit >= 1.2.2.1, process >= 1.0.1.1
+                   
     other-modules: Gom.UnitTests, Gom.Random
 
