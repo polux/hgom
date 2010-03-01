@@ -1,0 +1,12 @@
+module Foo
+imports int String char
+abstract syntax
+
+T1 implemented by Object = f(x:T2,y:T1) | a(x:T2)
+T2 implemented by Object = g(x:T1,y:T2) | b()
+T3 implemented by Object = S(x:String)
+T4 implemented by Object = T(x:char)
+
+List implemented by Object = List(T1*)
+IList implemented by Object = iList(int*)
+IList2 implemented by Object = iList21(int*) | iList22(int*)
