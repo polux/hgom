@@ -57,7 +57,10 @@ or
     cabal install -ftest
     hgom --test "-a n"
 
+where `n` is the number of generated random inputs for each test case.
+
 For other arguments to the `--test` option, try `hgom --test "--help"`.
+
 ### Code Coverage ###
 
 Code coverage can be tested as follows.
