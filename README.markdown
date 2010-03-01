@@ -50,14 +50,19 @@ set. For instance, run
 
     cabal configure -ftest
     cabal build
-    ./dist/build/hgom/hgom --test n
+    ./dist/build/hgom/hgom --test \"-a n\"
 
 or
 
     cabal install -ftest
-    hgom --test n 
+    hgom --test \"-a n\"
 
 where `n` is the number of random inputs generated for each test.
+For multithreaded unit testing, use
+
+    hgom --test \"-a n -j k\" +RTS -N
+
+where `k` is the number of jobs
 
 ### Code Coverage ###
 

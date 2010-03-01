@@ -63,6 +63,7 @@ executable hgom
 
   if flag(test)
     cpp-options:   -DTEST
+    ghc-options:   -threaded
     build-depends: QuickCheck >= 2, test-framework >= 0.2.4, 
                    test-framework-quickcheck2 >= 0.2.5,
                    test-framework-hunit >= 0.2.4, Glob >= 0.5,

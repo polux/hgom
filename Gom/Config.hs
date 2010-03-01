@@ -34,7 +34,7 @@ data Config =
     package :: Maybe [String], -- ^ optional package prefix
     prprint :: Bool,  -- ^ pretty-print module and exit ?
 #if TEST
-    utests  :: Maybe Int, -- ^ run unit tests ? how many by test case ?
+    utests  :: Maybe [String], -- ^ run unit tests ? 
 #endif
     haskell :: Bool, -- ^ generate @toHaskell@ methods ?
     visit   :: Bool, -- ^ implement @Visitable@ ? 
@@ -95,9 +95,8 @@ options =
   ,Option ['P'] ["pretty"] (NoArg  cpretty)
           "pretty-print the module and exit"
 #if TEST
-  ,Option [] ["test"] (ReqArg cutests "n")
-          (unlines ["run n random tests by test case",
-                    "in the test suite and exit"])
+  ,Option [] ["test"] (ReqArg cutests "args")
+          (unlines ["run test suite with args"])
 #endif
   ,Option ['p'] ["package"] (ReqArg cpackage "packageName") 
           "specify package name"
@@ -139,7 +138,7 @@ options =
         cdepth     c = return $ c { depth   = True  }
         csize      c = return $ c { size    = True  }
 #if TEST
-        cutests  s c = return $ c { utests = Just (read s) }
+        cutests  s c = return $ c { utests = Just (words s) }
 #endif
         cpackage p c = return $ c { package = Just (split '.' p) }
 
