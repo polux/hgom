@@ -92,15 +92,29 @@ propParsePretty m =
     Left  _  -> False
     Right m' -> m == m'
 
+getTempDir :: IO FilePath
+getTempDir = do
+  tmp <- getTemporaryDirectory
+  getTemp 0 tmp
+  where getTemp :: Integer -> FilePath -> IO FilePath
+        getTemp n tmp = do
+          b <- doesDirectoryExist htmp
+          if b then getTemp (n+1) tmp
+               else do createDirectory htmp
+                       return htmp
+          where htmp = tmp </> "hgom-tmp" ++ show n
+    
+
 -- | @doInTempDir a@ creates a directory, change working directory 
 -- to it, perform @a@ and comes back to original directory
-doInTempDir :: IO a -> IO a
+doInTempDir :: IO Bool -> IO Bool
 doInTempDir a = do
-  tmp <- getTemporaryDirectory
+  tmp <- getTempDir
   cur <- getCurrentDirectory
   setCurrentDirectory tmp
   r <- a
   setCurrentDirectory cur
+  when r $ removeDirectoryRecursive tmp
   return r
 
 -- | True iff the module passes the check phase
@@ -122,7 +136,6 @@ propGenParsePretty = monadicIO $ do
         cp <- getDataFileName $ "test" </> "data" </> "tom-runtime-full.jar:"
         st <- rawSystem "javac" ["-cp",cp,"Test.java"]
         let res = (st == ExitSuccess)
-        when res $ removeDirectoryRecursive pack
         return res)
     _ -> error "never happens"
 
@@ -154,7 +167,6 @@ testChecker opts = monadicIO $ do
         cp <- getDataFileName $ "test" </> "data" </> "tom-runtime-full.jar:"
         st <- rawSystem "javac" $ ["-cp",cp]++jfs
         let res = (st == ExitSuccess)
-        when res $ removeDirectoryRecursive pack
         return res)
 
 -- | cross modules quickcheck tests

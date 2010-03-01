@@ -22,7 +22,7 @@ module Gom.Checker (
   GeneratedConstructorsClash(),
   -- * Individual features checking
   checkJavaKeywordClash,
-  checkSortModuleClash,
+  checkCtorModuleClash,
   checkMultipleSortDecl,
   checkMultipleCtorDecl,
   checkDuplicateFields,
@@ -101,11 +101,11 @@ instance Pretty JavaKeywordClash where
           er mes x = text mes <+> dquotes (pretty x) <+> 
                      text "clashes with java keywords."
 
-data SortModuleClash = SMC [SortId]
+data CtorModuleClash = CMC [CtorId]
 
-instance Pretty SortModuleClash where
-  pretty (SMC cs) = vcat (map f cs)
-    where f c = text "Sort" <+> pretty c <+> text "clashes with module's name."
+instance Pretty CtorModuleClash where
+  pretty (CMC cs) = vcat (map f cs)
+    where f c = text "Constructor" <+> pretty c <+> text "clashes with module's name."
 
 -- | helper function to pack checkers results into Maybes
 pack :: ([t] -> a) -> [t] -> Maybe a
@@ -239,7 +239,7 @@ checkGenClashes m = pack GCG $ mapMaybe check vcs
 
 checkers :: [Module -> Maybe Doc]
 checkers = [w checkJavaKeywordClash,
-            w checkSortModuleClash,
+            w checkCtorModuleClash,
             w checkMultipleSortDecl,
             w checkMultipleCtorDecl,
             w checkDuplicateFields,
@@ -274,16 +274,16 @@ checkJavaKeywordClash m = pack4 (filter checkMod [moduleName m])
         checkCtor  = isJkw . idStr 
         checkFld   = isJkw . idStr
 
-checkSortModuleClash :: Module -> Maybe SortModuleClash
-checkSortModuleClash m = pack SMC clashes
-  where low     = map toLower
-        lowmn   = low (moduleName m)
-        clashes = filter ((== lowmn) . low . idStr) (exportedSorts m)
+-- | Looks for clashes between lowercase module name and constructor names
+checkCtorModuleClash :: Module -> Maybe CtorModuleClash
+checkCtorModuleClash m = pack CMC clashes
+  where lowmn   = map toLower (moduleName m)
+        clashes = filter ((== lowmn) . idStr) (constructorNames m)
 
 -- | Reports, in this order, the results of:
 --    - 'checkJavaKeywordClash'
 --
---    - 'checkSortModuleClash'
+--    - 'checkCtorModuleClash'
 --
 --    - 'checkMultipleSortDecl'
 --
