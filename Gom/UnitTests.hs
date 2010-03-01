@@ -69,21 +69,20 @@ fileFailsDuring f = do af <- getDataFileName f
 -- | regression suite
 regressionSuite :: Test
 regressionSuite = testGroup "regression tests" $
-
-  map cook [("t1.gom",  Never   ), ("t2.gom",  Never   ),
-            ("t3.gom",  Checking), ("t4.gom",  Parsing ),
-            ("t5.gom",  Parsing ), ("t6.gom",  Parsing ),
-            ("t7.gom",  Parsing ), ("t8.gom",  Parsing ),
-            ("t9.gom",  Parsing ), ("t10.gom", Checking),
-            ("t11.gom", Never   ), ("t12.gom", Never   ),
-            ("t13.gom", Checking), ("t14.gom", Never   )]
-
-  where cook (s,f) = testCase (msg s f) (test s f)
-        test s f = fileFailsDuring (prefix s) >>= (@?= f)
-        prefix s = "test" </> "data" </> s
+  concat [map (cook Never   ) (files 1 1 5),
+          map (cook Checking) (files 2 0 9), 
+          map (cook Parsing ) (files 3 1 7)]
+  where files :: Int -> Int -> Int -> [FilePath]
+        files n l h = map fname [l..h]
+          where fname i = "test" </> "data" </> 
+                          "t" ++ show n ++ 
+                          "_" ++ show i ++ ".gom"
+        cook f s = testCase (msg s f) (test f s)
+        test f s = fileFailsDuring s >>= (@?= f)
         msg s Never    = s ++ " is valid"
         msg s Parsing  = s ++ " fails parsing"
         msg s Checking = s ++ " fails checking"
+        
 
 -- | checks that @parse . pretty = id@
 propParsePretty :: Module -> Bool
