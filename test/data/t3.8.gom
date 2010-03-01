@@ -1,3 +1,5 @@
+/* invalid: T2 not declared */
+
 module Foo
 abstract syntax
 

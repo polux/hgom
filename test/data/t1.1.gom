@@ -1,5 +1,7 @@
+/* valid */
+
 module Foo
-int String char
+imports int String char
 abstract syntax
 
 T1 = f(x:T2,y:T1) | a(x:T2)
@@ -9,3 +11,4 @@ T4 = T(x:char)
 
 List = List(T1*)
 IList = iList(int*)
+IList2 = iList21(int*) | iList22(int*)

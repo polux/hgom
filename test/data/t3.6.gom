@@ -1,0 +1,8 @@
+/* A and B not declared */
+
+module Foo
+imports int String
+
+abstract syntax
+
+T = f(x:A,y:B) 

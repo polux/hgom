@@ -1,0 +1,8 @@
+// two different errors to cover linebreak in error display
+
+module Foo
+imports int String
+
+abstract syntax
+
+T = foo(x:A)

@@ -1,3 +1,6 @@
+/* invalid: 
+ * Int, while and public clash with keywords */
+
 module for
 abstract syntax
 

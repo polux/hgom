@@ -1,3 +1,5 @@
+/* valid */
+
 module Foo
 imports
 abstract syntax

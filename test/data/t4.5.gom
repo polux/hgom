@@ -1,8 +1,11 @@
-Foo
+/* invalid syntax:
+ * waits for a field declaration */
+
+module Foo
 imports int String char
 abstract syntax
 
-T1 = f(x:T2,y:T1) | a(x:T2)
+T1 = f(,y:T1) | a(x:T2)
 T2 = g(x:T1,y:T2) | b()
 T3 = S(x:String)
 T4 = T(x:char)

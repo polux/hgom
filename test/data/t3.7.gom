@@ -1,0 +1,9 @@
+/* clash between Emptyf, Consf and f */
+
+module Foo
+imports int String
+
+abstract syntax
+
+T1 = Emptyf() | Consf()
+T2 = f(int*)
