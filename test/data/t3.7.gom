@@ -1,9 +1,8 @@
-/* clash between Emptyf, Consf and f */
+/* invalid syntax:
+ * waits for a class id */
 
 module Foo
-imports int String
-
+imports int String char
 abstract syntax
 
-T1 = Emptyf() | Consf()
-T2 = f(int*)
+T implemented by = a()

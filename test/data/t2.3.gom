@@ -1,0 +1,9 @@
+/* invalid: a declared twice */
+
+module Foo
+imports int String
+
+abstract syntax
+
+T1 = a()
+T2 = a()

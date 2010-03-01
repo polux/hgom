@@ -1,8 +1,0 @@
-/* invalid syntax:
- * waits for a class id */
-
-module Foo
-imports int String char
-abstract syntax
-
-T implemented by = a()

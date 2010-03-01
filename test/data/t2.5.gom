@@ -1,0 +1,8 @@
+/* invalid: same field with two different sorts */
+
+module Foo
+imports int String
+
+abstract syntax
+
+T = f(x:int) | g(x:T)

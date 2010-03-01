@@ -1,8 +1,8 @@
-/* A and B not declared */
+/* invalid syntax:
+ * waits for a constructor declaration */
 
 module Foo
-imports int String
-
+imports int String char
 abstract syntax
 
-T = f(x:A,y:B) 
+T1 = f(x:T2,y:T1) |

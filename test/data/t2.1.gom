@@ -1,0 +1,8 @@
+/* invalid: ctor/module clash */
+
+module Foo
+imports int String
+
+abstract syntax
+
+T = foo()

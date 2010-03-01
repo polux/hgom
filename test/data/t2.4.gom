@@ -1,0 +1,8 @@
+/* invalid: two fields with the same name */
+
+module Foo
+imports int String
+
+abstract syntax
+
+T = h(x:T,x:T)
