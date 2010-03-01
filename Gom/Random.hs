@@ -20,10 +20,10 @@ import Gom.Sig
 import Test.QuickCheck
 
 genId :: Gen String
-genId = listOf1 $ oneof [choose ('a','z'), choose ('A','Z')]
+genId = resize 10 . listOf1 $ oneof [choose ('a','z'), choose ('A','Z')]
 
 genUId :: Gen String
-genUId = do c  <- choose ('A','Z') ; cs <- genId ; return $ c:cs
+genUId = resize 10 $ do c  <- choose ('A','Z') ; cs <- genId ; return $ c:cs
 
 instance Arbitrary SortId  where arbitrary = makeSortId  `fmap` genUId
 instance Arbitrary CtorId  where arbitrary = makeCtorId  `fmap` genId
@@ -38,7 +38,8 @@ instance Arbitrary Module where
     modul <- genId
     sorts <- arbitrary `suchThat` allDiff
     -- we need at least one constructor per sort
-    cidss <- listOf (listOf1 arbitrary) `suchThat` (allDiff . concat)
+    cidss <- resize 10 $ 
+      listOf (listOf1 arbitrary) `suchThat` (allDiff . concat)
     let mix = zip sorts cidss
     defs  <- mapM (genSortDef (map fst mix)) mix
     return $ Module modul [] defs
