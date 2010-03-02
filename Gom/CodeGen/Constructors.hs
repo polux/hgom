@@ -564,16 +564,16 @@ hashArg :: Int -> FieldId -> SortId -> Doc
 hashArg idx fid sid = let res d = char accum <+> text "+=" <+> parens d in
                       if shift == 0 then res go
                                     else res $ go <+> text "<<" <+> int shift
-  where go | isILFC    sid = pfid
+  where go | isILC     sid = pfid
            | isBoolean sid = pfid <> text "?1:0"
-           | isFloat   sid = text "(int)" <> toLong pfid <> text "^" <>
+           | isFloat   sid = text "(int)" <> toInt pfid <> text "^" <>
                              parens (toInt pfid) <> text ">>>16"
            | isDouble  sid = text "(int)" <> toLong pfid <> text "^" <>
                              parens (toLong pfid) <> text ">>>32"
            | otherwise     = rMethodCall pfid (text "hashCode") []
         shift = (idx `mod` 4) * 8
         accum = "aaaabbbbcccc" !! (idx `mod` 12)
-        isILFC s = any ($ s) [isInt,isLong,isFloat,isChar]
+        isILC s = any ($ s) [isInt,isLong,isChar]
         toInt x = text "java.lang.Float.floatToIntBits" <> parens x
         toLong x = text "java.lang.Double.doubleToLongBits" <> parens x
         pfid = this <> dot <> _u (pretty fid)
