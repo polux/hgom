@@ -91,7 +91,9 @@ It takes some time. The generated files can be plotted using
  * faster !
  * smaller code, compiles much faster
  * almost 100% code coverage,
- * consistency checks using QuickCheck
+ * unit tests using QuickCheck, both on compiler 
+   data structures and generated code
+ * regression tests for parser and checker
  * more things optional: visitable, checker, ...
  * `toHaskell`, `makeRandom`, `depth` and `size`
     methods generation (optional)
