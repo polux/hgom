@@ -89,6 +89,7 @@ It takes some time. The generated files can be plotted using
 ### Better ###
 
  * faster !
+ * a far less permissive checker
  * smaller code, compiles much faster
  * almost 100% code coverage,
  * unit tests using QuickCheck, both on compiler 
