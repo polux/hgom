@@ -26,7 +26,8 @@ genUId :: Gen String
 genUId = resize 10 $ do c  <- choose ('A','Z') ; cs <- genId ; return $ c:cs
 
 builtins :: [SortId]
-builtins = map makeSortId ["int","String","char"]
+builtins = map makeSortId 
+  ["boolean","int","char","double","float","long","String"]
 
 instance Arbitrary SortId where arbitrary = makeSortId `fmap` genUId
 instance Arbitrary CtorId where arbitrary = makeCtorId `fmap` genId
