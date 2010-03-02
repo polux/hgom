@@ -35,7 +35,7 @@ import System.FilePath((</>))
 import Paths_hgom (getDataFileName)
 
 -- for generated parser tesing
-import System.Cmd(rawSystem)
+import System.Process(rawSystem)
 import Data.Char(toLower)
 import System.Directory
 import Test.QuickCheck
@@ -45,8 +45,9 @@ import System.Exit
 -- for generated java testing
 import System.FilePath.Glob
 import Data.List(intercalate)
-import Control.Monad(when,liftM2)
+import Control.Monad(liftM2)
 import Data.Maybe(isNothing)
+import System.Process(readProcessWithExitCode)
 
 -- | models at which step of the chain a module failed
 data FailsDuring = Parsing | Checking | Never deriving (Show,Eq)
@@ -113,7 +114,8 @@ doInTempDir a = do
   setCurrentDirectory tmp
   r <- a
   setCurrentDirectory cur
-  when r $ removeDirectoryRecursive tmp
+  if r then removeDirectoryRecursive tmp
+       else putStrLn $ "guilty files kept in " ++ tmp
   return r
 
 -- | True iff the module passes the check phase
@@ -133,7 +135,7 @@ propGenParsePretty = monadicIO $ do
         _ <- rawSystem "hgom" ["-r","Test.gom"]
         writeFile "Test.java" $ template pack (show s)
         cp <- getDataFileName $ "test" </> "data" </> "tom-runtime-full.jar:"
-        st <- rawSystem "javac" ["-cp",cp,"Test.java"]
+        (st,_,_) <- readProcessWithExitCode "javac" ["-cp",cp,"Test.java"] ""
         let res = (st == ExitSuccess)
         return res)
     _ -> error "never happens"
@@ -164,7 +166,7 @@ testChecker opts = monadicIO $ do
         _ <- rawSystem "hgom" ("Test.gom":opts)
         jfs <- globDir1 (compile $ "**" </> "*.java") pack
         cp <- getDataFileName $ "test" </> "data" </> "tom-runtime-full.jar:"
-        st <- rawSystem "javac" $ ["-cp",cp]++jfs
+        (st,_,_) <- readProcessWithExitCode "javac" (["-cp",cp]++jfs) ""
         let res = (st == ExitSuccess)
         return res)
 

@@ -83,9 +83,9 @@ builtinImport s = fromMaybe (pretty s) (idStr s `lookup` ibuiltins)
 
 -- | @renderBuiltin s f b@ generates what is necessary to put
 -- the representation of @f@ (field of sort @s@) in the buffer @b@.
-renderBuiltin :: SortId -> FieldId -> Doc -> Doc
+renderBuiltin :: SortId -> Doc -> Doc -> Doc
 renderBuiltin s f b 
-  | isString s = text "renderString" <> parens (b <> comma <> pretty f)
-  | isChar   s = text "renderChar"   <> parens (b <> comma <> pretty f)
-  | otherwise  = rMethodCall b (text "append") [pretty f]
+  | isString s = text "renderString" <> parens (b <> comma <> f)
+  | isChar   s = text "renderChar"   <> parens (b <> comma <> f)
+  | otherwise  = rMethodCall b (text "append") [f]
 

@@ -25,8 +25,11 @@ genId = resize 10 . listOf1 $ oneof [choose ('a','z'), choose ('A','Z')]
 genUId :: Gen String
 genUId = resize 10 $ do c  <- choose ('A','Z') ; cs <- genId ; return $ c:cs
 
-instance Arbitrary SortId  where arbitrary = makeSortId  `fmap` genUId
-instance Arbitrary CtorId  where arbitrary = makeCtorId  `fmap` genId
+builtins :: [SortId]
+builtins = map makeSortId ["int","String","char"]
+
+instance Arbitrary SortId where arbitrary = makeSortId `fmap` genUId
+instance Arbitrary CtorId where arbitrary = makeCtorId `fmap` genId
 instance Arbitrary FieldId where arbitrary = makeFieldId `fmap` genId
 
 allDiff :: (Eq t) => [t] -> Bool
@@ -42,15 +45,15 @@ instance Arbitrary Module where
       listOf (listOf1 arbitrary) `suchThat` (allDiff . concat)
     let mix = zip sorts cidss
     defs  <- mapM (genSortDef (map fst mix)) mix
-    return $ Module modul [] defs
+    return $ Module modul builtins defs
   shrink (Module m i d) = do
     d' <- shrink d
     return $ Module m i d'
 
-genTypedFields :: (Arbitrary a, Eq a) => [a1] -> Gen [(a, a1)]
+genTypedFields :: [SortId] -> Gen [(FieldId,SortId)]
 genTypedFields sorts = do
   flds <- listOf1 arbitrary `suchThat` allDiff
-  doms <- listOf1 (elements sorts)
+  doms <- listOf1 (elements $ sorts ++ builtins)
   return $ zip flds doms
 
 instance Arbitrary SortDef where

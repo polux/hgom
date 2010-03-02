@@ -417,7 +417,7 @@ compToStringBuilder c = do rcalls <- iterOverFields rcall id c
         open       = bapp $ dquotes (pretty c <> lparen)
         close      = bapp $ dquotes rparen
         rcall x s  = return $
-          if isBuiltin s then renderBuiltin s x (text "_buf")
+          if isBuiltin s then renderBuiltin s (_u $ pretty x) (text "_buf")
                          else rMethodCall (this <> dot <> _u (pretty x))
                                           (text "toStringBuilder") 
                                           [text "_buf"]
@@ -448,7 +448,7 @@ compToHaskellBuilder c = do rcalls <- iterOverFields rcall id c
         open       = bapp $ dquotes (lparen <> pretty c)
         close      = bapp $ dquotes rparen
         rcall x s  = return $
-          if isBuiltin s then renderBuiltin s x (text "_buf")
+          if isBuiltin s then renderBuiltin s (_u $ pretty x) (text "_buf")
                          else rMethodCall (this <> dot <> _u (pretty x))
                                           (text "toHaskellBuilder") 
                                           [text "_buf"]
