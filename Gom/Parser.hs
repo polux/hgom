@@ -69,7 +69,7 @@ classidP =  do qname <- intercalate "." <$> ident `sepBy1` resOp "."
                gparams <- option "" (helper <$> angles (classidP `sepBy` comma))
                return (qname, gparams)
                <?> "class name"
-  where helper s = "<" ++ (intercalate "," (map (\(s1,s2) -> s1++s2) s)) ++ ">"
+  where helper s = "<" ++ intercalate "," (map (uncurry (++)) s) ++ ">"
 
 fieldidP :: Parser FieldId
 fieldidP = makeFieldId <$> ident
@@ -116,7 +116,7 @@ fieldP = do x <- fieldidP
          <?> "field declaration"
 
 run :: Parser a -> String -> Either ParseError a
-run p input = parse (white *> p) "" input
+run p = parse (white *> p) ""
 
 -- | Parses a gom module.
 parseModule :: String -> Either ParseError Module
