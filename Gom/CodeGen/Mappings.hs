@@ -39,8 +39,8 @@ compTomFiles = do mn    <- askSt modName
                   vcongr <- askConf congr
                   let mappings = incls:(tyts++ops++opls)
                   return $ case vcongr of 
-                     NoCongr -> [Tom mn (vsep mappings)]
-                     SameFile  -> [Tom mn (vsep $ includeSl:mappings++sops)]
+                     NoCongr  -> [Tom mn (vsep mappings)]
+                     SameFile -> [Tom mn (vsep $ includeSl:mappings++sops)]
                      SeparateFile -> [Tom mn $ vsep mappings, 
                                       Tom ("_"++mn) (vsep $ includeSl:sops)]
 
@@ -132,7 +132,7 @@ compSOp c = do sc <- compStratClass
         mkSlot i = text "get_slot(s" <> int i <> 
                    text ",t) { (tom.library.sl.Strategy) $t.getChildAt(" <> 
                    int (i-1) <> text ") }"
-        mkMake n sc = text "mk" <> args n "s" <> text "{ new " <> 
+        mkMake n sc = text "make" <> args n "s" <> text "{ new " <> 
                       sc <> args n "$s" <> text " }"
           where args ar s = encloseCommasNB [text s <> int i | i <- [1..ar]]
         mkTypedArgs n = [(text "s" <> int i, text "Strategy") | i <- [1..n]]
