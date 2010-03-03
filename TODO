@@ -1,3 +1,5 @@
  * generate fromAterm
  * generate congruence strategies [emilie]
+        * generate Is_f, Make_f and When_f
+        * generate congruence mappings for variadic constructors
  * generate oo mappings for congruence strategies and variadic constructors
