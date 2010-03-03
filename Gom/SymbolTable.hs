@@ -118,14 +118,16 @@ fieldsOf :: CtorId -> SymbolTable -> [(FieldId,SortId)]
 fieldsOf c st = 
   case c `M.lookup` sfields st of
     Just l  -> l
-    Nothing -> error $ "non-variadic constructor " ++ show c ++ " not declared" 
+    Nothing -> error $ "non-variadic constructor " ++ 
+                       show c ++ " not declared" 
 
 -- | Sort of the unique field of a variadic constructor.
 fieldOf :: CtorId -> SymbolTable -> SortId
 fieldOf c st =
   case c `M.lookup` vfield st of
     Just s  -> s
-    Nothing -> error $ "variadic constructor " ++ show c ++ " not declared" 
+    Nothing -> error $ "variadic constructor " ++ 
+                       show c ++ " not declared" 
 
 -- | Codomain of the constructor.
 codomainOf :: CtorId -> SymbolTable -> SortId
@@ -150,7 +152,8 @@ importsChar st = "char" `elem` map idStr (importedSorts st)
 -- | @emptySt m is@ is an empty symbol table (no sorts nor constructors) that
 -- encodes a module of name @m@ which imports sorts @is@.
 emptySt :: String -> [SortId] -> SymbolTable
-emptySt m i = SymbolTable m i M.empty M.empty M.empty M.empty M.empty M.empty M.empty
+emptySt m i = SymbolTable m i M.empty M.empty M.empty M.empty 
+                              M.empty M.empty M.empty
 
 -- | The ids of the sorts present in st.
 definedSortsIds :: SymbolTable -> [SortId]
@@ -200,15 +203,17 @@ insertJavaType _ Nothing st = st
 -- already associated to @s@ in @st@. If there are no non-variadic constructors
 -- associated to @s@, an entry is created.
 addToSctors :: SortId -> [CtorId] -> SymbolTable -> SymbolTable
-addToSctors s cs st = update $ st { sctors = M.alter (Just . maybe cs (++cs)) s (sctors st) }
-  where update mst = foldl' (\t c -> updateCodom c s t) mst cs
+addToSctors s cs st = update $ st { 
+    sctors = M.alter (Just . maybe cs (++cs)) s (sctors st) 
+  } where update mst = foldl' (\t c -> updateCodom c s t) mst cs
 
 -- | @addToVctors s cs st@ appends @cs@ to the variadic constructors already
 -- associated to @s@ in @st@.  If there are no variadic constructors associated
 -- to @s@, an entry is created.
 addToVctors :: SortId -> [CtorId] -> SymbolTable -> SymbolTable
-addToVctors s cs st = update $ st { vctors = M.alter (Just . maybe cs (++cs)) s (vctors st) }
-  where update mst = foldl' (\t c -> updateCodom c s t) mst cs
+addToVctors s cs st = update $ st { 
+    vctors = M.alter (Just . maybe cs (++cs)) s (vctors st) 
+  } where update mst = foldl' (\t c -> updateCodom c s t) mst cs
 
 -- | Converts a 'Module' into a 'SymbolTable', provided no
 -- error has been detected during the checking phase.

@@ -99,7 +99,8 @@ data Ctor =
     -- | non-variadic constructor, e.g. @f(x:int,y:T)@
     Simple { 
       ctorName :: CtorId,          -- ^ constructor name (e.g. @f@)
-      fields :: [(FieldId,SortId)] -- ^ constructor fields (e.g. @x:int@ and @y:T@)
+      fields :: [(FieldId,SortId)] 
+        -- ^ constructor fields (e.g. @x:int@ and @y:T@)
     }
     -- | variadic constructor, e.g. @plus(Expr*)@
   | Variadic { 
