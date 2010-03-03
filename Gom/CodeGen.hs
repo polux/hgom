@@ -38,13 +38,13 @@ compSt = do mn <- map toLower `liftM` askSt modName
             ds <- askSt definedSortsIds
             hs <- mapM compSort ds
             ac <- compAbstract
-            tf <- compTomFile 
+            tfs <- compTomFiles
             pr <- askConf package
             cs <- mapM compStrategy ds
             pc <- ifP $ Class "Parser" absParser
             lc <- ifP $ Class "Lexer" absLexer
             ps <- ifC $ Package "strategy" cs
-            let always = [ac,tf,Package "types" (concat hs)] 
+            let always = tfs ++ [ac,Package "types" (concat hs)] 
             return . wrap pr $ Package mn (always ++ pc ++ lc ++ ps)
   where -- wraps the package in the user-provided prefix hierarchy (-p option)
         wrap Nothing  h = h

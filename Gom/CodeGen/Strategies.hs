@@ -84,15 +84,17 @@ compVisit c = body `liftM` qualifiedCtor c
 -- the method @public int visitLight(Introspector introspector) { ... }@
 -- for class @_C@.
 compVisitLight :: CtorId -> Gen Doc
-compVisitLight c = body `liftM` qualifiedCtor c
-  where body qc = vcat $ map text 
+compVisitLight c = do n <- length `fmap` askSt (fieldsOf c)
+                      qc <- qualifiedCtor c
+                      return $ body qc n
+  where body qc n = vcat $ map text 
           ["public <T> T visitLight(T any,",
            "  tom.library.sl.Introspector introspector)", 
            "  throws tom.library.sl.VisitFailure {",
            "  if(any instanceof " ++ show qc ++ ") {",
            "    T result = any;",
            "    Object[] childs = null;",
-           "    for (int i = 0, nbi = 0; i < 1; i++) {",
+           "    for (int i = 0, nbi = 0; i <" ++ show n ++"; i++) {",
            "        Object oldChild = introspector.getChildAt(any,nbi);",
            "        Object newChild = arguments[i].visitLight(oldChild,introspector);",
            "        if(childs != null) {",

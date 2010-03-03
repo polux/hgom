@@ -1,8 +1,3 @@
  * generate fromAterm
  * generate congruence strategies [emilie]
-<<<<<<< HEAD:TODO
-
- * clash between fields and module name
-=======
  * generate oo mappings for congruence strategies and variadic constructors
->>>>>>> cfe2bb8d82ca9701f27b58a78ff9ad11234454a3:TODO

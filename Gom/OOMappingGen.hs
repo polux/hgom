@@ -78,8 +78,7 @@ compTypeTerm s = do cs <- askSt (concreteTypeOf s)
 compOp :: CtorId -> Gen Doc
 compOp c = do slots   <- compSlots 
               s       <- askSt (codomainOf c)
-              fis     <- askSt (fieldsOf c)
-              let pfis = map (pretty *** pretty) fis
+              pfis    <- map (pretty *** pretty) `fmap` askSt (fieldsOf c)
               let make = compMake (map fst pfis)
               return $ rOp (pretty s) (pretty c) pfis
                            (vcat [isfsym,slots,make])

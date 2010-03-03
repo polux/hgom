@@ -46,7 +46,7 @@ import Data.List(nub, intersperse)
 
 -- | A computation inside a context containing a read-only symbol table.
 newtype Gen a = Gen (Reader (SymbolTable,Config) a)
-  deriving (Monad, MonadReader (SymbolTable,Config))
+  deriving (Functor, Monad, MonadReader (SymbolTable,Config))
 
 -- | Run the Gen monad
 runGen ::  Gen a -> SymbolTable -> Config -> a

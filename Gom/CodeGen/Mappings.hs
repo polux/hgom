@@ -12,7 +12,7 @@
 --------------------------------------------------------------------
 
 module Gom.CodeGen.Mappings (
-  compTomFile
+  compTomFiles
 ) where
 
 import Gom.Sig
@@ -24,17 +24,25 @@ import Gom.CodeGen.Common
 import Text.PrettyPrint.Leijen
 import Control.Arrow((***))
 
--- | Generates the @Mod.tom@ tom mappings file for module @Mod@
-compTomFile :: Gen FileHierarchy
-compTomFile = do mn    <- askSt modName
-                 srts  <- askSt definedSortsIds
-                 ctrs  <- askSt simpleConstructorsIds
-                 vctrs <- askSt variadicConstructorsIds
-                 incls <- compIncludes
-                 tyts  <- mapM compTypeTerm srts
-                 ops   <- mapM compOp ctrs
-                 opls  <- mapM compOpList vctrs
-                 return $ Tom mn (vsep $ incls:(tyts++ops++opls))
+-- | Generates the @Mod.tom@ and @_Mod.tom@ tom mappings files for
+-- module @Mod@
+compTomFiles :: Gen [FileHierarchy]
+compTomFiles = do mn    <- askSt modName
+                  srts  <- askSt definedSortsIds
+                  ctrs  <- askSt simpleConstructorsIds
+                  vctrs <- askSt variadicConstructorsIds
+                  incls <- compIncludes
+                  tyts  <- mapM compTypeTerm srts
+                  ops   <- mapM compOp ctrs
+                  opls  <- mapM compOpList vctrs
+                  sops <-  mapM compSOp ctrs
+                  vcongr <- askConf congr
+                  let mappings = incls:(tyts++ops++opls)
+                  let slinclude = text "%include { sl.tom }"
+                  return $ case vcongr of 
+                     NoCongr -> [Tom mn (vsep mappings)]
+                     SameFile  -> [Tom mn (vsep $ slinclude:mappings++sops)]
+                     SeparateFile -> [Tom mn $ vsep mappings, Tom ("_"++mn) (vsep $ slinclude:sops)]
 
 -- | Generates @%include { x.tom }@ for every imported sort @x@
 compIncludes :: Gen Doc
@@ -103,4 +111,27 @@ compOpList c = do co     <- askSt (codomainOf c)
                   return $ rOpList (pretty c) (pretty co) 
                                    (pretty dom) consc emptyc
 
-
+-- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@
+-- of codomain @Co@, generates
+--
+-- > %op Strategy _C(s1:Strategy,..,sn:Strategy) {
+-- >   is_fsym(t) { $t m.strategy.co._C }
+-- >   get_slot(s1,t) { (tom.library.sl.Strategy) $t.getChildAt(0) }
+-- >   ...
+-- >   get_slot(sn,t) { (tom.library.sl.Strategy) $t.getChildAt(n-1) }
+-- >   make (t1,..,tn) { new m.strategy.co._C($t1,..,$tn) }
+-- > }
+compSOp :: CtorId -> Gen Doc
+compSOp c = do sc <- compStratClass
+               n  <- length `fmap` askSt (fieldsOf c)
+               return $ rOp (text "Strategy") (_u $ pretty c) (makeTypedArgs n)
+                           (vcat [rIsFsym sc,slots n,makeMake n sc])
+  where makeSlot i = text "get_slot(x" <> int i <> text ",t) { (tom.library.sl.Strategy) $t.getChildAt(" <> int (i-1) <> text ") }"
+        makeMake n sc =  text "make" <> makeArgs n "s" <> text "{ new " <> sc <> makeArgs n "$s" <> text " }"
+        makeArgs arity name = gen [text name <> int i | i <- [1..arity]]
+        makeTypedArgs n = [ (text "s" <> int i, text "Strategy") | i <- [1..n] ]
+        compStratClass = do m <- packagePrefix
+                            co <- lowerId `fmap` askSt (codomainOf c)
+                            return $ m <> dot <> pretty co <> dot <> text "strategy" <> dot <> _u (pretty c) 
+        slots n = vcat [makeSlot i | i <- [1..n]] 
+        gen   = parens . hcat . punctuate comma
