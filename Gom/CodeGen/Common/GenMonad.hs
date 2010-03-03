@@ -42,12 +42,17 @@ import Gom.Config
 
 import Text.PrettyPrint.Leijen
 import Control.Monad.Reader
+import Control.Applicative
 import Data.Char(toLower)
 import Data.List(nub, intersperse)
 
 -- | A computation inside a context containing a read-only symbol table.
 newtype Gen a = Gen (Reader (SymbolTable,Config) a)
   deriving (Functor, Monad, MonadReader (SymbolTable,Config))
+
+instance Applicative Gen where
+  (<*>) = ap
+  pure  = return
 
 -- | Run the Gen monad
 runGen ::  Gen a -> SymbolTable -> Config -> a

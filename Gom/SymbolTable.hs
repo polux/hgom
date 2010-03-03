@@ -19,8 +19,8 @@ module Gom.SymbolTable (
   emptySt, ast2st,
   -- * Consulting tables
   definedSortsIds, simpleConstructorsIds, variadicConstructorsIds,
-  modName, importedSorts, concreteTypeOf, sCtorsOf, vCtorsOf, fieldsOf, fieldOf, codomainOf,
-  isGenerated, importsString,
+  modName, importedSorts, concreteTypeOf, sCtorsOf, vCtorsOf, fieldsOf, 
+  fieldOf, codomainOf, isGenerated, importsString, importsChar,
   -- * Modifying tables
   -- ** Modifying mappings
   -- | These functions allow to change the constructor names (resp. fields)
@@ -143,6 +143,10 @@ isGenerated c = M.lookup c . baseCtor
 -- | Returns @True@ if @String@ is imported.
 importsString :: SymbolTable -> Bool
 importsString st = "String" `elem` map idStr (importedSorts st)
+
+-- | Returns @True@ if @char@ is imported.
+importsChar :: SymbolTable -> Bool
+importsChar st = "char" `elem` map idStr (importedSorts st)
 
 -- | @emptySt m is@ is an empty symbol table (no sorts nor constructors) that
 -- encodes a module of name @m@ which imports sorts @is@.

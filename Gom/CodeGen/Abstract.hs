@@ -20,7 +20,8 @@ import Gom.SymbolTable
 import Gom.Config
 import Gom.FileGen
 
-import Text.PrettyPrint.Leijen
+import Control.Applicative
+import Text.PrettyPrint.Leijen hiding ((<$>))
 
 -- | Generates the @ModAbstractType@ abstract java class for module @Mod@.
 compAbstract :: Gen FileHierarchy
@@ -34,8 +35,7 @@ compAbstract = do at <- abstractType
                   -- if sharing option is enabled, implement shared
                   is <- ifConf sharing [jSharedId] []
                   -- if String is imported we generate renderString
-                  im <- askSt importsString
-                  let rs = if im then str else []
+                  rs <- str <$> askSt importsString <*> askSt importsChar
                   -- if random is enabled, generate builtin random generation
                   ra <- ifConf random [randomBuiltins] []
                   -- if depth is enabled, generate size abstract method
@@ -44,9 +44,12 @@ compAbstract = do at <- abstractType
                   si <- ifConf size [abstractSize] []
                   -- build the class
                   return $ Class at (cl at (hs++ss++rs++ra++de++si) (iv++is))
+
   where cl at e i = rClass (public <+> abstract) (text at) Nothing i (body e)
         body      = vcat . (always ++)
         always    = [abstractSymbolName,toStringBody,abstractToStringBuilder]
         hask      = [toHaskellBody,abstractToHaskellBuilder]
-        str       = [renderStringMethod,renderCharMethod] 
 
+        str True  _     = [renderStringMethod,renderCharMethod] 
+        str False True  = [renderCharMethod]
+        str False False = []        
