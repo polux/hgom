@@ -47,26 +47,33 @@ newtype NameConsistencyError = NCE [(SortId,[(FieldId,[SortId])])]
 
 instance Pretty NameConsistencyError where
   pretty (NCE e) = vsep $ map f e
-    where f (s,al) = hang 2 (text "In the definition of sort" <+> text (show s) <> text ":" <$> vsep (map g al))
-          g (x,l)  = text "field" <+> text (show x) <+> text "has many sorts:" <+> 
+    where f (s,al) = hang 2 (text "In the definition of sort" <+> 
+                     text (show s) <> text ":" <$> vsep (map g al))
+          g (x,l)  = text "field" <+> text (show x) <+> 
+                     text "has many sorts:" <+>
                      hsep (punctuate (text ",") (map pretty l))
 
 newtype UndefSortError = USE [(SortId,[(CtorId,[SortId])])]
 
 instance Pretty UndefSortError where
   pretty (USE e) = vsep $ map f e
-    where f (s,l)  = nest 2 $ text "In the definition of sort" <+> text (show s) <> text ":" </> vsep (map g l)
-          g (c,ss) = nest 2 $ text "in constructor" <+> text (show c) <> text ":" </> 
-                              text "the following sorts are not defined:" <+>  
+    where f (s,l)  = nest 2 $ text "In the definition of sort" <+> 
+                              text (show s) <> text ":" </> vsep (map g l)
+          g (c,ss) = nest 2 $ text "in constructor" <+> text (show c) <> 
+                              text ":" </> 
+                              text "the following sorts are not defined:" <+>
                               hsep (punctuate (text ",") (map pretty ss))
 
 newtype MultipleFieldsError = MFE [(SortId,[(CtorId,[(FieldId,Int)])])]
 
 instance Pretty MultipleFieldsError where
   pretty (MFE e) = vsep $ map f e
-    where f (s,l)  = nest 2 $ text "In the definition of sort" <+> text (show s) <> text ":" </> vsep (map g l)
-          g (c,fs) = nest 2 $ text "in constructor" <+> text (show c) <> text ":" </> vsep (map h fs)
-          h (fi,n) = text "there are" <+> int n <+> text "fields named" <+> text (show fi)
+    where f (s,l)  = nest 2 $ text "In the definition of sort" <+> 
+                              text (show s) <> text ":" </> vsep (map g l)
+          g (c,fs) = nest 2 $ text "in constructor" <+> text (show c) <> 
+                              text ":" </> vsep (map h fs)
+          h (fi,n) = text "there are" <+> int n <+> 
+                     text "fields named" <+> text (show fi)
 
 newtype MultipleCtorDecl = MCD [(CtorId,Int)]
 
@@ -105,7 +112,8 @@ data CtorModuleClash = CMC [CtorId]
 
 instance Pretty CtorModuleClash where
   pretty (CMC cs) = vcat (map f cs)
-    where f c = text "Constructor" <+> pretty c <+> text "clashes with module's name."
+    where f c = text "Constructor" <+> pretty c <+> 
+                text "clashes with module's name."
 
 -- | helper function to pack checkers results into Maybes
 pack :: ([t] -> a) -> [t] -> Maybe a
