@@ -72,7 +72,8 @@ compVisit c = body `liftM` qualifiedCtor c
            "      environment.upLocal();",
            "    }",
            "    if(childs!=null) {",
-           "      environment.setSubject(introspector.setChildren(any,childs));",
+           "      environment.setSubject",
+           "        (introspector.setChildren(any,childs));",
            "    }",
            "    return tom.library.sl.Environment.SUCCESS;",
            "  } else {",
@@ -96,7 +97,8 @@ compVisitLight c = do n <- length `fmap` askSt (fieldsOf c)
            "    Object[] childs = null;",
            "    for (int i = 0, nbi = 0; i <" ++ show n ++"; i++) {",
            "        Object oldChild = introspector.getChildAt(any,nbi);",
-           "        Object newChild = arguments[i].visitLight(oldChild,introspector);",
+           "        Object newChild =",
+           "           arguments[i].visitLight(oldChild,introspector);",
            "        if(childs != null) {",
            "          childs[nbi] = newChild;",
            "        } else if(newChild != oldChild) {",
@@ -119,10 +121,10 @@ compVisitLight c = do n <- length `fmap` askSt (fieldsOf c)
 -- the constructor of @_C@.
 compCongruenceConstructor :: CtorId -> Gen Doc
 compCongruenceConstructor c = do
-  fis <- askSt (fieldsOf c)
-  let typedArgs = prettyArgs fis jStrategy
-      args      = prettyArgs fis empty
-  return $ rMethodDef public empty (text "_" <> pretty c) typedArgs
-                      (rBody [rMethodCall this (text "initSubterm") args])
-  where prettyArgs fis prefix = map (pre . pretty . fst) fis
-          where pre x = prefix <> text " s_" <> x
+  fs <- map convert `fmap` askSt (fieldsOf c)
+  return $ rMethodDef public empty (text "_" <> pretty c) 
+                      (map (jStrategy <+>) fs) (rBody [body fs])
+  where convert = (text "s" <>) . pretty . fst
+        body fs = rMethodCall this (text "initSubterm") [array]
+          where array   = new <+> jStrategyArray <+> sbraces content 
+                content = align $ sep (punctuate comma fs)

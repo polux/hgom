@@ -26,7 +26,8 @@ module Gom.CodeGen.Common.Helpers (
   -- ** Java Types
   jint, jStringBuilder, jboolean,
   jObject, jVisitable, jShared, jSharedId,
-  jVisitableArray, jSCombinator, jStrategy,
+  jSCombinator, jStrategy,
+  jVisitableArray, jStrategyArray,
   -- ** Classes
   rClass,
   -- ** Classes
@@ -81,7 +82,7 @@ static     = text "static"
 
 jint,jStringBuilder,jboolean,jObject :: Doc
 jSCombinator,jStrategy, jVisitable :: Doc
-jShared,jSharedId,jVisitableArray :: Doc
+jShared,jSharedId,jVisitableArray,jStrategyArray :: Doc
 jint            = text "int"
 jboolean        = text "boolean"
 jStringBuilder  = text "java.lang.StringBuilder"
@@ -92,6 +93,7 @@ jSCombinator    = text "tom.library.sl.AbstractStrategyCombinator"
 jShared         = text "shared.SharedObject"
 jSharedId       = text "shared.SharedObjectWithID"
 jVisitableArray = jVisitable <> text "[]"
+jStrategyArray  = jStrategy <> text "[]"
 
 -- | Renders the list enclosed in parenthesis and
 -- separated by commas. Breaks lines if the list is too long.
@@ -294,7 +296,8 @@ rOpList
 rOpList c co dom consc emptyc =
   text "%oplist" <+> co <+> c <> parens (dom <> text "*") <+> 
    ibraces (vcat
-     [text "is_fsym(t) { (($t instanceof" <+> consc <> text ") || ($t instanceof" <+> emptyc <> text ")) }",
+     [text "is_fsym(t) { (($t instanceof" <+> consc <> 
+        text ") || ($t instanceof" <+> emptyc <> text ")) }",
       text "make_empty() {" <+> emptyc <> text ".make() }",
       text "make_insert(e,l) {" <+> consc <> text ".make($e,$l) }",
       text "get_head(l) { $l.getHead" <> c <> text "() }",
