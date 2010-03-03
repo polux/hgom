@@ -131,7 +131,7 @@ compParseSort s = do
   return $ rMethodDef (static <+> public) qs (text "parse")
            [pars pr <+> arg] (vcat [pre,calls])
   where pars pr  = pr <> dot <> text "Parser"
-        arg = text "par"
+        arg = text "__par"
         pre = text "String __id = par.parseId();"
         post = text "throw new RuntimeException();"
         cond c = rMethodCall (text "__id") (text "equals") [dquotes $ pretty c]
