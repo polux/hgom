@@ -132,16 +132,16 @@ compParseSort s = do
            [pars pr <+> arg] (vcat [pre,calls])
   where pars pr  = pr <> dot <> text "Parser"
         arg      = text "par"
-        pre      = text "String _id = par.parseId();"
+        pre      = text "String __id = par.parseId();"
         post     = text "throw new RuntimeException();"
-        cond c   = rMethodCall (text "_id") (text "equals") [dquotes $ pretty c]
+        cond c   = rMethodCall (text "__id") (text "equals") [dquotes $ pretty c]
         rcall qc = rMethodCall (pretty qc) (text "parseArgs") [arg]
         ifsym (c,qc) = rIfThenElse (cond c) (jreturn <+> rcall qc <> semi)
 
 -- | Given a sort @S@, generates
 --
--- > public static mod.types.S fromString(String _s) {
--- >   return mod.types.S.parse(new mod.Parser(_s));
+-- > public static mod.types.S fromString(String __s) {
+-- >   return mod.types.S.parse(new mod.Parser(__s));
 -- > }
 compFromStringSort :: SortId -> Gen Doc
 compFromStringSort s = do
@@ -149,8 +149,8 @@ compFromStringSort s = do
   pr <- packagePrefix
   let pa = pr <> dot <> text "Parser"
   return $ vcat
-    [text "public static" <+> qs <+> text "fromString(String _s) {",
-     text "  return" <+> qs <> text ".parse(new" <+> pa <> text "(_s));",
+    [text "public static" <+> qs <+> text "fromString(String __s) {",
+     text "  return" <+> qs <> text ".parse(new" <+> pa <> text "(__s));",
      text "}"]
 
 -- | Given a sort @T = f1(...) | ... | fn(...)@, generates
@@ -184,15 +184,15 @@ compMakeRandomSort s = do
   let rcalls1 = map rcall1 qzcs 
   let rcalls2 = map rcall2 qnzcs
   return $ rMethodDef (static <+> public) qs (text "makeRandom")
-                      [text "java.util.Random _rand", text "int _depth"]
+                      [text "java.util.Random __rand", text "int __depth"]
                       (pack rcalls1 (rcalls1 ++ rcalls2))
   where isConst c  = null `liftM` askSt (fieldsOf c) 
         rcall1 qc  = jreturn <+> pretty qc <> text ".make();"
-        rcall2 qc  = jreturn <+> pretty qc <> text ".makeRandom(_rand,_depth-1);"
+        rcall2 qc  = jreturn <+> pretty qc <> text ".makeRandom(__rand,__depth-1);"
         ints       = map int [0..]
         dflt       = text "throw new RuntimeException();"
-        nextint n  = rMethodCall (text "_rand") (text "nextInt") [int (max n 1)]
-        pack c1 c2 = rIfThen (text "_depth <= 0") 
+        nextint n  = rMethodCall (text "__rand") (text "nextInt") [int (max n 1)]
+        pack c1 c2 = rIfThen (text "__depth <= 0") 
                        (rSwitch (nextint $ length c1) (zip ints c1) Nothing)
                      <$> 
                      rSwitch (nextint $ length c2) (zip ints c2) (Just dflt)
@@ -206,9 +206,9 @@ compMakeRandomSortInit :: SortId -> Gen Doc
 compMakeRandomSortInit s = do
   qs <- qualifiedSort s
   return $ rMethodDef (static <+> public) qs (text "makeRandom") 
-                      [text "int _depth"] (body qs)
+                      [text "int __depth"] (body qs)
   where body qs = jreturn <+> qs <> 
-                  text ".makeRandom(new java.util.Random(), _depth);"
+                  text ".makeRandom(new java.util.Random(), __depth);"
 
 -- | Monadic version of Data.List.partition
 partitionM :: (Monad m) => (a -> m Bool) -> [a] -> m ([a], [a])
