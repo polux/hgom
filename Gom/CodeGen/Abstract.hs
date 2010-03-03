@@ -34,7 +34,7 @@ compAbstract = do at <- abstractType
                   iv <- ifConf visit [jVisitable] []
                   -- if sharing option is enabled, implement shared
                   is <- ifConf sharing [jSharedId] []
-                  -- if String is imported we generate renderString
+                  -- generate renderString and/or renderChar
                   rs <- str <$> askSt importsString <*> askSt importsChar
                   -- if random is enabled, generate builtin random generation
                   ra <- ifConf random [randomBuiltins] []
