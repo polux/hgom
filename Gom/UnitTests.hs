@@ -70,7 +70,7 @@ fileFailsDuring f = do af <- getDataFileName f
 -- | regression suite
 regressionSuite :: Test
 regressionSuite = testGroup "regression tests" $
-  concat [map (cook Never   ) (files 1 1 5),
+  concat [map (cook Never   ) (files 1 1 6),
           map (cook Checking) (files 2 0 9), 
           map (cook Parsing ) (files 3 1 7)]
   where files :: Int -> Int -> Int -> [FilePath]
