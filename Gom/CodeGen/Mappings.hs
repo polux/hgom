@@ -126,12 +126,12 @@ compSOp c = do sc <- compStratClass
                n  <- length `fmap` askSt (fieldsOf c)
                return $ rOp (text "Strategy") (_u $ pretty c) (makeTypedArgs n)
                            (vcat [rIsFsym sc,slots n,makeMake n sc])
-  where makeSlot i = text "get_slot(x" <> int i <> text ",t) { (tom.library.sl.Strategy) $t.getChildAt(" <> int (i-1) <> text ") }"
+  where makeSlot i = text "get_slot(s" <> int i <> text ",t) { (tom.library.sl.Strategy) $t.getChildAt(" <> int (i-1) <> text ") }"
         makeMake n sc =  text "make" <> makeArgs n "s" <> text "{ new " <> sc <> makeArgs n "$s" <> text " }"
         makeArgs arity name = gen [text name <> int i | i <- [1..arity]]
         makeTypedArgs n = [ (text "s" <> int i, text "Strategy") | i <- [1..n] ]
         compStratClass = do m <- packagePrefix
                             co <- lowerId `fmap` askSt (codomainOf c)
-                            return $ m <> dot <> pretty co <> dot <> text "strategy" <> dot <> _u (pretty c) 
+                            return $ m <> dot <> text "strategy" <> dot <> pretty co <> dot <> _u (pretty c) 
         slots n = vcat [makeSlot i | i <- [1..n]] 
         gen   = parens . hcat . punctuate comma
