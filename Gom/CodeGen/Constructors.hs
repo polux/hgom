@@ -551,8 +551,8 @@ compInitHash c = do cfs <- askSt $ fieldsOf c
                        if isString s then pf <> text ".intern()" else pf
         lastLine  = text "this.hashCode = hashFunction()"
 
--- | Auxiliary function for @'compHashFun'@, generates the fields-related part of
--- the @hashFunction@ method.
+-- | Auxiliary function for @'compHashFun'@, generates the fields-related part
+-- of the @hashFunction@ method.
 hashArgs :: [(FieldId,SortId)] -> Int -> [Doc]
 hashArgs fis len = zipWith (\i (f,s) -> hashArg i f s) (desc (len -1)) fis
   where desc n = n:desc (n-1)
@@ -598,11 +598,11 @@ hashArg idx fid sid = let res d = char accum <+> text "+=" <+> parens d in
 -- >   return c;
 -- > }
 compHashFun :: CtorId -> Gen Doc
-compHashFun c = do fis <- askSt (fieldsOf c)
-                   let len = length fis
-                   let modif = protected <+> if len == 0 then static else empty 
-                   return $ rMethodDef modif jint 
-                                       (text "hashFunction") [] (body fis len)
+compHashFun c = do 
+  fis <- askSt (fieldsOf c)
+  let len = length fis
+  let modif = protected <+> if len == 0 then static else empty 
+  return $ rMethodDef modif jint (text "hashFunction") [] (body fis len)
   where body f l = rBody (prologue ++ mid f l ++ epilogue)
         prologue = map text ["int a, b, c",
                              "a = 0x9e3779b9",
@@ -649,8 +649,8 @@ compGetChildAt c = do fis <- askSt (fieldsOf c)
                       return $ rMethodDef 
                                  public jVisitable (text "getChildAt")
                                  [jint <+> arg] (body arg cs)
-  where cook (f,s)  = jreturn <+> wrap (this <> dot <> _u (pretty f)) s <> semi 
-        body n cs   = rSwitch n cs (Just outOfBounds)
+  where cook (f,s) = jreturn <+> wrap (this <> dot <> _u (pretty f)) s <> semi 
+        body n cs  = rSwitch n cs (Just outOfBounds)
         outOfBounds = text "throw new IndexOutOfBoundsException();"
         wrap f s | isBuiltin s = rConstructorCall (rWrapBuiltin qs) [f]
                  | otherwise   = f
@@ -694,9 +694,9 @@ compSetChildAt c = do fis  <- askSt (fieldsOf c)
                       fis' <- mapM set (parts fis)
                       let cs  = zip (map int [0..]) fis'
                       return $ rMethodDef 
-                                 public jVisitable (text "setChildAt")
-                                 [jint <+> text "__n", jVisitable <+> text "__v"]
-                                 (body cs)
+                        public jVisitable (text "setChildAt")
+                        [jint <+> text "__n", jVisitable <+> text "__v"]
+                        (body cs)
   where body cs     = rSwitch (text "__n") cs (Just outOfBounds)
         outOfBounds = text "throw new IndexOutOfBoundsException();"
         set (xs1,(_,t),xs2) = 
@@ -802,11 +802,11 @@ compEqAux meth comb ty c = do rcalls <- iterOverFields rcall id c
                               return $ rMethodDef 
                                 (public <+> final) jboolean meth
                                 [ty <+> text "__o"] (complete rcalls)
-  where cdoc = pretty c
+  where pc = pretty c
         complete b = rIfThenElse cond (branch1 b) (jreturn <+> false <> semi) 
-        cond       = text "__o" <+> instanceof <+> cdoc
+        cond       = text "__o" <+> instanceof <+> pc 
         branch1 b  = rBody [l1,l2 (true:b)]
-        l1 = cdoc <+> text "__typed_o" <+> equals <+> parens cdoc <+> text "__o"
+        l1 = pc <+> text "__typed_o" <+> equals <+> parens pc <+> text "__o"
         l2 b = jreturn <+> (align . fillSep $ intersperse (text "&&") b)
         rcall x s = let lhs = this <> dot <> _u (pretty x)
                         rhs = text "__typed_o." <> _u (pretty x)
