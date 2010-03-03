@@ -8,26 +8,26 @@ for i in $DATA/t*.gom; do
 done 
 
 $HGOM --help
-$HGOM -P $DATA/t1.1.gom 
-$HGOM -P $DATA/t1.5.gom 
-$HGOM -c no $DATA/t1.1.gom 
-$HGOM -c sep $DATA/t1.1.gom 
-$HGOM -c same $DATA/t1.1.gom 
-$HGOM -c foo $DATA/t1.1.gom 
-$HGOM -j $DATA/t1.1.gom 
-$HGOM -j -p aa.bb.cc $DATA/t1.5.gom 
-$HGOM -j -p aa.bb.cc $DATA/t1.1.gom 
-$HGOM -h $DATA/t1.1.gom 
-$HGOM --test 5 $DATA/t1.1.gom 
-$HGOM --compact $DATA/t1.1.gom 
-$HGOM --random $DATA/t1.1.gom 
-$HGOM --size $DATA/t1.1.gom 
-$HGOM --depth $DATA/t1.1.gom 
-$HGOM --noVisitable $DATA/t1.1.gom
-$HGOM --noSharing $DATA/t1.1.gom
-$HGOM --noCheck $DATA/t1.1.gom
-$HGOM --noParsers $DATA/t1.1.gom
-$HGOM -p aa.bb.cc $DATA/t1.1.gom 
+$HGOM -P $DATA/t1_1.gom 
+$HGOM -P $DATA/t1_5.gom 
+$HGOM -c no $DATA/t1_1.gom 
+$HGOM -c sep $DATA/t1_1.gom 
+$HGOM -c same $DATA/t1_1.gom 
+$HGOM -c foo $DATA/t1_1.gom 
+$HGOM -j $DATA/t1_1.gom 
+$HGOM -j -p aa.bb.cc $DATA/t1_5.gom 
+$HGOM -j -p aa.bb.cc $DATA/t1_1.gom 
+$HGOM -h $DATA/t1_1.gom 
+$HGOM --test 5 $DATA/t1_1.gom 
+$HGOM --compact $DATA/t1_1.gom 
+$HGOM --random $DATA/t1_1.gom 
+$HGOM --size $DATA/t1_1.gom 
+$HGOM --depth $DATA/t1_1.gom 
+$HGOM --noVisitable $DATA/t1_1.gom
+$HGOM --noSharing $DATA/t1_1.gom
+$HGOM --noCheck $DATA/t1_1.gom
+$HGOM --noParsers $DATA/t1_1.gom
+$HGOM -p aa.bb.cc $DATA/t1_1.gom 
 $HGOM -V
 $HGOM aa -p 
 $HGOM
