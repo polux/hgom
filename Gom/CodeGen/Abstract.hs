@@ -52,4 +52,4 @@ compAbstract = do at <- abstractType
 
         str True  _     = [renderStringMethod,renderCharMethod] 
         str False True  = [renderCharMethod]
-        str False False = []        
+        str False False = []
