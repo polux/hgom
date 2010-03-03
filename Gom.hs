@@ -36,7 +36,7 @@ import Test.Framework (defaultMainWithArgs)
 #endif
 
 hgomVersion :: String
-hgomVersion = "Version 0.4 - January 2009"
+hgomVersion = "Version 0.5 - March 2009"
 
 -- | @main = getArgs >>= entryPoint@
 main ::  IO ()
