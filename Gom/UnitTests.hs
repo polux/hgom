@@ -93,9 +93,7 @@ propParsePretty m =
     Right m' -> m == m'
 
 getTempDir :: IO FilePath
-getTempDir = do
-  tmp <- getTemporaryDirectory
-  getTemp 0 tmp
+getTempDir = getTemporaryDirectory >>= getTemp 0
   where getTemp :: Integer -> FilePath -> IO FilePath
         getTemp n tmp = do
           b <- doesDirectoryExist htmp
@@ -120,7 +118,7 @@ doInTempDir a = do
 
 -- | True iff the module passes the check phase
 checks :: Module -> Bool
-checks m = isNothing (checkEverything m)
+checks = isNothing . checkEverything
 
 -- | test that the generated parser is correct w.r.t. 
 -- the generated pretty printer (@fromString(x.toString()) == x@)

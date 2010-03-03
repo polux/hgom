@@ -42,7 +42,7 @@ compTomFiles = do mn    <- askSt modName
                      NoCongr  -> [Tom mn (vsep mappings)]
                      SameFile -> [Tom mn (vsep $ includeSl:mappings++sops)]
                      SeparateFile -> [Tom mn $ vsep mappings, 
-                                      Tom ("_"++mn) (vsep $ includeSl:sops)]
+                                      Tom ('_':mn) (vsep $ includeSl:sops)]
 
 -- | Generates @%include { x.tom }@ for every imported sort @x@
 compIncludes :: Gen Doc

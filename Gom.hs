@@ -71,7 +71,7 @@ go2 f c = do em <- parseModule `fmap` readFile f
 
 -- | after parsing:
 --
---    * checks all \"... and exit\" functions that require parsing
+--    * checks all "... and exit" functions that require parsing
 --
 --    * checks well-formedness
 --
