@@ -11,7 +11,7 @@ description:
   The executable hgom takes a module consisting of several abstract datatypes
   declarations as an input and ouputs java classes. It is meant to mimic the java
   version of Gom: <http://tom.loria.fr/wiki/index.php5/Documentation:Gom>.
-category:          Compilers
+category:          Compilers/Interpreters
 license:           GPL
 license-file:      COPYING
 cabal-version:     >= 1.6.0
