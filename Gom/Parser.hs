@@ -28,7 +28,7 @@ import Data.List
 defs :: ParsecT String u Identity Char-> LanguageDef u
 defs start = javaStyle { 
   P.reservedOpNames = ["=","|",":"],
-  P.reservedNames = ["module","abstract","syntax","imports"],
+  P.reservedNames = ["module","abstract","syntax","imports","implemented by"],
   P.identStart = start
 }
 
@@ -64,12 +64,19 @@ rhsSortidP :: Parser SortId
 rhsSortidP = makeSortId <$> ident 
              <?> "sort name"
 
-classidP :: Parser (String,String)
-classidP =  do qname <- intercalate "." <$> ident `sepBy1` resOp "."  
-               gparams <- option "" (helper <$> angles (classidP `sepBy` comma))
-               return (qname, gparams)
-               <?> "class name"
-  where helper s = "<" ++ intercalate "," (map (uncurry (++)) s) ++ ">"
+-- The code of this function is convoluted because
+-- it reconstructs the string it parses instead of building
+-- a datastructure. They may be a better way to do it with parsec.
+classidP :: Parser ClassId
+classidP = uncurry makeClassId <$> classidP' <?> "class name"
+  where classidP' = do 
+          qname  <- intercalate "." <$> ident `sepBy1` resOp "." 
+          params <- option "" paramsP
+          return (qname,params)
+        paramsP  = do 
+          ps <- angles (classidP' `sepBy` comma)
+          return $ "<" ++ intercalate "," (map glue ps) ++ ">"
+          where glue = uncurry (++)
 
 fieldidP :: Parser FieldId
 fieldidP = makeFieldId <$> ident
@@ -89,8 +96,8 @@ sigP = Module <$> (res "module" *> ident)
               <?> "module definition"
 
 sortP ::  Parser SortDef
-sortP = do n <- lhsSortidP
-           cn <- option Nothing (Just . makeClassId <$> (res "implemented by" *> classidP))
+sortP = do n  <- lhsSortidP
+           cn <- option Nothing $ Just <$> (res "implemented by" *> classidP)
            resOp "=" 
            c <- ctorP `sepBy` resOp "|"
            return $ SortDef n cn c

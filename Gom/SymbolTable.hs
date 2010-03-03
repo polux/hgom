@@ -93,12 +93,11 @@ importedSorts = imported
 -- | Concrete Java Type associated to a sort.
 concreteTypeOf :: SortId -> SymbolTable -> ClassId
 concreteTypeOf s st 
-  | isBuiltin s = makeClassId (show (qualifiedBuiltin s), "")
+  | isBuiltin s = makeClassId (show $ qualifiedBuiltin s) ""
   | otherwise = 
     case s `M.lookup` javatype st of
       Just c  -> c
       Nothing -> error $ "sort " ++ show s ++ " has no concrete type" 
-   
 
 -- | Non-variadic constructors associated to a sort.
 sCtorsOf :: SortId -> SymbolTable -> [CtorId]

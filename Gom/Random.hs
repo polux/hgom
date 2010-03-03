@@ -66,7 +66,7 @@ genSortDef :: [SortId] -> (SortId, [CtorId]) -> Gen SortDef
 genSortDef sorts (sid,cids) = do
   flds   <- genTypedFields sorts
   ctrs   <- mapM (genCtor sorts flds) cids
-  return $ SortDef sid (Just $ makeClassId ("Object","")) ctrs
+  return $ SortDef sid (Just $ makeClassId "Object" "") ctrs
 
 instance Arbitrary Ctor where
   shrink (Simple c l) = do l' <- shrink l ; return $ Simple c l' 

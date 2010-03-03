@@ -49,34 +49,34 @@ import Data.Char(toLower)
 import Text.PrettyPrint.Leijen
 
 -- | Sort name (e.g. @Expr@) identifier.
-newtype SortId     = SortId String 
+newtype SortId  = SortId String 
   deriving (Ord,Eq)
 -- | Java Class name (e.g. @p.c<...>@) identifier.
-newtype ClassId     = ClassId (String,String) 
+data ClassId = ClassId String String 
   deriving (Ord,Eq)
 -- | Field name (e.g. @x@) identifier.
-newtype FieldId    = FieldId String 
+newtype FieldId = FieldId String 
   deriving (Ord,Eq)
 -- | Constructor name (e.g. @f@) identifier.
-newtype CtorId     = CtorId String 
+newtype CtorId  = CtorId String 
   deriving (Ord,Eq)
 
-instance Show SortId  where show (SortId s)    = s
-instance Show ClassId  where show (ClassId (s1,s2))  = s1 ++ s2
-instance Show FieldId where show (FieldId s)   = s
-instance Show CtorId  where show (CtorId s)    = s
+instance Show SortId  where show (SortId s)      = s
+instance Show ClassId where show (ClassId s1 s2) = s1 ++ s2
+instance Show FieldId where show (FieldId s)     = s
+instance Show CtorId  where show (CtorId s)      = s
 
 instance Pretty SortId  where pretty = text . show
-instance Pretty ClassId  where pretty = text . show
+instance Pretty ClassId where pretty = text . show
 instance Pretty FieldId where pretty = text . show
 instance Pretty CtorId  where pretty = text . show
 
 class GomId a where
   idStr :: a -> String
 
-instance GomId SortId where idStr (SortId x)   = x
-instance GomId FieldId where idStr (FieldId x)   = x
-instance GomId CtorId where idStr (CtorId x)   = x
+instance GomId SortId  where idStr (SortId x)  = x
+instance GomId FieldId where idStr (FieldId x) = x
+instance GomId CtorId  where idStr (CtorId x)  = x
 
 -- | Represents a gom module.
 data Module = Module {
@@ -111,7 +111,9 @@ data Ctor =
 makeSortId :: String -> SortId
 makeSortId = SortId
 
-makeClassId :: (String,String) -> ClassId
+-- | @makeClassId c p@ builds the @c<p>@ identifier.
+-- (e.g. @makeClassId "HashMap" "Int,Float")
+makeClassId :: String -> String -> ClassId
 makeClassId = ClassId
 
 makeFieldId :: String -> FieldId
@@ -142,7 +144,7 @@ lowerId (SortId x) = SortId (map toLower x)
 
 
 getClassName :: ClassId -> String
-getClassName (ClassId (qualifiedname,_)) = qualifiedname
+getClassName (ClassId qualifiedname _) = qualifiedname
 
 -- | @simpleFields def@ is the list of fields of non-variadic 
 -- constructors of @def@, along with their sorts.
