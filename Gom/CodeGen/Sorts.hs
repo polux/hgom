@@ -131,10 +131,10 @@ compParseSort s = do
   return $ rMethodDef (static <+> public) qs (text "parse")
            [pars pr <+> arg] (vcat [pre,calls])
   where pars pr  = pr <> dot <> text "Parser"
-        arg      = text "par"
-        pre      = text "String __id = par.parseId();"
-        post     = text "throw new RuntimeException();"
-        cond c   = rMethodCall (text "__id") (text "equals") [dquotes $ pretty c]
+        arg = text "par"
+        pre = text "String __id = par.parseId();"
+        post = text "throw new RuntimeException();"
+        cond c = rMethodCall (text "__id") (text "equals") [dquotes $ pretty c]
         rcall qc = rMethodCall (pretty qc) (text "parseArgs") [arg]
         ifsym (c,qc) = rIfThenElse (cond c) (jreturn <+> rcall qc <> semi)
 
@@ -188,10 +188,12 @@ compMakeRandomSort s = do
                       (pack rcalls1 (rcalls1 ++ rcalls2))
   where isConst c  = null `fmap` askSt (fieldsOf c) 
         rcall1 qc  = jreturn <+> pretty qc <> text ".make();"
-        rcall2 qc  = jreturn <+> pretty qc <> text ".makeRandom(__rand,__depth-1);"
+        rcall2 qc  = jreturn <+> pretty qc <> 
+                     text ".makeRandom(__rand,__depth-1);"
         ints       = map int [0..]
         dflt       = text "throw new RuntimeException();"
-        nextint n  = rMethodCall (text "__rand") (text "nextInt") [int (max n 1)]
+        nextint n  = rMethodCall (text "__rand") 
+                     (text "nextInt") [int (max n 1)]
         pack c1 c2 = rIfThen (text "__depth <= 0") 
                        (rSwitch (nextint $ length c1) (zip ints c1) Nothing)
                      <$> 

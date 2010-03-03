@@ -101,7 +101,8 @@ iterOverFields f g c = do fis  <- askSt (fieldsOf c)
 -- subject sort and combines them with the second one. Duplicate fields are
 -- merged.
 iterOverSortFields 
-  :: (SortId -> FieldId -> SortId -> Gen a) -- ^ gets codomain, field name and field sort
+  :: (SortId -> FieldId -> SortId -> Gen a) 
+     -- ^ gets codomain, field name and field sort
   -> ([a] -> b) -- ^ combinator of results
   -> SortId     -- ^ subject sort
   -> Gen b

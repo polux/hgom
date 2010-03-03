@@ -111,8 +111,8 @@ data Ctor =
 makeSortId :: String -> SortId
 makeSortId = SortId
 
--- | @makeClassId c p@ builds the @c<p>@ identifier.
--- (e.g. @makeClassId "HashMap" "Int,Float")
+-- | @makeClassId c p@ builds the @c\<p\>@ identifier.
+-- (e.g. @makeClassId \"HashMap\" \"Int,Float\"@)
 makeClassId :: String -> String -> ClassId
 makeClassId = ClassId
 
