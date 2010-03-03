@@ -218,7 +218,7 @@ ast2st (Module m i defs) = execState (conv defs) (emptySt m i)
         convdef :: SortDef -> State SymbolTable ()
         convdef (SortDef n cn cs) = do
            modify $ insertJavaType n cn
-           (ss,vs) <- partitionEithers `liftM` mapM convctor cs
+           (ss,vs) <- partitionEithers `fmap` mapM convctor cs
            modify $ insertSctors n ss
            modify $ insertVctors n vs
            

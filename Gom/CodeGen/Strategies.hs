@@ -21,7 +21,6 @@ import Gom.SymbolTable
 import Gom.CodeGen.Common
 
 import Text.PrettyPrint.Leijen
-import Control.Monad.Reader
 
 -- | Given a sort @S@ of constructors @Ci@, 
 -- generates the package @s@ containing the
@@ -35,8 +34,8 @@ compStrategy s = do ctrs  <- askSt (sCtorsOf s)
 -- generates a congruence strategy class @_C.java@.
 compCongruence :: CtorId -> Gen FileHierarchy
 compCongruence c = 
-  do body <- vcat `liftM` sequence [compCongruenceConstructor c,
-                                    compVisit c, compVisitLight c]
+  do body <- vcat `fmap` sequence [compCongruenceConstructor c,
+                                   compVisit c, compVisitLight c]
      return $ Class classname (wrap body)
   where wrap = rClass public (text classname) (Just jSCombinator) []
         classname = '_':show c
@@ -45,7 +44,7 @@ compCongruence c =
 -- the method @public int visit(Introspector introspector) { ... }@
 -- for class @_C@.
 compVisit :: CtorId -> Gen Doc
-compVisit c = body `liftM` qualifiedCtor c
+compVisit c = body `fmap` qualifiedCtor c
   where body qc = vcat $ map text 
           ["public int visit(tom.library.sl.Introspector introspector) {",
            "  environment.setIntrospector(introspector);",

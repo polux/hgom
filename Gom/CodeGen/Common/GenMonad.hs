@@ -101,7 +101,7 @@ iterOverSortFields
   -> SortId     -- ^ subject sort
   -> Gen b
 iterOverSortFields f g s = do cs <- askSt (sCtorsOf s)
-                              fs <- (nub . concat) `liftM` mapM combine cs
+                              fs <- (nub . concat) `fmap` mapM combine cs
                               ms <- mapM (\(co,(fi,ty)) -> f co fi ty) fs
                               return $ g ms
    where combine c = do fis <- askSt (fieldsOf c)
@@ -114,8 +114,8 @@ iterOverSortFields f g s = do cs <- askSt (sCtorsOf s)
 -- As an example, returns @aa.bb.cc.foo@ for the module @Foo@,
 -- provided the user toggled @-p aa.bb.cc@.
 packagePrefix :: Gen Doc
-packagePrefix = do m <- map toLower `liftM` askSt modName
-                   go (pretty m) `liftM` askConf package
+packagePrefix = do m <- map toLower `fmap` askSt modName
+                   go (pretty m) `fmap` askConf package
   where go dm Nothing  = dm
         go dm (Just l) = hcat . intersperse dot $ map text l ++ [dm]
 
@@ -131,7 +131,7 @@ qualifiedSort s
 qualifiedCtor :: CtorId -> Gen Doc
 qualifiedCtor c = 
   do p <- packagePrefix
-     lows <- lowerId `liftM` askSt (codomainOf c)
+     lows <- lowerId `fmap` askSt (codomainOf c)
      return $ p <> dot <> text "types" <> dot <> 
               pretty lows <> dot <> pretty c
 
