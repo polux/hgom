@@ -42,7 +42,7 @@ compOOMapping = do m <- askSt modName
                    ops   <- mapM compOp ctrs
                    vops  <- mapM compVOp vctrs
                    isig  <- compISignature ctrs vctrs 
-                   let mapping = Tom m (vsep $ (tyts++ops++vops))
+                   let mapping = Tom m . vsep $ tyts++ops++vops
                    return . wrap pr $ Package mn [mapping,isig]
                 where 
                    -- wraps the package in the user-provided prefix hierarchy (-p option)
@@ -86,7 +86,9 @@ compOp c = do slots   <- compSlots
   where mapping = text "getSignature().getMapping_" <> pretty c <> text "()"
         isfsym  = text "is_fsym(t) {" <>  mapping <> text ".isInstanceOf($t) }"
         compSlot (i,s) = 
-          return $ (text "get_slot(" <> (pretty s) <> text ",t) {" <> mapping <> text ".get" <> text (show i) <> text "($t) }")
+          return $ text
+            "get_slot(" <> pretty s <> text ",t) {" <>
+            mapping <> text ".get" <> text (show i) <> text "($t) }"
         compMake as =
           text "make" <> args <+> (sbraces . parens) 
                 (mapping <> text ".make" <> iargs)
