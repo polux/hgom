@@ -44,13 +44,10 @@ compOOMapping = do m <- askSt modName
                    isig  <- compISignature ctrs vctrs 
                    let mapping = Tom m . vsep $ tyts++ops++vops
                    return . wrap pr $ Package mn [mapping,isig]
-                where 
-                   -- wraps the package in the user-provided prefix hierarchy (-p option)
-                   wrap Nothing  h = h
-                   wrap (Just l) h = foldr w h l
-                   w p h = Package p [h]
+  where wrap Nothing  h = h
+        wrap (Just l) h = foldr w h l
+        w p h = Package p [h]
                  
-
 -- | Given a sort @S@, generates
 --
 -- > %typeterm S {
@@ -62,8 +59,9 @@ compOOMapping = do m <- askSt modName
 -- generats @$t1.equals($t2)@ if @--noSharing@ has been
 -- toggled
 compTypeTerm :: SortId -> Gen Doc
-compTypeTerm s = do cs <- askSt (concreteTypeOf s)
-                    return $ rTypeterm (pretty s) (text (getClassName cs)) False 
+compTypeTerm s = do 
+  cs <- askSt (concreteTypeOf s)
+  return $ rTypeterm (pretty s) (text (getClassName cs)) False 
 
 -- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@
 -- of codomain @Co@, generates
@@ -76,27 +74,20 @@ compTypeTerm s = do cs <- askSt (concreteTypeOf s)
 -- >   make (t1,..,tn) { (getSignature().getMapping_f().make($s1, $s2)) }
 -- > }
 compOp :: CtorId -> Gen Doc
-compOp c = do slots   <- compSlots 
-              s       <- askSt (codomainOf c)
-              pfis    <- map (pretty *** pretty) `fmap` askSt (fieldsOf c)
-              let make = compMake (map fst pfis)
-              return $ rOp (pretty s) (pretty c) pfis
-                           (vcat [isfsym,slots,make])
+compOp c = do pfields <- map (pretty *** pretty) `fmap` askSt (fieldsOf c)
+              co <- askSt (codomainOf c)
+              let pfs = map fst pfields
+              return $ rOp (pretty co) (pretty c) pfields
+                           (vcat [isfsym, getters pfs, make pfs])
   where mapping = text "getSignature().getMapping_" <> pretty c <> text "()"
         isfsym  = text "is_fsym(t) {" <>  mapping <> text ".isInstanceOf($t) }"
-        compSlot (i,s) = 
-          return $ text
-            "get_slot(" <> pretty s <> text ",t) {" <>
-            mapping <> text ".get" <> text (show i) <> text "($t) }"
-        compMake as =
-          text "make" <> args <+> (sbraces . parens) 
-                (mapping <> text ".make" <> iargs)
-          where gen   = parens . hcat . punctuate comma
-                args  = gen as
-                iargs = gen (map inline as)
-        compSlots = do fis  <- askSt (fieldsOf c)
-                       fis' <- mapM compSlot [(i,fst (fis!!i)) | i <- [0..length fis-1]]
-                       return $ vcat fis'
+        make fs = text "make" <> gen fs <+> (sbraces . parens $ body)
+          where body = mapping <> text ".make" <> (gen $ map inline fs)
+                gen  = parens . hcat . punctuate comma
+        getters fs = vcat $ zipWith getter [0 :: Int ..] fs
+        getter i s = text "get_slot(" <> pretty s <> 
+                     text ",t) {" <> mapping <> text ".get" <> 
+                     text (show i) <> text "($t) }"
 
 -- | Given a variadic constructor @L(T*)@
 -- of codomain @Co@, generates
@@ -109,42 +100,50 @@ compOp c = do slots   <- compSlots
 --  is_empty(l)      { getSignature().getMapping_L().isEmpty($l) }
 --}
 compVOp :: CtorId -> Gen Doc
-compVOp c = do codom  <- askSt (codomainOf c)
-               dom  <- askSt (fieldOf c)
-               return $ text "%oplist" <+> pretty codom <+> pretty c <> parens (pretty dom <> text "*") <+> ibraces (vcat $ map text 
-                   [" is_fsym(l)       { " ++ mapping ++ ".isInstanceOf($l) }",
-                    " make_empty()     { " ++ mapping ++ ".makeEmpty() }",
-                    " make_insert(o,l) { " ++ mapping ++ ".makeInsert($o,$l) }",
-                    " get_head(l)      { " ++ mapping ++ ".getHead($l) }",
-                    " get_tail(l)      { " ++ mapping ++ ".getTail($l) }",
-                    " is_empty(l)      { " ++ mapping ++ ".isEmpty($l) }"])
-              where  mapping = "getSignature().getMapping_" ++ show c ++ "()"
+compVOp c = do 
+  codom  <- askSt (codomainOf c)
+  dom  <- askSt (fieldOf c)
+  return $ text "%oplist" <+> pretty codom <+> pretty c <> 
+           parens (pretty dom <> text "*") <+> ibraces (vcat $ map text 
+             [" is_fsym(l)       { " ++ mapping ++ ".isInstanceOf($l) }",
+              " make_empty()     { " ++ mapping ++ ".makeEmpty() }",
+              " make_insert(o,l) { " ++ mapping ++ ".makeInsert($o,$l) }",
+              " get_head(l)      { " ++ mapping ++ ".getHead($l) }",
+              " get_tail(l)      { " ++ mapping ++ ".getTail($l) }",
+              " is_empty(l)      { " ++ mapping ++ ".isEmpty($l) }"])
+  where mapping = "getSignature().getMapping_" ++ show c ++ "()"
 
 
 -- | Given a list of constructors @cs@ and a list of var constructors
--- @vcs@, 
--- generates the ISignature of new oo mappings.
+-- @vcs@, generates the ISignature of new oo mappings.
 compISignature :: [CtorId] -> [CtorId] -> Gen FileHierarchy
-compISignature cs vcs = do methDecls <- mapM compMDecl cs
-                           vmethDecls <- mapM compMVDecl vcs
-                           let code = rInterface public (text "ISignature") (rBody (methDecls ++ vmethDecls))
-                           return $ Class "ISignature" code 
+compISignature cs vcs = do 
+  methDecls  <- mapM compMDecl cs
+  vmethDecls <- mapM compMVDecl vcs
+  let code = rInterface public (text "ISignature") 
+                        (rBody (methDecls ++ vmethDecls))
+  return $ Class "ISignature" code 
 
 compMDecl :: CtorId -> Gen Doc
-compMDecl c = do cfields <- askSt (fieldsOf c)
-                 s       <- askSt (codomainOf c)
-                 cs      <- askSt (concreteTypeOf s) 
-                 let arity = length cfields
-                 classes <- mapM (prettyConcreteType . snd) cfields
-                 let types  =  gen (pretty cs:classes) 
-                 return $ text "tom.library.oomapping.Mapping"<> pretty arity <> types <> text " getMapping_" <> pretty c <> text "()"
-              where gen   =  angles . hcat . punctuate comma
-                    prettyConcreteType s = do cs <- askSt (concreteTypeOf s)
-                                              return $ pretty cs
+compMDecl c = do 
+  cfields <- askSt (fieldsOf c)
+  s       <- askSt (codomainOf c)
+  cs      <- askSt (concreteTypeOf s) 
+  let arity = length cfields
+  classes <- mapM (prettyConcreteType . snd) cfields
+  let types = gen (pretty cs:classes) 
+  return $ text "tom.library.oomapping.Mapping" <> pretty arity <> 
+           types <> text " getMapping_" <> pretty c <> text "()"
+  where gen = angles . hcat . punctuate comma
+        prettyConcreteType s = do cs <- askSt (concreteTypeOf s)
+                                  return $ pretty cs
 
 compMVDecl :: CtorId -> Gen Doc
-compMVDecl c = do dom    <- askSt (fieldOf c)
-                  codom  <- askSt (codomainOf c)
-                  cdom   <- askSt (concreteTypeOf dom) 
-                  ccodom <- askSt (concreteTypeOf codom) 
-                  return $ text "tom.library.oomapping.ListMapping<" <> pretty ccodom <> text "," <> pretty cdom <> text ">" <+> text "getMapping_" <> pretty c <> text "()"
+compMVDecl c = do 
+  dom    <- askSt (fieldOf c)
+  codom  <- askSt (codomainOf c)
+  cdom   <- askSt (concreteTypeOf dom) 
+  ccodom <- askSt (concreteTypeOf codom) 
+  return $ text "tom.library.oomapping.ListMapping<" <> pretty ccodom <> 
+           text "," <> pretty cdom <> text ">" <+> text "getMapping_" <> 
+           pretty c <> text "()"
