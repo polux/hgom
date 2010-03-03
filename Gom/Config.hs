@@ -103,10 +103,10 @@ options =
   ,Option ['c'] ["congruence"] (ReqArg ccongr "(same|sep)")
           (unlines ["generate congruence strategies in",
                     "the same or in a separate .tom file"])
-  ,Option ['r'] ["random"] (NoArg crandom)
-          "generate makeRamdom methods"
   ,Option ['j'] ["oomappings"] (NoArg coomapping)
           "generate only Java OO mappings"
+  ,Option ['r'] ["random"] (NoArg crandom)
+          "generate makeRamdom methods"
   ,Option ['d'] ["depth"] (NoArg cdepth)
           "generate depth methods"
   ,Option ['s'] ["size"] (NoArg csize)
