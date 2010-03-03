@@ -31,7 +31,8 @@ module Gom.CodeGen.Common.GenMonad (
   qualifiedSort,
   qualifiedCtor,
   abstractType,
-  qualifiedAbstractType
+  qualifiedAbstractType,
+  qualifiedStratPrefix
 ) where
 
 import Gom.Sig
@@ -145,3 +146,8 @@ qualifiedAbstractType = do at <- abstractType
                            pr <- packagePrefix 
                            return $ pr <> dot <> text at
 
+-- | Given a sort @S@ in the module @m@, generates @m.strategy.s@
+qualifiedStratPrefix :: SortId -> Gen Doc
+qualifiedStratPrefix s = do
+  m <- packagePrefix
+  return $ m <> dot <> text "strategy" <> dot <> pretty (lowerId s)

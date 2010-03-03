@@ -17,7 +17,8 @@
 module Gom.CodeGen.Common.Helpers (
   -- * Java pretty-printing
   -- ** Generic
-  ibraces, sbraces, encloseCommas, rBody, _u,
+  ibraces, sbraces, encloseCommas, 
+  encloseCommasNB, rBody, _u,
   -- ** Java keywords
   abstract, public, protected, private, this,
   jreturn, throw, new, void, instanceof, jif,
@@ -93,10 +94,16 @@ jSharedId       = text "shared.SharedObjectWithID"
 jVisitableArray = jVisitable <> text "[]"
 
 -- | Renders the list enclosed in parenthesis and
--- separated by commas.
+-- separated by commas. Breaks lines if the list is too long.
 encloseCommas :: [Doc] -> Doc
 encloseCommas [] = text "()"
 encloseCommas l = parens $ nest 2 (softbreak <> fillSep (punctuate comma l))
+
+-- | Renders the list enclosed in parenthesis and
+-- separated by commas. Doesn't break lines (NB is for No Break).
+encloseCommasNB :: [Doc] -> Doc
+encloseCommasNB [] = text "()"
+encloseCommasNB l = parens . hcat . punctuate comma $ l
 
 -- | Renders the list punctuated by semicolons
 rBody :: [Doc] -> Doc

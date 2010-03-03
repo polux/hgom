@@ -66,8 +66,8 @@ compToStringBuilderVariadic vc = do
   qnil  <- qualifiedCtor nil
   co    <- askSt (codomainOf vc)
   dom   <- askSt (fieldOf vc) 
-  qco   <- pretty `liftM` qualifiedSort co
-  qdom  <- pretty `liftM` qualifiedSort dom
+  qco   <- pretty `fmap` qualifiedSort co
+  qdom  <- pretty `fmap` qualifiedSort dom
   let mid = middle qco qcons qnil qdom (isBuiltin dom)
   return $ rMethodDef public void toSB
                       [jStringBuilder <+> buf]
@@ -140,7 +140,7 @@ compParseConstructor c = do
           return $ qs <+> _u (pretty f) <+> equals <+> rec
         pre      = rMethodCall arg (text "parseLpar") []
         postM    = do qc <- qualifiedCtor c
-                      fis <- map (_u . pretty . fst) `liftM` askSt (fieldsOf c)
+                      fis <- map (_u . pretty . fst) `fmap` askSt (fieldsOf c)
                       return [rMethodCall arg (text "parseRpar") [], 
                               jreturn <+> rMethodCall qc (text "make") fis]
 
@@ -296,7 +296,7 @@ compMembersOfConstructor c = iterOverFields rdr rBody c
 compSharingMembers :: CtorId -> Gen Doc
 compSharingMembers c = do
   qc  <- qualifiedCtor c
-  len <- length `liftM` askSt (fieldsOf c) 
+  len <- length `fmap` askSt (fieldsOf c) 
   return $ rBody [text "private static int nameHash" <+> equals <+>
                   rMethodCall (text "shared.HashFunctions")
                               (text "stringHashFunction") 
@@ -499,7 +499,7 @@ compEquals = compEqAux meth comb jObject
 -- >   return clone;
 -- > }
 compDuplicate :: CtorId -> Gen Doc
-compDuplicate c = rdr `liftM` askSt (fieldsOf c)
+compDuplicate c = rdr `fmap` askSt (fieldsOf c)
   where pc  = pretty c
         cl  = text "__clone"
         th  = (text "this." <>) . _u . pretty . fst
@@ -625,7 +625,7 @@ compHashFun c = do fis <- askSt (fieldsOf c)
 -- >   return n;
 -- > }
 compGetChildCount ::  CtorId -> Gen Doc
-compGetChildCount c = do ar <- length `liftM` askSt (fieldsOf c)
+compGetChildCount c = do ar <- length `fmap` askSt (fieldsOf c)
                          return $ wrap ar
   where wrap n = rMethodDef public jint (text "getChildCount") 
                             [] (jreturn <+> int n <> semi)
@@ -844,7 +844,7 @@ compMakeRandomConstructor c = do
   qc  <- qualifiedCtor c
   co  <- askSt (codomainOf c)
   qco <- qualifiedSort co
-  tys <- map snd `liftM` askSt (fieldsOf c)
+  tys <- map snd `fmap` askSt (fieldsOf c)
   rcalls <- mapM randomRecCall tys
   return $ rMethodDef (final <+> static <+> public)
                       qco (text "makeRandom")
