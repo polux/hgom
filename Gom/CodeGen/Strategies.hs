@@ -69,17 +69,17 @@ compIs c = do
            "public Is_" ++ show c ++ "() {",
            "  initSubterm();",
            "}",
-           "public <T> T visitLight(T any, tom.library.sl.Introspector i) ",
+           "public <T> T visitLight(T __any, tom.library.sl.Introspector __i) ",
            "  throws tom.library.sl.VisitFailure {",
-           "  if(any instanceof " ++ show qc ++ "){",
-           "    return any;",
+           "  if(__any instanceof " ++ show qc ++ "){",
+           "    return __any;",
            "  } else {",
            "    throw new tom.library.sl.VisitFailure(msg);",
            "  }",
            "}",
-           "public int visit(tom.library.sl.Introspector i) {",
-           "  Object any = environment.getSubject();",
-           "  if(any instanceof " ++ show qc ++ ") {",
+           "public int visit(tom.library.sl.Introspector __i) {",
+           "  Object __any = environment.getSubject();",
+           "  if(__any instanceof " ++ show qc ++ ") {",
            "    return tom.library.sl.Environment.SUCCESS;",
            "  } else {",
            "    return tom.library.sl.Environment.FAILURE;",
@@ -92,16 +92,16 @@ compIs c = do
 compVisitCongr :: CtorId -> Gen Doc
 compVisitCongr c = body `fmap` qualifiedCtor c
   where body qc = vcat $ map text 
-          ["public int visit(tom.library.sl.Introspector introspector) {",
-           "  environment.setIntrospector(introspector);",
-           "  Object any = environment.getSubject();",
-           "  if (any instanceof " ++ show qc ++ ") {",
-           "    int childCount = introspector.getChildCount(any);",
+          ["public int visit(tom.library.sl.Introspector __i) {",
+           "  environment.setIntrospector(__i);",
+           "  Object __any = environment.getSubject();",
+           "  if (__any instanceof " ++ show qc ++ ") {",
+           "    int childCount = __i.getChildCount(__any);",
            "    Object[] childs = null;",
            "    for(int i = 0; i < childCount; i++) {",
-           "      Object oldChild = introspector.getChildAt(any,i);",
+           "      Object oldChild = __i.getChildAt(__any,i);",
            "      environment.down(i+1);",
-           "      int status = arguments[i].visit(introspector);",
+           "      int status = arguments[i].visit(__i);",
            "      if(status != tom.library.sl.Environment.SUCCESS) {",
            "        environment.upLocal();",
            "        return status;",
@@ -111,14 +111,14 @@ compVisitCongr c = body `fmap` qualifiedCtor c
            "        childs[i] = newChild;",
            "      } else if(newChild != oldChild) {",
            "        // allocate the array, and fill it",
-           "        childs = introspector.getChildren(any);",
+           "        childs = __i.getChildren(__any);",
            "        childs[i] = newChild;",
            "      } ",
            "      environment.upLocal();",
            "    }",
            "    if(childs!=null) {",
            "      environment.setSubject",
-           "        (introspector.setChildren(any,childs));",
+           "        (__i.setChildren(__any,childs));",
            "    }",
            "    return tom.library.sl.Environment.SUCCESS;",
            "  } else {",
@@ -135,27 +135,27 @@ compVisitLightCongr c = do
   qc <- qualifiedCtor c
   return $ body qc n
   where body qc n = vcat $ map text 
-          ["public <T> T visitLight(T any,",
-           "  tom.library.sl.Introspector introspector)", 
+          ["public <T> T visitLight(T __any,",
+           "  tom.library.sl.Introspector __i)", 
            "  throws tom.library.sl.VisitFailure {",
-           "  if(any instanceof " ++ show qc ++ ") {",
-           "    T result = any;",
+           "  if(__any instanceof " ++ show qc ++ ") {",
+           "    T result = __any;",
            "    Object[] childs = null;",
            "    for (int i = 0, nbi = 0; i < " ++ show n ++"; i++) {",
-           "        Object oldChild = introspector.getChildAt(any,nbi);",
+           "        Object oldChild = __i.getChildAt(__any,nbi);",
            "        Object newChild =",
-           "           arguments[i].visitLight(oldChild,introspector);",
+           "           arguments[i].visitLight(oldChild,__i);",
            "        if(childs != null) {",
            "          childs[nbi] = newChild;",
            "        } else if(newChild != oldChild) {",
            "          // allocate the array, and fill it",
-           "          childs = introspector.getChildren(any);",
+           "          childs = __i.getChildren(__any);",
            "          childs[nbi] = newChild;",
            "        }",
            "        nbi++;",
            "    }",
            "    if(childs!=null) {",
-           "      result = introspector.setChildren(any,childs);",
+           "      result = __i.setChildren(__any,childs);",
            "    }",
            "    return result;",
            "  } else {",
@@ -195,7 +195,7 @@ compVisitMake c = do
         -- getChildAt(n) [...] = (foo.types.Tn) getEnvironment().getSubject()
         block qs i = vcat [getChild, testSort, assignTi]
           where getChild = cast (text "getChildAt" <> parens (int i))
-                           <> text ".visit(i);"
+                           <> text ".visit(__i);"
                 testSort = rIfThen cond failure
                 assignTi = qs <+> text "new_t" <> int i <+> equals <+> 
                            parens qs <+> text "getEnvironment().getSubject();"
@@ -208,7 +208,7 @@ compVisitMake c = do
                         [rMethodCall qc (text "make") ts] <> semi
           where ts = [text "new_t" <> int i | i <- [0..n-1]]
         lastLine = text "return tom.library.sl.Environment.SUCCESS;"
-        method body = text "public int visit(tom.library.sl.Introspector i)" 
+        method body = text "public int visit(tom.library.sl.Introspector __i)"
                       <+> ibraces body
 
 -- | Given a non-variadic constructor @C(_:T0,...,_:Tn)@, generates
@@ -244,10 +244,10 @@ compVisitLightMake c = do
         block qs i = vcat [visitChild, testSort, assignTi]
           where visitChild = text "Object" <+> tmp_i <+> equals <+>
                              cast (text "getChildAt" <> parens (int i))
-                             <> text ".visit(any,i);"
-                tmp_i    = text "tmp_" <> int i
+                             <> text ".visit(__any,__i);"
+                tmp_i    = text "__tmp_" <> int i
                 testSort = rIfThen cond failure
-                assignTi = qs <+> text "new_t" <> int i <+> equals
+                assignTi = qs <+> text "__new_t" <> int i <+> equals
                            <+> parens qs <+> tmp_i <> semi
                 cond = text "!(" <> tmp_i <+> instanceof <+> qs <> text ")"
                 failure = text "throw new tom.library.sl.VisitFailure();"
@@ -255,10 +255,10 @@ compVisitLightMake c = do
         -- return (T) m.types.co.C.make(new_t0, ..., new_tn);
         lastLine qc n = text "return (T)" <+> 
                         rMethodCall qc (text "make") ts <> semi
-          where ts = [text "new_t" <> int i | i <- [0..n-1]]
+          where ts = [text "__new_t" <> int i | i <- [0..n-1]]
         method body = (vcat $ map text 
-                         ["public <T> T visitLight(T any,",
-                          "  tom.library.sl.Introspector i)",
+                         ["public <T> T visitLight(T __any,",
+                          "  tom.library.sl.Introspector __i)",
                           "  throws tom.library.sl.VisitFailure"]) 
                       <+> ibraces body
  
@@ -276,7 +276,7 @@ compStratConstructor pr c = do
   fs <- map convert `fmap` askSt (fieldsOf c)
   return $ rMethodDef public empty (pr <> pretty c)
                       (map (jStrategy <+>) fs) (rBody [body fs])
-  where convert = (text "s_" <>) . pretty . fst
+  where convert = (text "__s_" <>) . pretty . fst
         body fs = rMethodCall this (text "initSubterm") [array]
           where array   = new <+> jStrategyArray <+> sbraces content 
                 content = align $ sep (punctuate comma fs)
