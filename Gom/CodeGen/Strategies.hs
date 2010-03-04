@@ -32,6 +32,30 @@ compStrategy s = do ctrs  <- askSt (sCtorsOf s)
                     is <- mapM compIs ctrs
                     return $ Package (show $ lowerId s) (cs++ms++is) 
 
+-- | Given a non-variadic constructor @C@, 
+-- generates a congruence strategy class @_C@.
+compCongruence :: CtorId -> Gen FileHierarchy
+compCongruence c = 
+  do body <- vcat `fmap` sequence 
+               [compStratConstructor (text "_") c,
+                compVisitCongr c, 
+                compVisitLightCongr c]
+     return $ Class classname (wrap body)
+  where wrap = rClass public (text classname) (Just jSCombinator) []
+        classname = '_':show c
+
+-- | Given a non-variadic constructor @C@,
+-- generates the creation strategy class @Make_C@.
+compMake :: CtorId -> Gen FileHierarchy
+compMake c = do
+  body <- vcat `fmap` sequence 
+            [compStratConstructor (text "Make_") c,
+             compVisitMake c, 
+             compVisitLightMake c]
+  return $ Class classname (wrap body)
+  where wrap = rClass public (text classname) (Just jSCombinator) []
+        classname = "Make_" ++ show c
+
 -- | Given a non-variadic constructor @C@,
 -- generates the test strategy class @Is_C@.
 compIs :: CtorId -> Gen FileHierarchy
@@ -62,30 +86,11 @@ compIs c = do
            "  }",
            "}"]
 
--- | Given a non-variadic constructor @C@,
--- generates the creation strategy class @Make_C@.
-compMake :: CtorId -> Gen FileHierarchy
-compMake c = do
-  body <- return (text "/* TODO */")
-  return $ Class classname (wrap body)
-  where wrap = rClass public (text classname) Nothing []
-        classname = "Make_" ++ show c
-
--- | Given a non-variadic constructor @C@, 
--- generates a congruence strategy class @_C@.
-compCongruence :: CtorId -> Gen FileHierarchy
-compCongruence c = 
-  do body <- vcat `fmap` sequence [compCongruenceConstructor c,
-                                   compVisit c, compVisitLight c]
-     return $ Class classname (wrap body)
-  where wrap = rClass public (text classname) (Just jSCombinator) []
-        classname = '_':show c
-
 -- | Given a non-variadic constructor @C@, generates
 -- the method @public int visit(Introspector introspector) { ... }@
 -- for class @_C@.
-compVisit :: CtorId -> Gen Doc
-compVisit c = body `fmap` qualifiedCtor c
+compVisitCongr :: CtorId -> Gen Doc
+compVisitCongr c = body `fmap` qualifiedCtor c
   where body qc = vcat $ map text 
           ["public int visit(tom.library.sl.Introspector introspector) {",
            "  environment.setIntrospector(introspector);",
@@ -124,10 +129,11 @@ compVisit c = body `fmap` qualifiedCtor c
 -- | Given a non-variadic constructor @C@, generates
 -- the method @public int visitLight(Introspector introspector) { ... }@
 -- for class @_C@.
-compVisitLight :: CtorId -> Gen Doc
-compVisitLight c = do n <- length `fmap` askSt (fieldsOf c)
-                      qc <- qualifiedCtor c
-                      return $ body qc n
+compVisitLightCongr :: CtorId -> Gen Doc
+compVisitLightCongr c = do 
+  n <- length `fmap` askSt (fieldsOf c)
+  qc <- qualifiedCtor c
+  return $ body qc n
   where body qc n = vcat $ map text 
           ["public <T> T visitLight(T any,",
            "  tom.library.sl.Introspector introspector)", 
@@ -156,15 +162,121 @@ compVisitLight c = do n <- length `fmap` askSt (fieldsOf c)
            "    throw new tom.library.sl.VisitFailure();",
            "  }",
            "}"]
-        
--- | Given a non-variadic constructor @C@, generates
--- the constructor of @_C@.
-compCongruenceConstructor :: CtorId -> Gen Doc
-compCongruenceConstructor c = do
+
+-- | Given a non-variadic constructor @C(_:T0,...,_:Tn)@, generates
+-- > public int visit(tom.library.Introspector i) {
+-- >   getChildAt(0).visit(i);
+-- >   if (! (getEnvironment().getSubject() instanceof m.types.T0)) {
+-- >     return tom.library.sl.Environment.FAILURE;
+-- >   }
+-- >   foo.types.T0 new_t0 = (foo.types.T0) getEnvironment().getSubject();
+-- >
+-- >   ...
+-- >
+-- >   getChildAt(n).visit(i);
+-- >   if (! (getEnvironment().getSubject() instanceof m.types.Tn)) {
+-- >     return tom.library.sl.Environment.FAILURE;
+-- >   }
+-- >   foo.types.Tn new_tn = (foo.types.Tn) getEnvironment().getSubject();
+-- > 
+-- >   getEnvironment().setSubject(m.types.co.C.make(new_t0, ..., new_tn));
+-- >   return tom.library.sl.Environment.SUCCESS;
+-- > }
+compVisitMake :: CtorId -> Gen Doc
+compVisitMake c = do
+  qc  <- qualifiedCtor c
+  ss  <- map snd `fmap` askSt (fieldsOf c)
+  qss <- mapM myQualifiedSort ss
+  let n = length qss
+  return . method . vcat $ 
+    (zipWith block qss [0..]) ++ [setSub qc n, lastLine]
+  where myQualifiedSort s | isBuiltin s = return $ qualifiedBuiltin s
+                          | otherwise = qualifiedSort s
+        -- getChildAt(n) [...] = (foo.types.Tn) getEnvironment().getSubject()
+        block qs i = vcat [getChild, testSort, assignTi]
+          where getChild = cast (text "getChildAt" <> parens (int i))
+                           <> text ".visit(i);"
+                testSort = rIfThen cond failure
+                assignTi = qs <+> text "new_t" <> int i <+> equals <+> 
+                           parens qs <+> text "getEnvironment().getSubject();"
+                cond = text "!(getEnvironment().getSubject() instanceof "
+                       <> qs <> text ")"
+                failure = text "return tom.library.sl.Environment.FAILURE;"
+                cast x = parens (parens jStrategy <+> x)
+        -- getEnvironment().setSubject(m.types.co.C.make(new_t0, ..., new_tn))
+        setSub qc n = rMethodCall (text "getEnvironment()") (text "setSubject")
+                        [rMethodCall qc (text "make") ts] <> semi
+          where ts = [text "new_t" <> int i | i <- [0..n-1]]
+        lastLine = text "return tom.library.sl.Environment.SUCCESS;"
+        method body = text "public int visit(tom.library.sl.Introspector i)" 
+                      <+> ibraces body
+
+-- | Given a non-variadic constructor @C(_:T0,...,_:Tn)@, generates
+-- > public <T> T visitLight(T any, tom.library.Introspector i) 
+-- >   throws tom.library.sl.VisitFailure {
+-- >   Object tmp_t0 = ((tom.library.sl.Strategy) getChildAt(0)).visit(any,i);
+-- >   if (!(tm_t0 instanceof m.types.T0)) {
+-- >     throw new tom.library.sl.VisitFailure();
+-- >   }
+-- >   foo.types.T0 new_t0 = (foo.types.T0) tmp_t0;
+-- >
+-- >   ...
+-- >
+-- >   Object tmp_tn = ((tom.library.sl.Strategy) getChildAt(n)).visit(any,i);
+-- >   if (!(tm_tn instanceof m.types.Tn)) {
+-- >     throw new tom.library.sl.VisitFailure();
+-- >   }
+-- >   foo.types.Tn new_tn = (foo.types.Tn) tmp_tn;
+-- > 
+-- >   return (T) m.types.co.C.make(new_t0, ..., new_tn);
+-- > }
+compVisitLightMake :: CtorId -> Gen Doc
+compVisitLightMake c = do
+  qc  <- qualifiedCtor c
+  ss  <- map snd `fmap` askSt (fieldsOf c)
+  qss <- mapM myQualifiedSort ss
+  let n = length qss
+  return . method . vcat $ 
+    (zipWith block qss [0..]) ++ [lastLine qc n]
+  where myQualifiedSort s | isBuiltin s = return $ qualifiedBuiltin s
+                          | otherwise = qualifiedSort s
+        -- Object tmp_tn [...] = (foo.types.Tn) tmp_tn
+        block qs i = vcat [visitChild, testSort, assignTi]
+          where visitChild = text "Object" <+> tmp_i <+> equals <+>
+                             cast (text "getChildAt" <> parens (int i))
+                             <> text ".visit(any,i);"
+                tmp_i    = text "tmp_" <> int i
+                testSort = rIfThen cond failure
+                assignTi = qs <+> text "new_t" <> int i <+> equals
+                           <+> parens qs <+> tmp_i <> semi
+                cond = text "!(" <> tmp_i <+> instanceof <+> qs <> text ")"
+                failure = text "throw new tom.library.sl.VisitFailure();"
+                cast x = parens (parens jStrategy <+> x)
+        -- return (T) m.types.co.C.make(new_t0, ..., new_tn);
+        lastLine qc n = text "return (T)" <+> 
+                        rMethodCall qc (text "make") ts <> semi
+          where ts = [text "new_t" <> int i | i <- [0..n-1]]
+        method body = (vcat $ map text 
+                         ["public <T> T visitLight(T any,",
+                          "  tom.library.sl.Introspector i)",
+                          "  throws tom.library.sl.VisitFailure"]) 
+                      <+> ibraces body
+ 
+-- | Given a non-variadic constructor @C(x1,...,xn)@ 
+-- and a prefix @prefix@, generates
+--
+-- >   public prefixf(tom.library.sl.Strategy s_x1, 
+-- >                  ...,
+-- >                  tom.library.sl.Strategy s_xn) {
+-- >    this.initSubterm(
+-- >      new tom.library.sl.Strategy[] { s_x1, ..., s_xn });
+-- >  }
+compStratConstructor :: Doc -> CtorId -> Gen Doc
+compStratConstructor pr c = do
   fs <- map convert `fmap` askSt (fieldsOf c)
-  return $ rMethodDef public empty (text "_" <> pretty c) 
+  return $ rMethodDef public empty (pr <> pretty c)
                       (map (jStrategy <+>) fs) (rBody [body fs])
-  where convert = (text "s" <>) . pretty . fst
+  where convert = (text "s_" <>) . pretty . fst
         body fs = rMethodCall this (text "initSubterm") [array]
           where array   = new <+> jStrategyArray <+> sbraces content 
                 content = align $ sep (punctuate comma fs)
