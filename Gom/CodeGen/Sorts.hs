@@ -132,7 +132,7 @@ compParseSort s = do
            [pars pr <+> arg] (vcat [pre,calls])
   where pars pr  = pr <> dot <> text "Parser"
         arg = text "__par"
-        pre = text "String __id = par.parseId();"
+        pre = text "String __id = __par.parseId();"
         post = text "throw new RuntimeException();"
         cond c = rMethodCall (text "__id") (text "equals") [dquotes $ pretty c]
         rcall qc = rMethodCall (pretty qc) (text "parseArgs") [arg]

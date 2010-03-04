@@ -28,10 +28,30 @@ import Text.PrettyPrint.Leijen
 compStrategy :: SortId -> Gen FileHierarchy
 compStrategy s = do ctrs  <- askSt (sCtorsOf s)
                     cs <- mapM compCongruence ctrs
-                    return $ Package (show $ lowerId s) cs 
+                    ms <- mapM compMake ctrs
+                    is <- mapM compIs ctrs
+                    return $ Package (show $ lowerId s) (cs++ms++is) 
+
+-- | Given a non-variadic constructor @C@,
+-- generates the test strategy class @Is_C@.
+compIs :: CtorId -> Gen FileHierarchy
+compIs c = do
+  body <- return empty -- TODO
+  return $ Class classname (wrap body)
+  where wrap = rClass public (text classname) Nothing []
+        classname = "Is_" ++ show c
+
+-- | Given a non-variadic constructor @C@,
+-- generates the creation strategy class @Make_C@.
+compMake :: CtorId -> Gen FileHierarchy
+compMake c = do
+  body <- return empty -- TODO
+  return $ Class classname (wrap body)
+  where wrap = rClass public (text classname) Nothing []
+        classname = "Make_" ++ show c
 
 -- | Given a non-variadic constructor @C@, 
--- generates a congruence strategy class @_C.java@.
+-- generates a congruence strategy class @_C@.
 compCongruence :: CtorId -> Gen FileHierarchy
 compCongruence c = 
   do body <- vcat `fmap` sequence [compCongruenceConstructor c,

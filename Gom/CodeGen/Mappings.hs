@@ -35,14 +35,14 @@ compTomFiles = do mn    <- askSt modName
                   tyts  <- mapM compTypeTerm srts
                   ops   <- mapM compOp ctrs
                   opls  <- mapM compOpList vctrs
-                  sops <-  mapM compSOp ctrs
+                  let always = incls:(tyts++ops++opls)
+                  cops  <-  mapM compCOp ctrs
                   vcongr <- askConf congr
-                  let mappings = incls:(tyts++ops++opls)
                   return $ case vcongr of 
-                     NoCongr  -> [Tom mn (vsep mappings)]
-                     SameFile -> [Tom mn (vsep $ includeSl:mappings++sops)]
-                     SeparateFile -> [Tom mn $ vsep mappings, 
-                                      Tom ('_':mn) (vsep $ includeSl:sops)]
+                     NoCongr  -> [Tom mn (vsep always)]
+                     SameFile -> [Tom mn (vsep $ includeSl:always++cops)]
+                     SeparateFile -> [Tom mn $ vsep always, 
+                                      Tom ('_':mn) (vsep $ includeSl:cops)]
 
 -- | Generates @%include { x.tom }@ for every imported sort @x@
 compIncludes :: Gen Doc
@@ -121,19 +121,15 @@ compOpList c = do co     <- askSt (codomainOf c)
 -- >   get_slot(sn,t) { (tom.library.sl.Strategy) $t.getChildAt(n-1) }
 -- >   make (t1,..,tn) { new m.strategy.co._C($t1,..,$tn) }
 -- > }
-compSOp :: CtorId -> Gen Doc
-compSOp c = do sc <- compStratClass
+compCOp :: CtorId -> Gen Doc
+compCOp c = do sc <- compStratClass
                n  <- length `fmap` askSt (fieldsOf c)
-               return $ rOp (text "Strategy") (_u $ pretty c) (mkTypedArgs n)
-                            (vcat [rIsFsym sc, slots n, mkMake n sc])
-  where compStratClass = do co <- askSt (codomainOf c)
-                            pr <- qualifiedStratPrefix co
-                            return $ pr <> dot <> _u (pretty c)
-        mkSlot i = text "get_slot(s" <> int i <> 
-                   text ",t) { (tom.library.sl.Strategy) $t.getChildAt(" <> 
-                   int (i-1) <> text ") }"
-        mkMake n sc = text "make" <> args n "s" <> text "{ new " <> 
-                      sc <> args n "$s" <> text " }"
-          where args ar s = encloseCommasNB [text s <> int i | i <- [1..ar]]
-        mkTypedArgs n = [(text "s" <> int i, text "Strategy") | i <- [1..n]]
-        slots n = vcat $ map mkSlot [1..n]
+               return $ rOp strat (_u $ pretty c) (rArgs n)
+                            (vcat [rIsFsym sc, slots n, rMakeCongr n sc])
+  where prefix = text "s"
+        strat  = text "Strategy"
+        rArgs n = [(prefix <> int i, strat) | i <- [0..n-1]]
+        slots n = vcat $ map (rGetSlotCongr prefix) [0..n-1]
+        compStratClass = do 
+          pr <- qualifiedStratPrefix =<< askSt (codomainOf c)
+          return $ pr <> dot <> _u (pretty c)
