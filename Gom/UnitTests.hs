@@ -132,8 +132,9 @@ propGenParsePretty = monadicIO $ do
         writeFile "Test.gom" $ show sig
         _ <- rawSystem "hgom" ["-r","Test.gom"]
         writeFile "Test.java" $ template pack (show s)
-        cp <- getDataFileName $ "test" </> "data" </> "tom-runtime-full.jar:"
-        (st,_,_) <- readProcessWithExitCode "javac" ["-cp",cp,"Test.java"] ""
+        cp  <- getDataFileName $ "test" </> "data" </> "tom_runtime.jar"
+        cp2 <- getDataFileName $ "test" </> "data" </> "shared-objects.jar"
+        (st,_,_) <- readProcessWithExitCode "javac" ["-cp",cp++":"++cp2,"Test.java"] ""
         let res = (st == ExitSuccess)
         return res)
     _ -> error "never happens"
@@ -163,8 +164,9 @@ testChecker opts = monadicIO $ do
         writeFile "Test.gom" $ show sig
         _ <- rawSystem "hgom" ("Test.gom":opts)
         jfs <- globDir1 (compile $ "**" </> "*.java") pack
-        cp <- getDataFileName $ "test" </> "data" </> "tom-runtime-full.jar:"
-        (st,_,_) <- readProcessWithExitCode "javac" (["-cp",cp]++jfs) ""
+        cp  <- getDataFileName $ "test" </> "data" </> "tom_runtime.jar"
+        cp2 <- getDataFileName $ "test" </> "data" </> "shared-objects.jar"
+        (st,_,_) <- readProcessWithExitCode "javac" (["-cp",cp++":"++cp2]++jfs) ""
         let res = (st == ExitSuccess)
         return res)
 
