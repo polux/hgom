@@ -36,7 +36,7 @@ compStrategy s = do ctrs  <- askSt (sCtorsOf s)
 -- generates the test strategy class @Is_C@.
 compIs :: CtorId -> Gen FileHierarchy
 compIs c = do
-  body <- return empty -- TODO
+  body <- return (text "/* TODO */")
   return $ Class classname (wrap body)
   where wrap = rClass public (text classname) Nothing []
         classname = "Is_" ++ show c
@@ -45,7 +45,7 @@ compIs c = do
 -- generates the creation strategy class @Make_C@.
 compMake :: CtorId -> Gen FileHierarchy
 compMake c = do
-  body <- return empty -- TODO
+  body <- return (text "/* TODO */")
   return $ Class classname (wrap body)
   where wrap = rClass public (text classname) Nothing []
         classname = "Make_" ++ show c

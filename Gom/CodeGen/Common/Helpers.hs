@@ -40,7 +40,7 @@ module Gom.CodeGen.Common.Helpers (
   -- ** Mappings
   rOp, rOpList, rTypeterm,
   rIsFsym, rMake, rGetSlot,
-  rMakeCongr, rGetSlotCongr,
+  rMakeStrat, rGetSlotStrat,
   -- ** Other
   inline
 ) where
@@ -260,20 +260,20 @@ rMake qc as =
         gen   = parens . hcat . punctuate comma
 
 -- | Renders @make (x1,..,xn) { new m.strategy.co._C($x1,..,$xn)@
-rMakeCongr
+rMakeStrat
   :: Int -- ^ the number of arguments
   -> Doc -- ^ the qualified congruence strategy class
   -> Doc
-rMakeCongr n sc = 
-  text "make" <> args n "x" <> sbraces (new <> sc <> args n "$x")
+rMakeStrat n sc = 
+  text "make" <> args n "x" <+> sbraces (new <+> sc <> args n "$x")
   where args ar s = encloseCommasNB [text s <> int i | i <- [1..ar]]
 
 -- | Renders @get_slot(fi,t) { (tom.library.sl.Strategy) $t.getChildAt(i) }@
-rGetSlotCongr 
+rGetSlotStrat 
   :: Doc -- ^ the field prefix (@f@ in @fi@)
   -> Int -- ^ the field number
   -> Doc
-rGetSlotCongr f i = 
+rGetSlotStrat f i = 
     text "get_slot(" <> f <> int i <> text ",t)" <+>
     sbraces (parens jStrategy <+> text "$t.getChildAt" <> parens (int i)) 
 
