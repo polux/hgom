@@ -24,6 +24,7 @@ extra-source-files: examples/*.gom
                     test/bench/Gen.hs
                     test/bench/Makefile
                     README.markdown
+                    CHANGELOG.markdown
 
 data-files: test/data/*.gom
             test/data/*.jar

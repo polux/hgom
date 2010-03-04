@@ -69,7 +69,7 @@ compIs c = do
            "public Is_" ++ show c ++ "() {",
            "  initSubterm();",
            "}",
-           "public <T> T visitLight(T __any, tom.library.sl.Introspector __i) ",
+           "public <T> T visitLight(T __any, tom.library.sl.Introspector __i)",
            "  throws tom.library.sl.VisitFailure {",
            "  if(__any instanceof " ++ show qc ++ "){",
            "    return __any;",

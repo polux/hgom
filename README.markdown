@@ -109,7 +109,7 @@ It takes some time. The generated files can be plotted using
 
 ### Worse ###
 
- * no hooks !
+ * no hooks!
  * no ant task
  * imports only builtins
  * generates no comments
