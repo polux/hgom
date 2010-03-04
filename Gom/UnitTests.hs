@@ -70,7 +70,7 @@ fileFailsDuring f = do af <- getDataFileName f
 -- | regression suite
 regressionSuite :: Test
 regressionSuite = testGroup "regression tests" $
-  concat [map (cook Never   ) (files 1 1 5),
+  concat [map (cook Never   ) (files 1 1 6),
           map (cook Checking) (files 2 0 9), 
           map (cook Parsing ) (files 3 1 7)]
   where files :: Int -> Int -> Int -> [FilePath]
@@ -93,9 +93,7 @@ propParsePretty m =
     Right m' -> m == m'
 
 getTempDir :: IO FilePath
-getTempDir = do
-  tmp <- getTemporaryDirectory
-  getTemp 0 tmp
+getTempDir = getTemporaryDirectory >>= getTemp 0
   where getTemp :: Integer -> FilePath -> IO FilePath
         getTemp n tmp = do
           b <- doesDirectoryExist htmp
@@ -120,7 +118,7 @@ doInTempDir a = do
 
 -- | True iff the module passes the check phase
 checks :: Module -> Bool
-checks m = isNothing (checkEverything m)
+checks = isNothing . checkEverything
 
 -- | test that the generated parser is correct w.r.t. 
 -- the generated pretty printer (@fromString(x.toString()) == x@)
@@ -173,11 +171,11 @@ testChecker opts = monadicIO $ do
 -- | cross modules quickcheck tests
 crossModuleSuite :: Test
 crossModuleSuite = testGroup "cross module properties" 
-  [check flags3, check flags2, check flags1,
-   testProperty "parse . pretty = id" propParsePretty,
+  [testProperty "parse . pretty = id" propParsePretty,
+   check flags1, check flags2, check flags3, 
    testProperty "generated parse . generated pretty = id" propGenParsePretty]
   where check fs = testProperty (mes fs) (testChecker fs)
-        flags1 = ["-r","-d","-s","-h"]
+        flags1 = ["-r","-d","-s","-h","-c","same"]
         flags2 = ["--noSharing"]
         flags3 = ["-j"]
         mes fs = "check ok => compilable java (" ++ intercalate " " fs ++ ")"

@@ -14,6 +14,7 @@
 --------------------------------------------------------------------
 
 module Gom.CodeGen.Common.Constants (
+  includeSl,
   toStringBody,
   abstractToStringBuilder,
   toHaskellBody,
@@ -31,6 +32,10 @@ module Gom.CodeGen.Common.Constants (
 ) where
 
 import Text.PrettyPrint.Leijen
+
+-- | @include { sl.tom }@ text constant 
+includeSl :: Doc
+includeSl = text "%include { sl.tom }"
 
 -- | Full text of the toString method of @moduleAbstractType@.
 toStringBody :: Doc

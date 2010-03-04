@@ -21,7 +21,6 @@ import Gom.SymbolTable
 import Gom.CodeGen.Common
 
 import Text.PrettyPrint.Leijen
-import Control.Monad.Reader
 
 -- | Given a sort @S@ of constructors @Ci@, 
 -- generates the package @s@ containing the
@@ -29,14 +28,34 @@ import Control.Monad.Reader
 compStrategy :: SortId -> Gen FileHierarchy
 compStrategy s = do ctrs  <- askSt (sCtorsOf s)
                     cs <- mapM compCongruence ctrs
-                    return $ Package (show $ lowerId s) cs 
+                    ms <- mapM compMake ctrs
+                    is <- mapM compIs ctrs
+                    return $ Package (show $ lowerId s) (cs++ms++is) 
+
+-- | Given a non-variadic constructor @C@,
+-- generates the test strategy class @Is_C@.
+compIs :: CtorId -> Gen FileHierarchy
+compIs c = do
+  body <- return (text "/* TODO */")
+  return $ Class classname (wrap body)
+  where wrap = rClass public (text classname) Nothing []
+        classname = "Is_" ++ show c
+
+-- | Given a non-variadic constructor @C@,
+-- generates the creation strategy class @Make_C@.
+compMake :: CtorId -> Gen FileHierarchy
+compMake c = do
+  body <- return (text "/* TODO */")
+  return $ Class classname (wrap body)
+  where wrap = rClass public (text classname) Nothing []
+        classname = "Make_" ++ show c
 
 -- | Given a non-variadic constructor @C@, 
--- generates a congruence strategy class @_C.java@.
+-- generates a congruence strategy class @_C@.
 compCongruence :: CtorId -> Gen FileHierarchy
 compCongruence c = 
-  do body <- vcat `liftM` sequence [compCongruenceConstructor c,
-                                    compVisit c, compVisitLight c]
+  do body <- vcat `fmap` sequence [compCongruenceConstructor c,
+                                   compVisit c, compVisitLight c]
      return $ Class classname (wrap body)
   where wrap = rClass public (text classname) (Just jSCombinator) []
         classname = '_':show c
@@ -45,7 +64,7 @@ compCongruence c =
 -- the method @public int visit(Introspector introspector) { ... }@
 -- for class @_C@.
 compVisit :: CtorId -> Gen Doc
-compVisit c = body `liftM` qualifiedCtor c
+compVisit c = body `fmap` qualifiedCtor c
   where body qc = vcat $ map text 
           ["public int visit(tom.library.sl.Introspector introspector) {",
            "  environment.setIntrospector(introspector);",
@@ -72,7 +91,8 @@ compVisit c = body `liftM` qualifiedCtor c
            "      environment.upLocal();",
            "    }",
            "    if(childs!=null) {",
-           "      environment.setSubject(introspector.setChildren(any,childs));",
+           "      environment.setSubject",
+           "        (introspector.setChildren(any,childs));",
            "    }",
            "    return tom.library.sl.Environment.SUCCESS;",
            "  } else {",
@@ -96,7 +116,8 @@ compVisitLight c = do n <- length `fmap` askSt (fieldsOf c)
            "    Object[] childs = null;",
            "    for (int i = 0, nbi = 0; i <" ++ show n ++"; i++) {",
            "        Object oldChild = introspector.getChildAt(any,nbi);",
-           "        Object newChild = arguments[i].visitLight(oldChild,introspector);",
+           "        Object newChild =",
+           "           arguments[i].visitLight(oldChild,introspector);",
            "        if(childs != null) {",
            "          childs[nbi] = newChild;",
            "        } else if(newChild != oldChild) {",
@@ -119,10 +140,10 @@ compVisitLight c = do n <- length `fmap` askSt (fieldsOf c)
 -- the constructor of @_C@.
 compCongruenceConstructor :: CtorId -> Gen Doc
 compCongruenceConstructor c = do
-  fis <- askSt (fieldsOf c)
-  let typedArgs = prettyArgs fis jStrategy
-      args      = prettyArgs fis empty
-  return $ rMethodDef public empty (text "_" <> pretty c) typedArgs
-                      (rBody [rMethodCall this (text "initSubterm") args])
-  where prettyArgs fis prefix = map (pre . pretty . fst) fis
-          where pre x = prefix <> text " s_" <> x
+  fs <- map convert `fmap` askSt (fieldsOf c)
+  return $ rMethodDef public empty (text "_" <> pretty c) 
+                      (map (jStrategy <+>) fs) (rBody [body fs])
+  where convert = (text "s" <>) . pretty . fst
+        body fs = rMethodCall this (text "initSubterm") [array]
+          where array   = new <+> jStrategyArray <+> sbraces content 
+                content = align $ sep (punctuate comma fs)

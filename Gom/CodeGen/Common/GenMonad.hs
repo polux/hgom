@@ -31,7 +31,8 @@ module Gom.CodeGen.Common.GenMonad (
   qualifiedSort,
   qualifiedCtor,
   abstractType,
-  qualifiedAbstractType
+  qualifiedAbstractType,
+  qualifiedStratPrefix
 ) where
 
 import Gom.Sig
@@ -41,12 +42,17 @@ import Gom.Config
 
 import Text.PrettyPrint.Leijen
 import Control.Monad.Reader
+import Control.Applicative
 import Data.Char(toLower)
 import Data.List(nub, intersperse)
 
 -- | A computation inside a context containing a read-only symbol table.
 newtype Gen a = Gen (Reader (SymbolTable,Config) a)
   deriving (Functor, Monad, MonadReader (SymbolTable,Config))
+
+instance Applicative Gen where
+  (<*>) = ap
+  pure  = return
 
 -- | Run the Gen monad
 runGen ::  Gen a -> SymbolTable -> Config -> a
@@ -95,12 +101,13 @@ iterOverFields f g c = do fis  <- askSt (fieldsOf c)
 -- subject sort and combines them with the second one. Duplicate fields are
 -- merged.
 iterOverSortFields 
-  :: (SortId -> FieldId -> SortId -> Gen a) -- ^ gets codomain, field name and field sort
+  :: (SortId -> FieldId -> SortId -> Gen a) 
+     -- ^ gets codomain, field name and field sort
   -> ([a] -> b) -- ^ combinator of results
   -> SortId     -- ^ subject sort
   -> Gen b
 iterOverSortFields f g s = do cs <- askSt (sCtorsOf s)
-                              fs <- (nub . concat) `liftM` mapM combine cs
+                              fs <- (nub . concat) `fmap` mapM combine cs
                               ms <- mapM (\(co,(fi,ty)) -> f co fi ty) fs
                               return $ g ms
    where combine c = do fis <- askSt (fieldsOf c)
@@ -113,8 +120,8 @@ iterOverSortFields f g s = do cs <- askSt (sCtorsOf s)
 -- As an example, returns @aa.bb.cc.foo@ for the module @Foo@,
 -- provided the user toggled @-p aa.bb.cc@.
 packagePrefix :: Gen Doc
-packagePrefix = do m <- map toLower `liftM` askSt modName
-                   go (pretty m) `liftM` askConf package
+packagePrefix = do m <- map toLower `fmap` askSt modName
+                   go (pretty m) `fmap` askConf package
   where go dm Nothing  = dm
         go dm (Just l) = hcat . intersperse dot $ map text l ++ [dm]
 
@@ -130,7 +137,7 @@ qualifiedSort s
 qualifiedCtor :: CtorId -> Gen Doc
 qualifiedCtor c = 
   do p <- packagePrefix
-     lows <- lowerId `liftM` askSt (codomainOf c)
+     lows <- lowerId `fmap` askSt (codomainOf c)
      return $ p <> dot <> text "types" <> dot <> 
               pretty lows <> dot <> pretty c
 
@@ -145,3 +152,8 @@ qualifiedAbstractType = do at <- abstractType
                            pr <- packagePrefix 
                            return $ pr <> dot <> text at
 
+-- | Given a sort @S@ in the module @m@, generates @m.strategy.s@
+qualifiedStratPrefix :: SortId -> Gen Doc
+qualifiedStratPrefix s = do
+  m <- packagePrefix
+  return $ m <> dot <> text "strategy" <> dot <> pretty (lowerId s)

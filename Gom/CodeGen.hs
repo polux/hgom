@@ -15,7 +15,6 @@
 
 module Gom.CodeGen (st2java) where
 
-import Control.Monad.Reader
 import Data.Char(toLower)
 
 import Gom.SymbolTable
@@ -34,7 +33,7 @@ st2java =  runGen  compSt
 
 -- | Generates the whole file hierarchy of the \"global\" symbol table.
 compSt :: Gen FileHierarchy
-compSt = do mn <- map toLower `liftM` askSt modName
+compSt = do mn <- map toLower `fmap` askSt modName
             ds <- askSt definedSortsIds
             hs <- mapM compSort ds
             ac <- compAbstract

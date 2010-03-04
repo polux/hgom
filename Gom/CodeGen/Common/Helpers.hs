@@ -17,7 +17,8 @@
 module Gom.CodeGen.Common.Helpers (
   -- * Java pretty-printing
   -- ** Generic
-  ibraces, sbraces, encloseCommas, rBody, _u,
+  ibraces, sbraces, encloseCommas, 
+  encloseCommasNB, rBody, _u,
   -- ** Java keywords
   abstract, public, protected, private, this,
   jreturn, throw, new, void, instanceof, jif,
@@ -25,7 +26,8 @@ module Gom.CodeGen.Common.Helpers (
   -- ** Java Types
   jint, jStringBuilder, jboolean,
   jObject, jVisitable, jShared, jSharedId,
-  jVisitableArray, jSCombinator, jStrategy,
+  jSCombinator, jStrategy,
+  jVisitableArray, jStrategyArray,
   -- ** Classes
   rClass,
   -- ** Classes
@@ -38,6 +40,8 @@ module Gom.CodeGen.Common.Helpers (
   -- ** Mappings
   rOp, rOpList, rTypeterm,
   rIsFsym, rMake, rGetSlot,
+  rMakeStrat, rGetSlotStrat,
+  rWhenOp,
   -- ** Other
   inline
 ) where
@@ -80,7 +84,7 @@ static     = text "static"
 
 jint,jStringBuilder,jboolean,jObject :: Doc
 jSCombinator,jStrategy, jVisitable :: Doc
-jShared,jSharedId,jVisitableArray :: Doc
+jShared,jSharedId,jVisitableArray,jStrategyArray :: Doc
 jint            = text "int"
 jboolean        = text "boolean"
 jStringBuilder  = text "java.lang.StringBuilder"
@@ -91,12 +95,19 @@ jSCombinator    = text "tom.library.sl.AbstractStrategyCombinator"
 jShared         = text "shared.SharedObject"
 jSharedId       = text "shared.SharedObjectWithID"
 jVisitableArray = jVisitable <> text "[]"
+jStrategyArray  = jStrategy <> text "[]"
 
 -- | Renders the list enclosed in parenthesis and
--- separated by commas.
+-- separated by commas. Breaks lines if the list is too long.
 encloseCommas :: [Doc] -> Doc
 encloseCommas [] = text "()"
 encloseCommas l = parens $ nest 2 (softbreak <> fillSep (punctuate comma l))
+
+-- | Renders the list enclosed in parenthesis and
+-- separated by commas. Doesn't break lines (NB is for No Break).
+encloseCommasNB :: [Doc] -> Doc
+encloseCommasNB [] = text "()"
+encloseCommasNB l = parens . hcat . punctuate comma $ l
 
 -- | Renders the list punctuated by semicolons
 rBody :: [Doc] -> Doc
@@ -204,7 +215,8 @@ rSwitch
  -> Maybe Doc -- ^ default case
  -> Doc
 rSwitch s l d = text "switch" <+> parens s <+> ibraces body
-  where body    = vcat (map f l) <$> maybe empty ((text "default:" <+>) . align) d
+  where body    = vcat (map f l) <$> 
+                  maybe empty ((text "default:" <+>) . align) d
         f (x,y) = text "case" <+> x <> colon <+> align y
 
 -- | @rTypeterm s qs shr@ renders
@@ -244,10 +256,26 @@ rMake
  -> Doc
 rMake qc as =
   text "make" <> args <+> (sbraces . parens) (qc <> text ".make" <> iargs)
-  where gen   = parens . hcat . punctuate comma
-        args  = gen as
-        iargs = gen (map inline as)
+  where args  = encloseCommasNB as
+        iargs = encloseCommasNB (map inline as)
 
+-- | Renders @make(x1,..,xn) { new m.strategy.co._C($x1,..,$xn)@
+rMakeStrat
+  :: Int -- ^ the number of arguments
+  -> Doc -- ^ the qualified congruence strategy class
+  -> Doc
+rMakeStrat n sc = 
+  text "make" <> args n "x" <+> sbraces (new <+> sc <> args n "$x")
+  where args ar s = encloseCommasNB [text s <> int i | i <- [1..ar]]
+
+-- | Renders @get_slot(fi,t) { (tom.library.sl.Strategy) $t.getChildAt(i) }@
+rGetSlotStrat 
+  :: Doc -- ^ the field prefix (@f@ in @fi@)
+  -> Int -- ^ the field number
+  -> Doc
+rGetSlotStrat f i = 
+    text "get_slot(" <> f <> int i <> text ",t)" <+>
+    sbraces (parens jStrategy <+> text "$t.getChildAt" <> parens (int i)) 
 
 -- | Renders @get_slot(slot,t) { $t.getslot() }@.
 rGetSlot
@@ -255,6 +283,18 @@ rGetSlot
  -> Doc
 rGetSlot x =
   text "get_slot(" <> x <> text ",t) { $t.get" <> x <> text "() }"
+
+-- | Renders
+--
+-- >  %op Strategy When_C(s:Strategy) {
+-- >    make(s) { `Sequence(Is_C(),s) }
+-- >  }
+rWhenOp 
+ :: Doc -- ^ constructor id (@C@ in the example)
+ -> Doc
+rWhenOp c = rOp strat (text "When_" <> c) [(text "s",strat)] body
+  where strat = text "Strategy"
+        body  = text "make(s) { `Sequence(Is_" <> c <> text "(),s) }"
 
 -- | Renders @%op sort c(field1,..,field2) { body }@.
 rOp :: Doc   -- ^ sort
@@ -287,7 +327,8 @@ rOpList
 rOpList c co dom consc emptyc =
   text "%oplist" <+> co <+> c <> parens (dom <> text "*") <+> 
    ibraces (vcat
-     [text "is_fsym(t) { (($t instanceof" <+> consc <> text ") || ($t instanceof" <+> emptyc <> text ")) }",
+     [text "is_fsym(t) { (($t instanceof" <+> consc <> 
+        text ") || ($t instanceof" <+> emptyc <> text ")) }",
       text "make_empty() {" <+> emptyc <> text ".make() }",
       text "make_insert(e,l) {" <+> consc <> text ".make($e,$l) }",
       text "get_head(l) { $l.getHead" <> c <> text "() }",

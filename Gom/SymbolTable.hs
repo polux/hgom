@@ -19,8 +19,8 @@ module Gom.SymbolTable (
   emptySt, ast2st,
   -- * Consulting tables
   definedSortsIds, simpleConstructorsIds, variadicConstructorsIds,
-  modName, importedSorts, concreteTypeOf, sCtorsOf, vCtorsOf, fieldsOf, fieldOf, codomainOf,
-  isGenerated, importsString,
+  modName, importedSorts, concreteTypeOf, sCtorsOf, vCtorsOf, fieldsOf, 
+  fieldOf, codomainOf, isGenerated, importsString, importsChar,
   -- * Modifying tables
   -- ** Modifying mappings
   -- | These functions allow to change the constructor names (resp. fields)
@@ -93,12 +93,11 @@ importedSorts = imported
 -- | Concrete Java Type associated to a sort.
 concreteTypeOf :: SortId -> SymbolTable -> ClassId
 concreteTypeOf s st 
-  | isBuiltin s = makeClassId (show (qualifiedBuiltin s), "")
+  | isBuiltin s = makeClassId (show $ qualifiedBuiltin s) ""
   | otherwise = 
     case s `M.lookup` javatype st of
       Just c  -> c
       Nothing -> error $ "sort " ++ show s ++ " has no concrete type" 
-   
 
 -- | Non-variadic constructors associated to a sort.
 sCtorsOf :: SortId -> SymbolTable -> [CtorId]
@@ -119,14 +118,16 @@ fieldsOf :: CtorId -> SymbolTable -> [(FieldId,SortId)]
 fieldsOf c st = 
   case c `M.lookup` sfields st of
     Just l  -> l
-    Nothing -> error $ "non-variadic constructor " ++ show c ++ " not declared" 
+    Nothing -> error $ "non-variadic constructor " ++ 
+                       show c ++ " not declared" 
 
 -- | Sort of the unique field of a variadic constructor.
 fieldOf :: CtorId -> SymbolTable -> SortId
 fieldOf c st =
   case c `M.lookup` vfield st of
     Just s  -> s
-    Nothing -> error $ "variadic constructor " ++ show c ++ " not declared" 
+    Nothing -> error $ "variadic constructor " ++ 
+                       show c ++ " not declared" 
 
 -- | Codomain of the constructor.
 codomainOf :: CtorId -> SymbolTable -> SortId
@@ -144,10 +145,15 @@ isGenerated c = M.lookup c . baseCtor
 importsString :: SymbolTable -> Bool
 importsString st = "String" `elem` map idStr (importedSorts st)
 
+-- | Returns @True@ if @char@ is imported.
+importsChar :: SymbolTable -> Bool
+importsChar st = "char" `elem` map idStr (importedSorts st)
+
 -- | @emptySt m is@ is an empty symbol table (no sorts nor constructors) that
 -- encodes a module of name @m@ which imports sorts @is@.
 emptySt :: String -> [SortId] -> SymbolTable
-emptySt m i = SymbolTable m i M.empty M.empty M.empty M.empty M.empty M.empty M.empty
+emptySt m i = SymbolTable m i M.empty M.empty M.empty M.empty 
+                              M.empty M.empty M.empty
 
 -- | The ids of the sorts present in st.
 definedSortsIds :: SymbolTable -> [SortId]
@@ -197,15 +203,17 @@ insertJavaType _ Nothing st = st
 -- already associated to @s@ in @st@. If there are no non-variadic constructors
 -- associated to @s@, an entry is created.
 addToSctors :: SortId -> [CtorId] -> SymbolTable -> SymbolTable
-addToSctors s cs st = update $ st { sctors = M.alter (Just . maybe cs (++cs)) s (sctors st) }
-  where update mst = foldl' (\t c -> updateCodom c s t) mst cs
+addToSctors s cs st = update $ st { 
+    sctors = M.alter (Just . maybe cs (++cs)) s (sctors st) 
+  } where update mst = foldl' (\t c -> updateCodom c s t) mst cs
 
 -- | @addToVctors s cs st@ appends @cs@ to the variadic constructors already
 -- associated to @s@ in @st@.  If there are no variadic constructors associated
 -- to @s@, an entry is created.
 addToVctors :: SortId -> [CtorId] -> SymbolTable -> SymbolTable
-addToVctors s cs st = update $ st { vctors = M.alter (Just . maybe cs (++cs)) s (vctors st) }
-  where update mst = foldl' (\t c -> updateCodom c s t) mst cs
+addToVctors s cs st = update $ st { 
+    vctors = M.alter (Just . maybe cs (++cs)) s (vctors st) 
+  } where update mst = foldl' (\t c -> updateCodom c s t) mst cs
 
 -- | Converts a 'Module' into a 'SymbolTable', provided no
 -- error has been detected during the checking phase.
@@ -218,7 +226,7 @@ ast2st (Module m i defs) = execState (conv defs) (emptySt m i)
         convdef :: SortDef -> State SymbolTable ()
         convdef (SortDef n cn cs) = do
            modify $ insertJavaType n cn
-           (ss,vs) <- partitionEithers `liftM` mapM convctor cs
+           (ss,vs) <- partitionEithers `fmap` mapM convctor cs
            modify $ insertSctors n ss
            modify $ insertVctors n vs
            

@@ -35,14 +35,18 @@ compTomFiles = do mn    <- askSt modName
                   tyts  <- mapM compTypeTerm srts
                   ops   <- mapM compOp ctrs
                   opls  <- mapM compOpList vctrs
-                  sops <-  mapM compSOp ctrs
+                  let always = incls:(tyts++ops++opls)
+                  cops  <-  mapM (compSOp empty) ctrs
+                  mops  <-  mapM (compSOp $ text "Make") ctrs
+                  iops  <-  mapM compIsOp ctrs
+                  let wops = map (rWhenOp . pretty) ctrs
+                      sops = cops++mops++iops++wops
                   vcongr <- askConf congr
-                  let mappings = incls:(tyts++ops++opls)
-                  let slinclude = text "%include { sl.tom }"
                   return $ case vcongr of 
-                     NoCongr -> [Tom mn (vsep mappings)]
-                     SameFile  -> [Tom mn (vsep $ slinclude:mappings++sops)]
-                     SeparateFile -> [Tom mn $ vsep mappings, Tom ("_"++mn) (vsep $ slinclude:sops)]
+                     NoCongr  -> [Tom mn (vsep always)]
+                     SameFile -> [Tom mn (vsep $ includeSl:always++sops)]
+                     SeparateFile -> [Tom mn $ vsep always, 
+                                      Tom ('_':mn) (vsep $ includeSl:sops)]
 
 -- | Generates @%include { x.tom }@ for every imported sort @x@
 compIncludes :: Gen Doc
@@ -112,26 +116,39 @@ compOpList c = do co     <- askSt (codomainOf c)
                                    (pretty dom) consc emptyc
 
 -- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@
--- of codomain @Co@, generates
+-- of codomain @Co@, @compSOp prefix C@ generates
 --
--- > %op Strategy _C(s1:Strategy,..,sn:Strategy) {
--- >   is_fsym(t) { $t m.strategy.co._C }
+-- > %op Strategy prefix_C(s1:Strategy,..,sn:Strategy) {
+-- >   is_fsym(t) { $t m.strategy.co.prefix_C }
 -- >   get_slot(s1,t) { (tom.library.sl.Strategy) $t.getChildAt(0) }
 -- >   ...
 -- >   get_slot(sn,t) { (tom.library.sl.Strategy) $t.getChildAt(n-1) }
--- >   make (t1,..,tn) { new m.strategy.co._C($t1,..,$tn) }
+-- >   make (t1,..,tn) { new m.strategy.co.prefix_C($t1,..,$tn) }
 -- > }
-compSOp :: CtorId -> Gen Doc
-compSOp c = do sc <- compStratClass
-               n  <- length `fmap` askSt (fieldsOf c)
-               return $ rOp (text "Strategy") (_u $ pretty c) (makeTypedArgs n)
-                           (vcat [rIsFsym sc,slots n,makeMake n sc])
-  where makeSlot i = text "get_slot(s" <> int i <> text ",t) { (tom.library.sl.Strategy) $t.getChildAt(" <> int (i-1) <> text ") }"
-        makeMake n sc =  text "make" <> makeArgs n "s" <> text "{ new " <> sc <> makeArgs n "$s" <> text " }"
-        makeArgs arity name = gen [text name <> int i | i <- [1..arity]]
-        makeTypedArgs n = [ (text "s" <> int i, text "Strategy") | i <- [1..n] ]
-        compStratClass = do m <- packagePrefix
-                            co <- lowerId `fmap` askSt (codomainOf c)
-                            return $ m <> dot <> text "strategy" <> dot <> pretty co <> dot <> _u (pretty c) 
-        slots n = vcat [makeSlot i | i <- [1..n]] 
-        gen   = parens . hcat . punctuate comma
+compSOp :: Doc -> CtorId -> Gen Doc
+compSOp pr c = do sc <- compStratClass
+                  n  <- length `fmap` askSt (fieldsOf c)
+                  return $ rOp strat cln (rArgs n)
+                               (vcat [rIsFsym sc, slots n, rMakeStrat n sc])
+  where arg = text "s"
+        cln = pr <> _u (pretty c)
+        strat  = text "Strategy"
+        rArgs n = [(arg <> int i, strat) | i <- [0..n-1]]
+        slots n = vcat $ map (rGetSlotStrat arg) [0..n-1]
+        compStratClass = do 
+          spr <- qualifiedStratPrefix =<< askSt (codomainOf c)
+          return $ spr <> dot <> cln
+
+-- | Given a non-variadic constructor @C@, generates
+--
+-- >  %op Strategy Is_C() {
+-- >    make() { new m.strategy.co.Is_C()}
+-- >  }
+compIsOp :: CtorId -> Gen Doc
+compIsOp c = do 
+  sc <- compStratClass
+  return $ rOp (text "Strategy") cln [] (rMakeStrat 0 sc)
+  where cln = text "Is_" <> pretty c
+        compStratClass = do 
+          spr <- qualifiedStratPrefix =<< askSt (codomainOf c)
+          return $ spr <> dot <> cln

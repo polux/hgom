@@ -36,7 +36,7 @@ import Test.Framework (defaultMainWithArgs)
 #endif
 
 hgomVersion :: String
-hgomVersion = "Version 0.4 - January 2009"
+hgomVersion = "Version 0.5.3 - March 2009"
 
 -- | @main = getArgs >>= entryPoint@
 main ::  IO ()
@@ -71,7 +71,7 @@ go2 f c = do em <- parseModule `fmap` readFile f
 
 -- | after parsing:
 --
---    * checks all \"... and exit\" functions that require parsing
+--    * checks all "... and exit" functions that require parsing
 --
 --    * checks well-formedness
 --
