@@ -36,10 +36,31 @@ compStrategy s = do ctrs  <- askSt (sCtorsOf s)
 -- generates the test strategy class @Is_C@.
 compIs :: CtorId -> Gen FileHierarchy
 compIs c = do
-  body <- return (text "/* TODO */")
-  return $ Class classname (wrap body)
-  where wrap = rClass public (text classname) Nothing []
+  qc <- qualifiedCtor c
+  return $ Class classname (wrap $ body qc)
+  where wrap = rClass public (text classname) (Just jSCombinator) []
         classname = "Is_" ++ show c
+        body qc = vcat $ map text
+          ["private static final String msg = \"Not a " ++ show c ++"\";",
+           "public Is_" ++ show c ++ "() {",
+           "  initSubterm();",
+           "}",
+           "public <T> T visitLight(T any, tom.library.sl.Introspector i) ",
+           "  throws tom.library.sl.VisitFailure {",
+           "  if(any instanceof " ++ show qc ++ "){",
+           "    return any;",
+           "  } else {",
+           "    throw new tom.library.sl.VisitFailure(msg);",
+           "  }",
+           "}",
+           "public int visit(tom.library.sl.Introspector i) {",
+           "  Object any = environment.getSubject();",
+           "  if(any instanceof " ++ show qc ++ ") {",
+           "    return tom.library.sl.Environment.SUCCESS;",
+           "  } else {",
+           "    return tom.library.sl.Environment.FAILURE;",
+           "  }",
+           "}"]
 
 -- | Given a non-variadic constructor @C@,
 -- generates the creation strategy class @Make_C@.
@@ -114,7 +135,7 @@ compVisitLight c = do n <- length `fmap` askSt (fieldsOf c)
            "  if(any instanceof " ++ show qc ++ ") {",
            "    T result = any;",
            "    Object[] childs = null;",
-           "    for (int i = 0, nbi = 0; i <" ++ show n ++"; i++) {",
+           "    for (int i = 0, nbi = 0; i < " ++ show n ++"; i++) {",
            "        Object oldChild = introspector.getChildAt(any,nbi);",
            "        Object newChild =",
            "           arguments[i].visitLight(oldChild,introspector);",
