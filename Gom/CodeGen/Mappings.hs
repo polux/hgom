@@ -38,7 +38,9 @@ compTomFiles = do mn    <- askSt modName
                   let always = incls:(tyts++ops++opls)
                   cops  <-  mapM (compSOp empty) ctrs
                   mops  <-  mapM (compSOp $ text "Make") ctrs
-                  let sops = cops++mops
+                  iops  <-  mapM compIsOp ctrs
+                  let wops = map (rWhenOp . pretty) ctrs
+                      sops = cops++mops++iops++wops
                   vcongr <- askConf congr
                   return $ case vcongr of 
                      NoCongr  -> [Tom mn (vsep always)]
@@ -133,6 +135,20 @@ compSOp pr c = do sc <- compStratClass
         strat  = text "Strategy"
         rArgs n = [(arg <> int i, strat) | i <- [0..n-1]]
         slots n = vcat $ map (rGetSlotStrat arg) [0..n-1]
+        compStratClass = do 
+          spr <- qualifiedStratPrefix =<< askSt (codomainOf c)
+          return $ spr <> dot <> cln
+
+-- | Given a non-variadic constructor @C@, generates
+--
+-- >  %op Strategy Is_C() {
+-- >    make() { new m.strategy.co.Is_C()}
+-- >  }
+compIsOp :: CtorId -> Gen Doc
+compIsOp c = do 
+  sc <- compStratClass
+  return $ rOp (text "Strategy") cln [] (rMakeStrat 0 sc)
+  where cln = text "Is_" <> pretty c
         compStratClass = do 
           spr <- qualifiedStratPrefix =<< askSt (codomainOf c)
           return $ spr <> dot <> cln

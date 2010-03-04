@@ -41,6 +41,7 @@ module Gom.CodeGen.Common.Helpers (
   rOp, rOpList, rTypeterm,
   rIsFsym, rMake, rGetSlot,
   rMakeStrat, rGetSlotStrat,
+  rWhenOp,
   -- ** Other
   inline
 ) where
@@ -255,11 +256,10 @@ rMake
  -> Doc
 rMake qc as =
   text "make" <> args <+> (sbraces . parens) (qc <> text ".make" <> iargs)
-  where args  = gen as
-        iargs = gen (map inline as)
-        gen   = parens . hcat . punctuate comma
+  where args  = encloseCommasNB as
+        iargs = encloseCommasNB (map inline as)
 
--- | Renders @make (x1,..,xn) { new m.strategy.co._C($x1,..,$xn)@
+-- | Renders @make(x1,..,xn) { new m.strategy.co._C($x1,..,$xn)@
 rMakeStrat
   :: Int -- ^ the number of arguments
   -> Doc -- ^ the qualified congruence strategy class
@@ -283,6 +283,18 @@ rGetSlot
  -> Doc
 rGetSlot x =
   text "get_slot(" <> x <> text ",t) { $t.get" <> x <> text "() }"
+
+-- | Renders
+--
+-- >  %op Strategy When_C(s:Strategy) {
+-- >    make(s) { `Sequence(Is_C(),s) }
+-- >  }
+rWhenOp 
+ :: Doc -- ^ constructor id (@C@ in the example)
+ -> Doc
+rWhenOp c = rOp strat (text "When_" <> c) [(text "s",strat)] body
+  where strat = text "Strategy"
+        body  = text "make(s) { `Sequence(Is_" <> c <> text "(),s) }"
 
 -- | Renders @%op sort c(field1,..,field2) { body }@.
 rOp :: Doc   -- ^ sort
