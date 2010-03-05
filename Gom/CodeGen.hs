@@ -43,8 +43,8 @@ compSt = do mn <- map toLower `fmap` askSt modName
             pc <- ifP $ Class "Parser" absParser
             lc <- ifP $ Class "Lexer" absLexer
             ps <- ifC $ Package "strategy" cs
-            let always = tfs ++ [ac,Package "types" (concat hs)] 
-            return . wrap pr $ Package mn (always ++ pc ++ lc ++ ps)
+            return . wrap pr . Package mn $
+              ac : (Package "types" (concat hs)) : concat [tfs, pc, lc, ps]
   where -- wraps the package in the user-provided prefix hierarchy (-p option)
         wrap Nothing  h = h
         wrap (Just l) h = foldr w h l

@@ -244,18 +244,6 @@ checkGenClashes m = pack GCG $ mapMaybe check vcs
           let l = L.nub $ filter (`elem` [prependEmpty vc, prependCons vc]) cs
           in if null l then Nothing else Just (vc,l)
            
-
-checkers :: [Module -> Maybe Doc]
-checkers = [w checkJavaKeywordClash,
-            w checkCtorModuleClash,
-            w checkMultipleSortDecl,
-            w checkMultipleCtorDecl,
-            w checkDuplicateFields,
-            w checkNameConsistency,
-            w checkUndefSorts,
-            w checkGenClashes]
-  where w check x = pretty `fmap` check x
-
 javaKeywords :: S.Set String
 javaKeywords = S.fromList
   ["abstract","continue","for","new","switch","assert","default","goto",
@@ -287,6 +275,17 @@ checkCtorModuleClash :: Module -> Maybe CtorModuleClash
 checkCtorModuleClash m = pack CMC clashes
   where lowmn   = map toLower (moduleName m)
         clashes = filter ((== lowmn) . idStr) (constructorNames m)
+
+checkers :: [Module -> Maybe Doc]
+checkers = [w checkJavaKeywordClash,
+            w checkCtorModuleClash,
+            w checkMultipleSortDecl,
+            w checkMultipleCtorDecl,
+            w checkDuplicateFields,
+            w checkNameConsistency,
+            w checkUndefSorts,
+            w checkGenClashes]
+  where w check x = pretty `fmap` check x
 
 -- | Reports, in this order, the results of:
 --    - 'checkJavaKeywordClash'
