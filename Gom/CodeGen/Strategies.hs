@@ -164,6 +164,7 @@ compVisitLightCongr c = do
            "}"]
 
 -- | Given a non-variadic constructor @C(_:T0,...,_:Tn)@, generates
+--
 -- > public int visit(tom.library.Introspector i) {
 -- >   getChildAt(0).visit(i);
 -- >   if (! (getEnvironment().getSubject() instanceof m.types.T0)) {
@@ -212,6 +213,7 @@ compVisitMake c = do
                       <+> ibraces body
 
 -- | Given a non-variadic constructor @C(_:T0,...,_:Tn)@, generates
+--
 -- > public <T> T visitLight(T any, tom.library.Introspector i) 
 -- >   throws tom.library.sl.VisitFailure {
 -- >   Object tmp_t0 = ((tom.library.sl.Strategy) getChildAt(0)).visit(any,i);

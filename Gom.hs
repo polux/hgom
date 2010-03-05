@@ -11,6 +11,11 @@
 -- Portability : non-portable (requires GeneralizedNewtypeDeriving)
 --
 -- Entry point of hgom. 
+--
+-- The call graph is:
+--
+-- > main -> entryPoint -> go1 -> go2 -> go3 --> hgomChain
+-- >                                         '-> ooChain
 --------------------------------------------------------------------
 
 {-# LANGUAGE PatternGuards #-}
@@ -56,7 +61,7 @@ go1 :: Config -> [String] -> IO ()
 go1 c n | help c              = putStrLn usage
         | version c           = putStrLn hgomVersion
 #if TEST
-        | Just as <- utests c  = defaultMainWithArgs T.testSuite as
+        | Just as <- utests c = defaultMainWithArgs T.testSuite as
 #endif
         | otherwise           = case n of
             [f] -> go2 f c 
@@ -71,7 +76,7 @@ go2 f c = do em <- parseModule `fmap` readFile f
 
 -- | after parsing:
 --
---    * checks all "... and exit" functions that require parsing
+--    * checks all \"... and exit\" functions that require parsing
 --
 --    * checks well-formedness
 --
