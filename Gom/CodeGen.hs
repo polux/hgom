@@ -47,10 +47,9 @@ compSt = do mn <- map toLower `fmap` askSt modName
               ac : (Package "types" (concat hs)) : concat [tfs, pc, lc, ps]
   where -- wraps the package in the user-provided prefix hierarchy (-p option)
         wrap Nothing  h = h
-        wrap (Just l) h = foldr w h l
-        w p h = Package p [h]
+        wrap (Just l) h = foldr w h l where w p r = Package p [r]
         ifC x = do congrval <- askConf congr
-                   case congrval of
-                     NoCongr -> return []
-                     _ ->       return [x]
+                   return $ case congrval of
+                     NoCongr -> []
+                     _       -> [x]
         ifP x = ifConf parsers [x] []
