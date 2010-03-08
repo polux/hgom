@@ -127,6 +127,13 @@ dataClassPath = do
   j2 <- getDataFileName $ "test" </> "data" </> "shared-objects.jar"
   return $ j1 ++ ":" ++ j2 ++ ":"
 
+-- | runs javac with args, returns exit status code
+javac :: [String] -> IO ExitCode
+javac args = do 
+  cp <- dataClassPath
+  (st,_,_) <- readProcessWithExitCode "javac" (["-cp",cp] ++ args) ""
+  return st
+
 -- | test that the generated parser is correct w.r.t. 
 -- the generated pretty printer (@fromString(x.toString()) == x@)
 propGenParsePretty :: Property
@@ -139,10 +146,8 @@ propGenParsePretty = monadicIO $ do
         writeFile "Test.gom" $ show sig
         _ <- rawSystem "hgom" ["-r","Test.gom"]
         writeFile "Test.java" $ template pack (show s)
-        cp <- dataClassPath
-        (st,_,_) <- readProcessWithExitCode "javac" ["-cp",cp,"Test.java"] ""
-        let res = (st == ExitSuccess)
-        return res)
+        st <- javac ["Test.java"]
+        return $ st == ExitSuccess)
     _ -> error "never happens"
 
   where hasSort = not . null . sortDefs
@@ -170,10 +175,8 @@ testChecker opts = monadicIO $ do
         writeFile "Test.gom" $ show sig
         _ <- rawSystem "hgom" ("Test.gom":opts)
         jfs <- globDir1 (compile $ "**" </> "*.java") pack
-        cp <- dataClassPath
-        (st,_,_) <- readProcessWithExitCode "javac" (["-cp",cp]++jfs) ""
-        let res = (st == ExitSuccess)
-        return res)
+        st <- javac jfs
+        return $ st == ExitSuccess)
 
 -- | cross modules quickcheck tests
 crossModuleSuite :: Test
