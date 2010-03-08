@@ -1,6 +1,6 @@
 ------------------------------------------------------------------
 -- |
--- Module      : Main
+-- Module      : Gom.HGom
 -- Copyright   : (c) Paul Brauner 2009
 --               (c) Emilie Balland 2009
 --               (c) INRIA 2009
@@ -20,7 +20,7 @@
 
 {-# LANGUAGE PatternGuards #-}
 
-module Main (main,entryPoint) where
+module Gom.HGom (main,entryPoint) where
 
 import Gom.Sig
 import Gom.Parser
