@@ -1,6 +1,6 @@
 -------------------------------------------------------------------
 -- |
--- Module      : Gom.Parser
+-- Module      : Gom.Common.Parser
 -- Copyright   : (c) Paul Brauner 2009
 --               (c) Emilie Balland 2009
 --               (c) INRIA 2009
@@ -13,7 +13,7 @@
 -- Parser for gom modules.
 --------------------------------------------------------------------
 
-module Gom.Parser (parseModule) where
+module Gom.Common.Parser (parseModule) where
 
 import Text.Parsec
 import Text.Parsec.String(Parser)
@@ -21,7 +21,7 @@ import Text.Parsec.Language
 import qualified Text.Parsec.Token as P
 import Control.Applicative((<$>),(<*),(*>),(<*>))
 
-import Gom.Sig
+import Gom.Common.Sig
 import Control.Monad.Identity(Identity)
 import Data.List
 

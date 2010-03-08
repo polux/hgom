@@ -35,8 +35,8 @@ module Gom.CodeGen.Common.GenMonad (
   qualifiedStratPrefix
 ) where
 
-import Gom.Sig
-import Gom.SymbolTable
+import Gom.Common.Sig
+import Gom.Common.SymbolTable
 import Gom.CodeGen.Common.Builtins
 import Gom.Config
 

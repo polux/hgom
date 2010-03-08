@@ -15,10 +15,10 @@
 
 module Gom.OOMappingGen (st2oomapping) where
 
-import Gom.Sig
-import Gom.SymbolTable
+import Gom.Common.Sig
+import Gom.Common.SymbolTable
 import Gom.Config
-import Gom.FileGen
+import Gom.Common.FileGen
 import Gom.CodeGen.Common
 
 import Text.PrettyPrint.Leijen

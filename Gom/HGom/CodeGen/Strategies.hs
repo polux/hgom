@@ -15,9 +15,9 @@ module Gom.CodeGen.Strategies (
   compStrategy
 ) where
 
-import Gom.Sig
-import Gom.FileGen
-import Gom.SymbolTable
+import Gom.Common.Sig
+import Gom.Common.FileGen
+import Gom.Common.SymbolTable
 import Gom.CodeGen.Common
 
 import Text.PrettyPrint.Leijen

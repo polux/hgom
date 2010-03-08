@@ -22,15 +22,15 @@
 
 module Gom.HGom (main,entryPoint) where
 
-import Gom.Sig
-import Gom.Parser
-import Gom.Pretty ()
-import Gom.Checker
-import Gom.SymbolTable
+import Gom.Common.Sig
+import Gom.Common.Parser
+import Gom.Common.Pretty ()
+import Gom.Common.Checker
+import Gom.Common.SymbolTable
 import Gom.CodeGen
 import Gom.OOMappingGen
 import Gom.Config
-import Gom.FileGen
+import Gom.Common.FileGen
 
 import System.Environment (getArgs)
 import Text.PrettyPrint.Leijen (pretty)

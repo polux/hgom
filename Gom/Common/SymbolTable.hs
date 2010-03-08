@@ -1,6 +1,6 @@
 ------------------------------------------------------------------
 -- |
--- Module      : Gom.SymbolTable
+-- Module      : Gom.Common.SymbolTable
 -- Copyright   : (c) Paul Brauner 2009
 --               (c) Emilie Balland 2009
 --               (c) INRIA 2009
@@ -13,7 +13,7 @@
 -- An efficient representation of a gom module.
 --------------------------------------------------------------------
 
-module Gom.SymbolTable (
+module Gom.Common.SymbolTable (
   SymbolTable (),
   -- * Constructing tables
   emptySt, ast2st,
@@ -30,7 +30,7 @@ module Gom.SymbolTable (
   -- ** Adding whole definitions
   -- | These functions perform higher-level modifications of the table than
   -- 'insertSctors', 'addToSctors', etc.
-  -- They take AST bits of "Gom.Sig" as arguments.
+  -- They take AST bits of "Gom.Common.Sig" as arguments.
   addCtor,
   -- ** Table completion
   completeVariadics,
@@ -40,7 +40,7 @@ module Gom.SymbolTable (
 #endif
 ) where
 
-import Gom.Sig
+import Gom.Common.Sig
 import Control.Monad.State
 import qualified Data.Map as M
 import Data.Either(partitionEithers)
@@ -48,12 +48,12 @@ import Data.List(foldl',nub)
 import Gom.CodeGen.Common.Builtins
 
 #if TEST
-import Gom.Random ()
+import Gom.Common.Random ()
 import Test.Framework (Test, testGroup)
 import Test.Framework.Providers.QuickCheck2 (testProperty)
 import qualified Data.Set as S
 import qualified Data.List as L
-import Gom.Pretty ()
+import Gom.Common.Pretty ()
 import Data.Maybe(mapMaybe)
 import Data.List(sort)
 #endif

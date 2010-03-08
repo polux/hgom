@@ -15,14 +15,14 @@
 
 module Gom.UnitTests (testSuite) where
 
-import Gom.Pretty ()
-import Gom.Random ()
-import Gom.Sig
-import Gom.Parser
-import Gom.Checker
+import Gom.Common.Pretty ()
+import Gom.Common.Random ()
+import Gom.Common.Sig
+import Gom.Common.Parser
+import Gom.Common.Checker
 
 -- imported test suites
-import qualified Gom.SymbolTable
+import qualified Gom.Common.SymbolTable
 
 -- for t*.gom testing
 import Test.Framework (Test,testGroup)
@@ -193,5 +193,5 @@ crossModuleSuite = testGroup "cross module properties"
 -- | all tests
 testSuite :: [Test]
 testSuite = [regressionSuite,
-             Gom.SymbolTable.testSuite,
+             Gom.Common.SymbolTable.testSuite,
              crossModuleSuite]

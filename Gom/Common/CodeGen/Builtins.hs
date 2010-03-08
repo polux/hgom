@@ -31,7 +31,7 @@ import Data.Maybe(fromMaybe)
 import Text.PrettyPrint.Leijen
 
 import Gom.CodeGen.Common.Helpers
-import Gom.Sig
+import Gom.Common.Sig
 
 -- | List of supported java builtins
 builtins :: [String]

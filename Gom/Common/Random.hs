@@ -1,6 +1,6 @@
 ------------------------------------------------------------------
 -- |
--- Module      : Gom.Random
+-- Module      : Gom.Common.Random
 -- Copyright   : (c) Paul Brauner 2009
 --               (c) Emilie Balland 2009
 --               (c) INRIA 2009
@@ -10,13 +10,13 @@
 -- Stability   : provisional
 -- Portability : non-portable (requires generalized newtype deriving)
 --
--- Instances of 'Test.QuickCheck.Arbitrary' for 'Gom.Sig' and other
+-- Instances of 'Test.QuickCheck.Arbitrary' for 'Gom.Common.Sig' and other
 -- generators.
 --------------------------------------------------------------------
 
-module Gom.Random () where
+module Gom.Common.Random () where
 
-import Gom.Sig
+import Gom.Common.Sig
 import Test.QuickCheck
 
 genId :: Gen String

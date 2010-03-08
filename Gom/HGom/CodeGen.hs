@@ -17,9 +17,9 @@ module Gom.CodeGen (st2java) where
 
 import Data.Char(toLower)
 
-import Gom.SymbolTable
+import Gom.Common.SymbolTable
 import Gom.Config
-import Gom.FileGen
+import Gom.Common.FileGen
 import Gom.CodeGen.Common.Constants
 import Gom.CodeGen.Common.GenMonad
 import Gom.CodeGen.Abstract

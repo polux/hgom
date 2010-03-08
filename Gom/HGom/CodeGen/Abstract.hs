@@ -16,9 +16,9 @@ module Gom.CodeGen.Abstract (
 ) where
 
 import Gom.CodeGen.Common
-import Gom.SymbolTable
+import Gom.Common.SymbolTable
 import Gom.Config
-import Gom.FileGen
+import Gom.Common.FileGen
 
 import Control.Applicative
 import Text.PrettyPrint.Leijen hiding ((<$>))
