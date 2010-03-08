@@ -22,7 +22,7 @@ import Common.Parser
 import Common.Checker
 
 -- imported test suites
-import qualified Gom.Common.SymbolTable
+import qualified Common.SymbolTable
 
 -- for t*.gom testing
 import Test.Framework (Test,testGroup)
@@ -193,5 +193,5 @@ crossModuleSuite = testGroup "cross module properties"
 -- | all tests
 testSuite :: [Test]
 testSuite = [regressionSuite,
-             Gom.Common.SymbolTable.testSuite,
+             Common.SymbolTable.testSuite,
              crossModuleSuite]

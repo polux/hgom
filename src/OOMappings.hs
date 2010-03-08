@@ -1,6 +1,6 @@
 ------------------------------------------------------------------
 -- |
--- Module      : OOMappings
+-- Module      : Main
 -- Copyright   : (c) Paul Brauner 2009
 --               (c) Emilie Balland 2009
 --               (c) INRIA 2009
@@ -20,7 +20,7 @@
 
 {-# LANGUAGE PatternGuards #-}
 
-module OOMappings (main,entryPoint) where
+module Main (main,entryPoint) where
 
 import Common.Sig
 import Common.Parser
