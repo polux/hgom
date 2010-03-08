@@ -1,6 +1,6 @@
 ------------------------------------------------------------------
 -- |
--- Module      : Gom.CodeGen.Abstract
+-- Module      : HGom.CodeGen.Abstract
 -- Copyright   : (c) Paul Brauner 2009
 --               (c) Emilie Balland 2009
 --               (c) INRIA 2009
@@ -11,13 +11,13 @@
 -- Portability : non-portable (requires generalized newtype deriving)
 --------------------------------------------------------------------
 
-module Gom.CodeGen.Abstract (
+module HGom.CodeGen.Abstract (
   compAbstract
 ) where
 
 import Gom.CodeGen.Common
 import Gom.Common.SymbolTable
-import Gom.Config
+import Gom.Common.Config
 import Gom.Common.FileGen
 
 import Control.Applicative

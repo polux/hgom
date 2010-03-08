@@ -18,14 +18,14 @@ module Gom.CodeGen (st2java) where
 import Data.Char(toLower)
 
 import Gom.Common.SymbolTable
-import Gom.Config
+import Gom.Common.Config
 import Gom.Common.FileGen
-import Gom.CodeGen.Common.Constants
-import Gom.CodeGen.Common.GenMonad
-import Gom.CodeGen.Abstract
-import Gom.CodeGen.Mappings
-import Gom.CodeGen.Strategies
-import Gom.CodeGen.Sorts
+import Gom.Common.CodeGen.Constants
+import Gom.Common.CodeGen.GenMonad
+import HGom.CodeGen.Abstract
+import HGom.CodeGen.Mappings
+import HGom.CodeGen.Strategies
+import HGom.CodeGen.Sorts
 
 -- | Compiles a symbol table into a Java hierarchy
 st2java :: SymbolTable -> Config -> FileHierarchy

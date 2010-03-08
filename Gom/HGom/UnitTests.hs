@@ -1,6 +1,6 @@
 ------------------------------------------------------------------
 -- |
--- Module      : Gom.UnitTests
+-- Module      : HGom.UnitTests
 -- Copyright   : (c) Paul Brauner 2009
 --               (c) Emilie Balland 2009
 --               (c) INRIA 2009
@@ -13,7 +13,7 @@
 -- Run all unit tests
 --------------------------------------------------------------------
 
-module Gom.UnitTests (testSuite) where
+module HGom.UnitTests (testSuite) where
 
 import Gom.Common.Pretty ()
 import Gom.Common.Random ()

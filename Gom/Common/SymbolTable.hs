@@ -45,7 +45,7 @@ import Control.Monad.State
 import qualified Data.Map as M
 import Data.Either(partitionEithers)
 import Data.List(foldl',nub)
-import Gom.CodeGen.Common.Builtins
+import Gom.Common.CodeGen.Builtins
 
 #if TEST
 import Gom.Common.Random ()

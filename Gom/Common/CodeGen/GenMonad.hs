@@ -1,6 +1,6 @@
 ------------------------------------------------------------------
 -- |
--- Module      : Gom.CodeGen.Common.GenMonad
+-- Module      : Gom.Common.CodeGen.GenMonad
 -- Copyright   : (c) Paul Brauner 2009
 --               (c) Emilie Balland 2009
 --               (c) INRIA 2009
@@ -15,7 +15,7 @@
 
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module Gom.CodeGen.Common.GenMonad (
+module Gom.Common.CodeGen.GenMonad (
   -- * Definition
   Gen(),
   runGen,
@@ -37,8 +37,8 @@ module Gom.CodeGen.Common.GenMonad (
 
 import Gom.Common.Sig
 import Gom.Common.SymbolTable
-import Gom.CodeGen.Common.Builtins
-import Gom.Config
+import Gom.Common.CodeGen.Builtins
+import Gom.Common.Config
 
 import Text.PrettyPrint.Leijen
 import Control.Monad.Reader

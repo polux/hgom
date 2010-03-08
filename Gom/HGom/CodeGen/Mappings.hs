@@ -1,6 +1,6 @@
 ------------------------------------------------------------------
 -- |
--- Module      : Gom.CodeGen.Mappings
+-- Module      : HGom.CodeGen.Mappings
 -- Copyright   : (c) Paul Brauner 2009
 --               (c) Emilie Balland 2009
 --               (c) INRIA 2009
@@ -11,12 +11,12 @@
 -- Portability : non-portable (requires generalized newtype deriving)
 --------------------------------------------------------------------
 
-module Gom.CodeGen.Mappings (
+module HGom.CodeGen.Mappings (
   compTomFiles
 ) where
 
 import Gom.Common.Sig
-import Gom.Config
+import Gom.Common.Config
 import Gom.Common.FileGen
 import Gom.Common.SymbolTable
 import Gom.CodeGen.Common

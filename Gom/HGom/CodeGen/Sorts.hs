@@ -1,6 +1,6 @@
 ------------------------------------------------------------------
 -- |
--- Module      : Gom.CodeGen.Sorts
+-- Module      : HGom.CodeGen.Sorts
 -- Copyright   : (c) Paul Brauner 2009
 --               (c) Emilie Balland 2009
 --               (c) INRIA 2009
@@ -11,16 +11,16 @@
 -- Portability : non-portable (requires generalized newtype deriving)
 --------------------------------------------------------------------
 
-module Gom.CodeGen.Sorts (
+module HGom.CodeGen.Sorts (
   compSort
 ) where
 
 import Gom.Common.Sig
-import Gom.Config
+import Gom.Common.Config
 import Gom.Common.FileGen
 import Gom.Common.SymbolTable
 import Gom.CodeGen.Common
-import Gom.CodeGen.Constructors
+import HGom.CodeGen.Constructors
 
 import Text.PrettyPrint.Leijen
 import Control.Monad(foldM)

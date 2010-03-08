@@ -1,6 +1,6 @@
 ------------------------------------------------------------------
 -- |
--- Module      : Gom.CodeGen.Constructors
+-- Module      : HGom.CodeGen.Constructors
 -- Copyright   : (c) Paul Brauner 2009
 --               (c) Emilie Balland 2009
 --               (c) INRIA 2009
@@ -11,13 +11,13 @@
 -- Portability : non-portable (requires generalized newtype deriving)
 --------------------------------------------------------------------
 
-module Gom.CodeGen.Constructors (
+module HGom.CodeGen.Constructors (
   compConstructor,
   compAbstractVariadic
 ) where
 
 import Gom.Common.Sig
-import Gom.Config
+import Gom.Common.Config
 import Gom.Common.FileGen
 import Gom.Common.SymbolTable
 import Gom.CodeGen.Common

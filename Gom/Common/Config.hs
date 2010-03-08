@@ -1,6 +1,6 @@
 -------------------------------------------------------------------
 -- |
--- Module      : Gom.Config
+-- Module      : Gom.Common.Config
 -- Copyright   : (c) Paul Brauner 2009
 --               (c) Emilie Balland 2009
 --               (c) INRIA 2009
@@ -13,7 +13,7 @@
 -- Handle user args.
 --------------------------------------------------------------------
 
-module Gom.Config (
+module Gom.Common.Config (
   Config(..),
   CongrOpt(..),
   gomOpts,

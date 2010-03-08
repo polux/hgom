@@ -17,7 +17,7 @@ module Gom.OOMappingGen (st2oomapping) where
 
 import Gom.Common.Sig
 import Gom.Common.SymbolTable
-import Gom.Config
+import Gom.Common.Config
 import Gom.Common.FileGen
 import Gom.CodeGen.Common
 

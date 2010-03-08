@@ -28,15 +28,14 @@ import Gom.Common.Pretty ()
 import Gom.Common.Checker
 import Gom.Common.SymbolTable
 import Gom.CodeGen
-import Gom.OOMappingGen
-import Gom.Config
+import Gom.Common.Config
 import Gom.Common.FileGen
 
 import System.Environment (getArgs)
 import Text.PrettyPrint.Leijen (pretty)
 
 #if TEST
-import qualified Gom.UnitTests as T
+import qualified HGom.UnitTests as T
 import Test.Framework (defaultMainWithArgs)
 #endif
 
@@ -87,17 +86,11 @@ go3 f c sig | prprint c = print $ pretty sig
                 Nothing -> gomain
                 Just d  -> error (f ++ " contains errors:\n" ++ show d)
             | otherwise = gomain
-  where gomain = (if oomapping c then ooChain else hgomChain) c sig
+  where gomain = chain c sig
 
 -- | compilation chain for hgom
-hgomChain :: Config -> Module -> IO ()
-hgomChain conf = generateFileHierarchy (compact conf) . 
-                 flip st2java conf . 
-                 completeVariadics .  
-                 ast2st
-
--- | compilation chain for oomapings
-ooChain :: Config -> Module -> IO ()
-ooChain conf = generateFileHierarchy (compact conf) . 
-               flip st2oomapping conf .
-               ast2st 
+chain :: Config -> Module -> IO ()
+chain conf = generateFileHierarchy (compact conf) . 
+             flip st2java conf . 
+             completeVariadics .  
+             ast2st
