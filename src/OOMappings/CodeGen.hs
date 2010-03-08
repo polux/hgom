@@ -1,6 +1,6 @@
 -------------------------------------------------------------------
 -- |
--- Module      : Gom.CodeGen
+-- Module      : CodeGen
 -- Copyright   : (c) Paul Brauner 2009
 --               (c) Emilie Balland 2009
 --               (c) INRIA 2009
@@ -13,13 +13,13 @@
 -- Generation of a file hierarchy from a symbol table.
 -------------------------------------------------------------------- 
 
-module Gom.OOMappingGen (st2oomapping) where
+module OOMappingGen (st2oomapping) where
 
-import Gom.Common.Sig
-import Gom.Common.SymbolTable
-import Gom.Common.Config
-import Gom.Common.FileGen
-import Gom.CodeGen.Common
+import Common.Sig
+import Common.SymbolTable
+import Common.Config
+import Common.FileGen
+import CodeGen.Common
 
 import Text.PrettyPrint.Leijen
 import Control.Arrow((***))

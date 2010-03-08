@@ -1,6 +1,6 @@
 ------------------------------------------------------------------
 -- |
--- Module      : Gom.Common.CodeGen.Constants
+-- Module      : Common.CodeGen.Constants
 -- Copyright   : (c) Paul Brauner 2009
 --               (c) Emilie Balland 2009
 --               (c) INRIA 2009
@@ -13,7 +13,7 @@
 -- Big 'Doc' constants.
 --------------------------------------------------------------------
 
-module Gom.Common.CodeGen.Constants (
+module Common.CodeGen.Constants (
   includeSl,
   toStringBody,
   abstractToStringBuilder,

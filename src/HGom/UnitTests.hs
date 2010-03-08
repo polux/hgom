@@ -15,11 +15,11 @@
 
 module HGom.UnitTests (testSuite) where
 
-import Gom.Common.Pretty ()
-import Gom.Common.Random ()
-import Gom.Common.Sig
-import Gom.Common.Parser
-import Gom.Common.Checker
+import Common.Pretty ()
+import Common.Random ()
+import Common.Sig
+import Common.Parser
+import Common.Checker
 
 -- imported test suites
 import qualified Gom.Common.SymbolTable

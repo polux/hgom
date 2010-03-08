@@ -1,6 +1,6 @@
 -------------------------------------------------------------------
 -- |
--- Module      : Gom.Common.Pretty
+-- Module      : Common.Pretty
 -- Copyright   : (c) Paul Brauner 2009
 --               (c) Emilie Balland 2009
 --               (c) INRIA 2009
@@ -16,9 +16,9 @@
 
 
 
-module Gom.Common.Pretty () where
+module Common.Pretty () where
 
-import Gom.Common.Sig
+import Common.Sig
 import Text.PrettyPrint.Leijen
 
 lb ::  Doc

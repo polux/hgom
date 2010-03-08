@@ -15,10 +15,10 @@ module HGom.CodeGen.Strategies (
   compStrategy
 ) where
 
-import Gom.Common.Sig
-import Gom.Common.FileGen
-import Gom.Common.SymbolTable
-import Gom.CodeGen.Common
+import Common.Sig
+import Common.FileGen
+import Common.SymbolTable
+import Common.CodeGen
 
 import Text.PrettyPrint.Leijen
 

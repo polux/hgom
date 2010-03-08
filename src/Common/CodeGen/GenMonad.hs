@@ -1,6 +1,6 @@
 ------------------------------------------------------------------
 -- |
--- Module      : Gom.Common.CodeGen.GenMonad
+-- Module      : Common.CodeGen.GenMonad
 -- Copyright   : (c) Paul Brauner 2009
 --               (c) Emilie Balland 2009
 --               (c) INRIA 2009
@@ -15,7 +15,7 @@
 
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module Gom.Common.CodeGen.GenMonad (
+module Common.CodeGen.GenMonad (
   -- * Definition
   Gen(),
   runGen,
@@ -35,10 +35,10 @@ module Gom.Common.CodeGen.GenMonad (
   qualifiedStratPrefix
 ) where
 
-import Gom.Common.Sig
-import Gom.Common.SymbolTable
-import Gom.Common.CodeGen.Builtins
-import Gom.Common.Config
+import Common.Sig
+import Common.SymbolTable
+import Common.CodeGen.Builtins
+import Common.Config
 
 import Text.PrettyPrint.Leijen
 import Control.Monad.Reader

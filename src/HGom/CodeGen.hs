@@ -1,6 +1,6 @@
 -------------------------------------------------------------------
 -- |
--- Module      : Gom.CodeGen
+-- Module      : HGom.CodeGen
 -- Copyright   : (c) Paul Brauner 2009
 --               (c) Emilie Balland 2009
 --               (c) INRIA 2009
@@ -13,15 +13,15 @@
 -- Generation of a file hierarchy from a symbol table.
 -------------------------------------------------------------------- 
 
-module Gom.CodeGen (st2java) where
+module HGom.CodeGen (st2java) where
 
 import Data.Char(toLower)
 
-import Gom.Common.SymbolTable
-import Gom.Common.Config
-import Gom.Common.FileGen
-import Gom.Common.CodeGen.Constants
-import Gom.Common.CodeGen.GenMonad
+import Common.SymbolTable
+import Common.Config
+import Common.FileGen
+import Common.CodeGen.Constants
+import Common.CodeGen.GenMonad
 import HGom.CodeGen.Abstract
 import HGom.CodeGen.Mappings
 import HGom.CodeGen.Strategies

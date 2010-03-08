@@ -1,6 +1,6 @@
 ------------------------------------------------------------------
 -- |
--- Module      : Gom.Common.CodeGen.Builtins
+-- Module      : Common.CodeGen.Builtins
 -- Copyright   : (c) Paul Brauner 2009
 --               (c) Emilie Balland 2009
 --               (c) INRIA 2009
@@ -13,7 +13,7 @@
 -- Builtins handling.
 --------------------------------------------------------------------
 
-module Gom.Common.CodeGen.Builtins (
+module Common.CodeGen.Builtins (
   isBuiltin,
   isBoolean,
   isInt,
@@ -30,8 +30,8 @@ module Gom.Common.CodeGen.Builtins (
 import Data.Maybe(fromMaybe)
 import Text.PrettyPrint.Leijen
 
-import Gom.Common.CodeGen.Helpers
-import Gom.Common.Sig
+import Common.CodeGen.Helpers
+import Common.Sig
 
 -- | List of supported java builtins
 builtins :: [String]

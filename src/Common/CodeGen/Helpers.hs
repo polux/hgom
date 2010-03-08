@@ -1,6 +1,6 @@
 -------------------------------------------------------------------
 -- |
--- Module      : Gom.Common.CodeGen.Helpers
+-- Module      : Common.CodeGen.Helpers
 -- Copyright   : (c) Paul Brauner 2009
 --               (c) Emilie Balland 2009
 --               (c) INRIA 2009
@@ -14,7 +14,7 @@
 -- java and tom pieces of type 'Doc'.
 --------------------------------------------------------------------
 
-module Gom.Common.CodeGen.Helpers (
+module Common.CodeGen.Helpers (
   -- * Java pretty-printing
   -- ** Generic
   ibraces, sbraces, encloseCommas, 

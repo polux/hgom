@@ -13,7 +13,7 @@
 -- Checker to be run before the construction of a symbol table.
 --------------------------------------------------------------------
 
-module Gom.Common.Checker (
+module Common.Checker (
   NameConsistencyError(),
   UndefSortError(),
   MultipleCtorDecl(),
@@ -33,8 +33,8 @@ module Gom.Common.Checker (
   checkEverything
 ) where
 
-import Gom.Common.Sig
-import Gom.Common.Pretty()
+import Common.Sig
+import Common.Pretty()
 
 import qualified Data.Map as M
 import qualified Data.Set as S

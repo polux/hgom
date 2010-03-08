@@ -15,11 +15,11 @@ module HGom.CodeGen.Sorts (
   compSort
 ) where
 
-import Gom.Common.Sig
-import Gom.Common.Config
-import Gom.Common.FileGen
-import Gom.Common.SymbolTable
-import Gom.CodeGen.Common
+import Common.Sig
+import Common.Config
+import Common.FileGen
+import Common.SymbolTable
+import Common.CodeGen
 import HGom.CodeGen.Constructors
 
 import Text.PrettyPrint.Leijen

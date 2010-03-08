@@ -1,6 +1,6 @@
 ------------------------------------------------------------------
 -- |
--- Module      : Gom.Common.Random
+-- Module      : Common.Random
 -- Copyright   : (c) Paul Brauner 2009
 --               (c) Emilie Balland 2009
 --               (c) INRIA 2009
@@ -14,9 +14,9 @@
 -- generators.
 --------------------------------------------------------------------
 
-module Gom.Common.Random () where
+module Common.Random () where
 
-import Gom.Common.Sig
+import Common.Sig
 import Test.QuickCheck
 
 genId :: Gen String

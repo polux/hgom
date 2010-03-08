@@ -1,6 +1,6 @@
 ------------------------------------------------------------------
 -- |
--- Module      : Gom.Common.Sig
+-- Module      : Common.Sig
 -- Copyright   : (c) Paul Brauner 2009
 --               (c) Emilie Balland 2009
 --               (c) INRIA 2009
@@ -16,7 +16,7 @@
 
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module Gom.Common.Sig (
+module Common.Sig (
   SortId(),
   ClassId(),
   FieldId(),

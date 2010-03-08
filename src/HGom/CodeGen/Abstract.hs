@@ -15,10 +15,10 @@ module HGom.CodeGen.Abstract (
   compAbstract
 ) where
 
-import Gom.CodeGen.Common
-import Gom.Common.SymbolTable
-import Gom.Common.Config
-import Gom.Common.FileGen
+import Common.SymbolTable
+import Common.Config
+import Common.FileGen
+import Common.CodeGen
 
 import Control.Applicative
 import Text.PrettyPrint.Leijen hiding ((<$>))

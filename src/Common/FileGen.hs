@@ -1,6 +1,6 @@
 -------------------------------------------------------------------
 -- |
--- Module      : Gom.Common.FileGen
+-- Module      : Common.FileGen
 -- Copyright   : (c) Paul Brauner 2009
 --               (c) Emilie Balland 2009
 --               (c) INRIA 2009
@@ -15,7 +15,7 @@
 -- actually generating the hierarchy.
 --------------------------------------------------------------------
 
-module Gom.Common.FileGen (
+module Common.FileGen (
   FileHierarchy(..),
   generateFileHierarchy
 ) where

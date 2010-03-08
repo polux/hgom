@@ -1,6 +1,6 @@
 ------------------------------------------------------------------
 -- |
--- Module      : Gom.HGom
+-- Module      : OOMappings
 -- Copyright   : (c) Paul Brauner 2009
 --               (c) Emilie Balland 2009
 --               (c) INRIA 2009
@@ -20,16 +20,16 @@
 
 {-# LANGUAGE PatternGuards #-}
 
-module Gom.HGom (main,entryPoint) where
+module OOMappings (main,entryPoint) where
 
-import Gom.Common.Sig
-import Gom.Common.Parser
-import Gom.Common.Pretty ()
-import Gom.Common.Checker
-import Gom.Common.SymbolTable
-import Gom.CodeGen
-import Gom.Common.Config
-import Gom.Common.FileGen
+import Common.Sig
+import Common.Parser
+import Common.Pretty ()
+import Common.Checker
+import Common.SymbolTable
+import OOMappings.CodeGen
+import Common.Config
+import Common.FileGen
 
 import System.Environment (getArgs)
 import Text.PrettyPrint.Leijen (pretty)
@@ -88,9 +88,8 @@ go3 f c sig | prprint c = print $ pretty sig
             | otherwise = gomain
   where gomain = chain c sig
 
--- | compilation chain for hgom
+-- | compilation chain for oomapings
 chain :: Config -> Module -> IO ()
 chain conf = generateFileHierarchy (compact conf) . 
-             flip st2java conf . 
-             completeVariadics .  
-             ast2st
+             flip st2oomapping conf .
+             ast2st 
