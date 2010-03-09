@@ -35,12 +35,12 @@ import System.Environment (getArgs)
 import Text.PrettyPrint.Leijen (pretty)
 
 #if TEST
-import qualified HGom.UnitTests as T
+import qualified OOMappings.UnitTests as T
 import Test.Framework (defaultMainWithArgs)
 #endif
 
-hgomVersion :: String
-hgomVersion = "Version 0.6 - March 2009"
+oomVersion :: String
+oomVersion = "Version 0.6 - March 2009"
 
 -- | @main = getArgs >>= entryPoint@
 main ::  IO ()
@@ -50,7 +50,7 @@ main = getArgs >>= entryPoint
 -- to make it callable by other programs
 entryPoint :: [String] -> IO ()
 entryPoint args =
-  case gomOpts args of 
+  case oomOpts args of 
     Left err    -> paramsError err
     Right (c,n) -> go1 c n
 
@@ -58,7 +58,7 @@ entryPoint args =
 -- that don't require parsing
 go1 :: Config -> [String] -> IO ()
 go1 c n | help c              = putStrLn usage
-        | version c           = putStrLn hgomVersion
+        | version c           = putStrLn oomVersion
 #if TEST
         | Just as <- utests c = defaultMainWithArgs T.testSuite as
 #endif

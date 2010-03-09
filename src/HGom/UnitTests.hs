@@ -182,12 +182,11 @@ testChecker opts = monadicIO $ do
 crossModuleSuite :: Test
 crossModuleSuite = testGroup "cross module properties" 
   [testProperty "parse . pretty = id" propParsePretty,
-   check flags1, check flags2, check flags3, 
+   check flags1, check flags2, 
    testProperty "generated parse . generated pretty = id" propGenParsePretty]
   where check fs = testProperty (mes fs) (testChecker fs)
         flags1 = ["-r","-d","-s","-h","-c","same"]
         flags2 = ["--noSharing"]
-        flags3 = ["-j"]
         mes fs = "check ok => compilable java (" ++ intercalate " " fs ++ ")"
 
 -- | all tests

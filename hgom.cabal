@@ -45,7 +45,6 @@ executable hgom
                  HGom.CodeGen.Mappings
                  HGom.CodeGen.Strategies
                  HGom.CodeGen.Sorts
-                 HGom.UnitTests
                  Common.Config
                  Common.FileGen
                  Common.Parser
@@ -108,5 +107,5 @@ executable oomappings
                    test-framework-hunit >= 0.2.4, Glob >= 0.5,
                    HUnit >= 1.2.2.1, process >= 1.0.1.1
                    
-    other-modules: Common.Random
+    other-modules: OOMappings.UnitTests, Common.Random
 

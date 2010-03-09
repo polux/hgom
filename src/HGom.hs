@@ -15,7 +15,7 @@
 
 {-# LANGUAGE PatternGuards #-}
 
-module Main (main) where
+module Main (main,entryPoint) where
 
 import Common.Sig
 import Common.Parser
@@ -28,6 +28,11 @@ import HGom.Config
 
 import System.Environment (getArgs)
 import Text.PrettyPrint.Leijen (pretty)
+
+#if TEST
+import qualified HGom.UnitTests as T
+import Test.Framework (defaultMainWithArgs)
+#endif
 
 hgomVersion :: String
 hgomVersion = "Version 0.6 - March 2009"
