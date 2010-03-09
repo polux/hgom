@@ -21,7 +21,7 @@ import Common.SymbolTable
 import Common.FileGen
 import Common.CodeGen.Constants
 import Common.CodeGen.GenMonad
-import HGom.CodeGen.Common
+import HGom.CodeGen.HGenMonad
 import HGom.CodeGen.Abstract
 import HGom.CodeGen.Mappings
 import HGom.CodeGen.Strategies

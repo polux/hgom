@@ -1,6 +1,6 @@
 -------------------------------------------------------------------
 -- |
--- Module      : HGom.CodeGen.Common
+-- Module      : HGom.CodeGen.HGenMonad
 -- Copyright   : (c) Paul Brauner 2009
 --               (c) Emilie Balland 2009
 --               (c) INRIA 2009
@@ -13,7 +13,7 @@
 -- Gen monad specialisation for hgom.
 -------------------------------------------------------------------- 
 
-module HGom.CodeGen.Common (HGen) where
+module HGom.CodeGen.HGenMonad (HGen) where
 
 import HGom.Config
 import Common.CodeGen.GenMonad

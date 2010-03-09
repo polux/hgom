@@ -19,7 +19,7 @@ import Common.Sig
 import Common.FileGen
 import Common.SymbolTable
 import Common.CodeGen
-import HGom.CodeGen.Common
+import HGom.CodeGen.HGenMonad
 
 import Text.PrettyPrint.Leijen
 

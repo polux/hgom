@@ -20,7 +20,7 @@ import Common.FileGen
 import Common.SymbolTable
 import Common.CodeGen
 import HGom.Config
-import HGom.CodeGen.Common
+import HGom.CodeGen.HGenMonad
 
 import Text.PrettyPrint.Leijen
 import Control.Arrow((***))

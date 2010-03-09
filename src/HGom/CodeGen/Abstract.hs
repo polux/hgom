@@ -19,7 +19,7 @@ import Common.SymbolTable
 import Common.FileGen
 import Common.CodeGen
 import HGom.Config
-import HGom.CodeGen.Common
+import HGom.CodeGen.HGenMonad
 
 import Control.Applicative
 import Text.PrettyPrint.Leijen hiding ((<$>))

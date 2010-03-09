@@ -19,7 +19,7 @@ import Common.Sig
 import Common.SymbolTable
 import Common.FileGen
 import Common.CodeGen
-import OOMappings.CodeGen.Common
+import OOMappings.CodeGen.OGenMonad
 import OOMappings.Config
 
 import Text.PrettyPrint.Leijen
