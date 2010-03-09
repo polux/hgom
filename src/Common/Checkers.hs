@@ -1,6 +1,6 @@
 ------------------------------------------------------------------
 -- |
--- Module      : Common.Checker
+-- Module      : Common.Checkers
 -- Copyright   : (c) Paul Brauner 2009
 --               (c) Emilie Balland 2009
 --               (c) INRIA 2009
@@ -10,16 +10,17 @@
 -- Stability   : provisional
 -- Portability : non-portable (requires generalized newtype deriving)
 --
--- Checker to be run before the construction of a symbol table.
+-- Collection of checkers meant to be used by hgom and/or oomappings.
 --------------------------------------------------------------------
 
-module Common.Checker (
+module Common.Checkers (
   NameConsistencyError(),
   UndefSortError(),
   MultipleCtorDecl(),
   MultipleSortDecl(),
   MultipleFieldsError(),
   GeneratedConstructorsClash(),
+  NoConcreteSortError(),
   -- * Individual features checking
   checkJavaKeywordClash,
   checkCtorModuleClash,
@@ -29,8 +30,7 @@ module Common.Checker (
   checkNameConsistency,
   checkUndefSorts,
   checkGenClashes,
-  -- * All-in-one check
-  checkEverything
+  checkNoConcreteSort
 ) where
 
 import Common.Sig
@@ -39,9 +39,15 @@ import Common.Pretty()
 import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Data.List as L
-import Data.Maybe(mapMaybe)
+import Data.Maybe(mapMaybe,isNothing)
 import Text.PrettyPrint.Leijen
 import Data.Char(toLower)
+
+newtype NoConcreteSortError = NCSE [SortId]
+
+instance Pretty NoConcreteSortError where
+  pretty (NCSE ss) = vsep $ map f ss
+    where f s = text "Sort" <+> pretty s <+> text "has no concrete sort."
 
 newtype NameConsistencyError = NCE [(SortId,[(FieldId,[SortId])])]
 
@@ -276,35 +282,8 @@ checkCtorModuleClash m = pack CMC clashes
   where lowmn   = map toLower (moduleName m)
         clashes = filter ((== lowmn) . idStr) (constructorNames m)
 
-checkers :: [Module -> Maybe Doc]
-checkers = [w checkJavaKeywordClash,
-            w checkCtorModuleClash,
-            w checkMultipleSortDecl,
-            w checkMultipleCtorDecl,
-            w checkDuplicateFields,
-            w checkNameConsistency,
-            w checkUndefSorts,
-            w checkGenClashes]
-  where w check x = pretty `fmap` check x
-
--- | Reports, in this order, the results of:
---    - 'checkJavaKeywordClash'
---
---    - 'checkCtorModuleClash'
---
---    - 'checkMultipleSortDecl'
---
---    - 'checkMultipleCtorDecl'
---
---    - 'checkDuplicateFields'
---
---    - 'checkNameConsistency'
---
---    - 'checkUndefSorts'
---
---    - 'checkGenClashes'
-checkEverything :: Module -> Maybe Doc
-checkEverything m = ret $ mapMaybe ($ m) checkers  
-  where ret [] = Nothing
-        ret l  = Just $ foldr1 dbreak l
-        dbreak x y = x <> linebreak <> linebreak <> y
+-- | Look for sorts with no declared concrete type
+checkNoConcreteSort :: Module -> Maybe NoConcreteSortError
+checkNoConcreteSort m = pack NCSE nothings
+  where nothings = [sortName s | s <- sortDefs m, 
+                                 isNothing $ concreteSortName s]

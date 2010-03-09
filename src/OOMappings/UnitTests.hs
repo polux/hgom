@@ -18,7 +18,7 @@ module OOMappings.UnitTests (testSuite) where
 import Common.Pretty ()
 import Common.Random ()
 import Common.Sig
-import Common.Checker
+import Common.Checkers
 
 -- for t*.gom testing
 import Test.Framework (Test,testGroup)

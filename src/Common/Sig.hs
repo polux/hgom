@@ -143,7 +143,6 @@ prependTail (CtorId s) = FieldId ("Tail" ++ s)
 lowerId :: SortId -> SortId
 lowerId (SortId x) = SortId (map toLower x)
 
-
 getClassName :: ClassId -> String
 getClassName (ClassId qualifiedname _) = qualifiedname
 

@@ -19,7 +19,7 @@ import Common.Pretty ()
 import Common.Random ()
 import Common.Sig
 import Common.Parser
-import Common.Checker
+import Common.Checkers
 
 -- imported test suites
 import qualified Common.SymbolTable

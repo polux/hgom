@@ -38,6 +38,7 @@ executable hgom
   hs-source-dirs: src
   main-is:       HGom.hs
   other-modules: HGom.Config
+                 HGom.Checker
                  HGom.CodeGen
                  HGom.CodeGen.Common
                  HGom.CodeGen.Abstract
@@ -48,7 +49,7 @@ executable hgom
                  Common.Config
                  Common.FileGen
                  Common.Parser
-                 Common.Checker
+                 Common.Checkers
                  Common.Pretty
                  Common.CodeGen
                  Common.CodeGen.Builtins
@@ -78,12 +79,13 @@ executable oomappings
   hs-source-dirs: src
   main-is:       OOMappings.hs
   other-modules: OOMappings.Config
+                 OOMappings.Checker
                  OOMappings.CodeGen
                  OOMappings.CodeGen.Common
                  Common.Config
                  Common.FileGen
                  Common.Parser
-                 Common.Checker
+                 Common.Checkers
                  Common.Pretty
                  Common.CodeGen
                  Common.CodeGen.Builtins

@@ -25,9 +25,9 @@ module Main (main,entryPoint) where
 import Common.Sig
 import Common.Parser
 import Common.Pretty ()
-import Common.Checker
 import Common.SymbolTable
 import Common.FileGen
+import OOMappings.Checker
 import OOMappings.CodeGen
 import OOMappings.Config
 
