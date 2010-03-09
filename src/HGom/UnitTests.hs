@@ -19,7 +19,7 @@ import Common.Pretty ()
 import Common.Random ()
 import Common.Sig
 import Common.Parser
-import Common.Checkers
+import HGom.Checker
 
 -- imported test suites
 import qualified Common.SymbolTable
