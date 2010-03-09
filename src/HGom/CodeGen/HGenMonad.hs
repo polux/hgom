@@ -16,7 +16,7 @@
 module HGom.CodeGen.HGenMonad (HGen) where
 
 import HGom.Config
-import Common.CodeGen.GenMonad
+import Common.CodeGen
 
 -- | Gen Monad tuned for HGom
 type HGen = Gen Config

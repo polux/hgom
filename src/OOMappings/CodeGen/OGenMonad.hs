@@ -16,7 +16,7 @@
 module OOMappings.CodeGen.OGenMonad (OGen) where
 
 import OOMappings.Config
-import Common.CodeGen.GenMonad
+import Common.CodeGen
 
 -- | OGen Monad tuned for HGom
 type OGen = Gen Config
