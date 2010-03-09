@@ -17,17 +17,18 @@ module HGom.CodeGen.Constructors (
 ) where
 
 import Common.Sig
-import Common.Config
 import Common.FileGen
 import Common.SymbolTable
 import Common.CodeGen
+import HGom.Config
+import HGom.CodeGen.Common
 
 import Text.PrettyPrint.Leijen
 import Control.Monad.Reader
 import Data.List(intersperse)
 
 -- | Given a variadic constructor @VC@, generates an abstract class @VC.java@.
-compAbstractVariadic :: CtorId -> Gen FileHierarchy
+compAbstractVariadic :: CtorId -> HGen FileHierarchy
 compAbstractVariadic vc = do cl <- body
                              return $ Class (show vc) cl
   where ifP = flip (ifConfM parsers) (return empty)
@@ -60,7 +61,7 @@ compAbstractVariadic vc = do cl <- body
 -- >   }
 -- >   buf.append(")");
 -- > }
-compToStringBuilderVariadic :: CtorId -> Gen Doc
+compToStringBuilderVariadic :: CtorId -> HGen Doc
 compToStringBuilderVariadic vc = do
   qcons <- qualifiedCtor cons
   qnil  <- qualifiedCtor nil
@@ -101,7 +102,7 @@ compToStringBuilderVariadic vc = do
 --  * @arg.parses()@ if @s@ is a builtin, 
 --
 --  * @mod.types.s.parse(arg)@ otherwise
-parseRecCall :: Doc -> SortId -> Gen Doc
+parseRecCall :: Doc -> SortId -> HGen Doc
 parseRecCall arg s = do
   qs <- qualifiedSort s
   return $ if isBuiltin s 
@@ -121,7 +122,7 @@ parseRecCall arg s = do
 -- >   par.parseRpar();
 -- >   return mod.types.Co.C.make(x1,...,xn);
 -- > }
-compParseConstructor :: CtorId -> Gen Doc
+compParseConstructor :: CtorId -> HGen Doc
 compParseConstructor c = do
   pr   <- packagePrefix
   co   <- askSt (codomainOf c)
@@ -159,7 +160,7 @@ compParseConstructor c = do
 -- >     return mod.types.vc.ConsVC.make(head,tail);
 -- >   }
 -- > }
-compParseVariadic :: CtorId -> Gen Doc
+compParseVariadic :: CtorId -> HGen Doc
 compParseVariadic vc = do
   pr    <- packagePrefix
   co    <- askSt (codomainOf vc)
@@ -200,7 +201,7 @@ compParseVariadic vc = do
 -- >     return mod.types.vc.EmptyVC.make();
 -- >   }
 -- > }
-compParseVariadicTail :: CtorId -> Gen Doc
+compParseVariadicTail :: CtorId -> HGen Doc
 compParseVariadicTail vc = do
   pr    <- packagePrefix
   co    <- askSt (codomainOf vc)
@@ -228,7 +229,7 @@ compParseVariadicTail vc = do
                             rMethodCall qvc (text "parseTail") [arg]
 
 -- | Given a non-variadic constructor @C@, generates a concrete class @C.java@.
-compConstructor :: CtorId -> Gen FileHierarchy
+compConstructor :: CtorId -> HGen FileHierarchy
 compConstructor c = do mem  <- compMembersOfConstructor c
                        smem <- ifSh $ compSharingMembers c
                        ctor <- compCtorOfConstructor c
@@ -281,7 +282,7 @@ compConstructor c = do mem  <- compMembersOfConstructor c
 
 -- | Given a non-variadic constructor @C(x1:T1,..,xn:Tn)@,
 -- generates @m.types.T1 x1; ...; m.types.Tn xn;@
-compMembersOfConstructor :: CtorId -> Gen Doc
+compMembersOfConstructor :: CtorId -> HGen Doc
 compMembersOfConstructor c = iterOverFields rdr rBody c
   where rdr f s = do qs <- qualifiedSort s
                      return $ private <+> qs <+> _u (pretty f)
@@ -293,7 +294,7 @@ compMembersOfConstructor c = iterOverFields rdr rBody c
 -- > private static C proto = new C();
 -- > private static int nameHash = 
 -- >   shared.HashFunctions.stringHashFunction(mod.types.s.c,n);
-compSharingMembers :: CtorId -> Gen Doc
+compSharingMembers :: CtorId -> HGen Doc
 compSharingMembers c = do
   qc  <- qualifiedCtor c
   len <- length `fmap` askSt (fieldsOf c) 
@@ -313,7 +314,7 @@ compSharingMembers c = do
 -- >   ...
 -- >   this.xn = xn;
 -- > }
-compCtorOfConstructor :: CtorId -> Gen Doc
+compCtorOfConstructor :: CtorId -> HGen Doc
 compCtorOfConstructor c = ifConfM sharing ctorShr ctorNoShr
   where ctorShr   = return $ rMethodDef private empty (pretty c) [] empty
         ctorNoShr = do fis <- askSt (fieldsOf c)
@@ -338,7 +339,7 @@ compCtorOfConstructor c = ifConfM sharing ctorShr ctorNoShr
 -- > public static C make(m.types.T1 x1, ..., m.types.Tn xn) {
 -- >   return new C(x1, ..., xn);
 -- > } 
-compMakeOfConstructor :: CtorId -> Gen Doc
+compMakeOfConstructor :: CtorId -> HGen Doc
 compMakeOfConstructor c = ifConfM sharing cmakes cmake
   where -- the sharing case
         cmakes = do cfs <- cfields 
@@ -369,7 +370,7 @@ compMakeOfConstructor c = ifConfM sharing cmakes cmake
 -- > public m.types.T1 getx1() { return x1; }
 -- > ...
 -- > public m.types.Tn getxn() { return xn; }
-compGettersOfConstructor :: CtorId -> Gen Doc
+compGettersOfConstructor :: CtorId -> HGen Doc
 compGettersOfConstructor = iterOverFields getter vcat
   where getter f s = do qs <- qualifiedSort s
                         let fun = text "get" <> pretty f
@@ -384,7 +385,7 @@ compGettersOfConstructor = iterOverFields getter vcat
 -- > ...
 -- > public void setxn(m.types.Tn xn) 
 -- >   { this.xn = xn; }
-compSettersOfConstructor :: CtorId -> Gen Doc
+compSettersOfConstructor :: CtorId -> HGen Doc
 compSettersOfConstructor = iterOverFields setter vcat
   where setter f s = do qs <- qualifiedSort s
                         let fun = text "set" <> pretty f
@@ -405,7 +406,7 @@ compSettersOfConstructor = iterOverFields setter vcat
 -- >   xn.toStringBuilder(buf);
 -- >   buffer.append(")");
 -- > }
-compToStringBuilder :: CtorId -> Gen Doc
+compToStringBuilder :: CtorId -> HGen Doc
 compToStringBuilder c = do rcalls <- iterOverFields rcall id c
                            return $ rMethodDef 
                              public void (text "toStringBuilder")
@@ -435,7 +436,7 @@ compToStringBuilder c = do rcalls <- iterOverFields rcall id c
 -- >   xn.toStringBuilder(buf);
 -- >   buffer.append(")");
 -- > }
-compToHaskellBuilder :: CtorId -> Gen Doc
+compToHaskellBuilder :: CtorId -> HGen Doc
 compToHaskellBuilder c = do rcalls <- iterOverFields rcall id c
                             return $ rMethodDef 
                               public void (text "toHaskellBuilder")
@@ -467,7 +468,7 @@ compToHaskellBuilder c = do rcalls <- iterOverFields rcall id c
 -- >     return false;
 -- >   }
 -- > }
-compEquiv :: CtorId -> Gen Doc
+compEquiv :: CtorId -> HGen Doc
 compEquiv = compEqAux meth comb jShared
   where meth = text "equivalent"
         comb lhs rhs = lhs <+> text "==" <+> rhs
@@ -486,7 +487,7 @@ compEquiv = compEqAux meth comb jShared
 -- >     return false;
 -- >   }
 -- > }
-compEquals :: CtorId -> Gen Doc
+compEquals :: CtorId -> HGen Doc
 compEquals = compEqAux meth comb jObject
   where meth = text "equals"
         comb lhs rhs = rMethodCall lhs meth [rhs]
@@ -498,7 +499,7 @@ compEquals = compEqAux meth comb jObject
 -- >   clone.init(this.x1,..,this.xn,hashCode);
 -- >   return clone;
 -- > }
-compDuplicate :: CtorId -> Gen Doc
+compDuplicate :: CtorId -> HGen Doc
 compDuplicate c = rdr `fmap` askSt (fieldsOf c)
   where pc  = pretty c
         cl  = text "__clone"
@@ -517,7 +518,7 @@ compDuplicate c = rdr `fmap` askSt (fieldsOf c)
 -- >   this.xn = xn;
 -- >   this.hashCode = hashCode;
 -- > }
-compInit :: CtorId -> Gen Doc 
+compInit :: CtorId -> HGen Doc 
 compInit c = do cfs <- askSt $ fieldsOf c
                 tfs <- mapM rdr cfs
                 let args = tfs ++ [text "int __hashCode"]
@@ -538,7 +539,7 @@ compInit c = do cfs <- askSt $ fieldsOf c
 -- >   this.xn = xn;
 -- >   this.hashCode = hashFunction();
 -- > }
-compInitHash :: CtorId -> Gen Doc 
+compInitHash :: CtorId -> HGen Doc 
 compInitHash c = do cfs <- askSt $ fieldsOf c
                     args <- mapM rdr cfs
                     let body = rBody $ map ass cfs ++ [lastLine]
@@ -597,7 +598,7 @@ hashArg idx fid sid = let res d = char accum <+> text "+=" <+> parens d in
 -- >   c -= a; c -= b; c ^= (b >> 15);
 -- >   return c;
 -- > }
-compHashFun :: CtorId -> Gen Doc
+compHashFun :: CtorId -> HGen Doc
 compHashFun c = do 
   fis <- askSt (fieldsOf c)
   let len = length fis
@@ -624,7 +625,7 @@ compHashFun c = do
 -- > public int getChildCount() {
 -- >   return n;
 -- > }
-compGetChildCount ::  CtorId -> Gen Doc
+compGetChildCount ::  CtorId -> HGen Doc
 compGetChildCount c = do ar <- length `fmap` askSt (fieldsOf c)
                          return $ wrap ar
   where wrap n = rMethodDef public jint (text "getChildCount") 
@@ -642,7 +643,7 @@ compGetChildCount c = do ar <- length `fmap` askSt (fieldsOf c)
 -- > }
 --
 -- Common.Builtins are boxed in @tom.library.sl.VisitableBuiltin@.
-compGetChildAt :: CtorId -> Gen Doc
+compGetChildAt :: CtorId -> HGen Doc
 compGetChildAt c = do fis <- askSt (fieldsOf c)
                       let cs  = zip (map int [0..]) (map cook fis)
                       let arg = text "n"
@@ -665,7 +666,7 @@ compGetChildAt c = do fis <- askSt (fieldsOf c)
 -- > }
 --
 -- Common.Builtins are boxed in @tom.library.sl.VisitableBuiltin@.
-compGetChildren :: CtorId -> Gen Doc
+compGetChildren :: CtorId -> HGen Doc
 compGetChildren c = do fis <- askSt (fieldsOf c)
                        return $ rMethodDef public jVisitableArray
                                            (text "getChildren")
@@ -689,7 +690,7 @@ compGetChildren c = do fis <- askSt (fieldsOf c)
 -- > }
 --
 -- Common.Builtins are unboxed from @tom.library.sl.VisitableBuiltin@.
-compSetChildAt :: CtorId -> Gen Doc
+compSetChildAt :: CtorId -> HGen Doc
 compSetChildAt c = do fis  <- askSt (fieldsOf c)
                       fis' <- mapM set (parts fis)
                       let cs  = zip (map int [0..]) fis'
@@ -732,7 +733,7 @@ compSetChildAt c = do fis  <- askSt (fieldsOf c)
 -- > }
 --
 -- Common.Builtins are unboxed from @tom.library.sl.VisitableBuiltin@.
-compSetChildren :: CtorId -> Gen Doc 
+compSetChildren :: CtorId -> HGen Doc 
 compSetChildren c = do cs  <- askSt (fieldsOf c)
                        csn <- zipWithM cook [0..] cs
                        let cd  = cond csn
@@ -797,7 +798,7 @@ compSymbolName c =
 -- >     return false;
 -- >   }
 -- > }
-compEqAux :: Doc -> (Doc -> Doc -> Doc) -> Doc -> CtorId -> Gen Doc
+compEqAux :: Doc -> (Doc -> Doc -> Doc) -> Doc -> CtorId -> HGen Doc
 compEqAux meth comb ty c = do rcalls <- iterOverFields rcall id c
                               return $ rMethodDef 
                                 (public <+> final) jboolean meth
@@ -820,7 +821,7 @@ compEqAux meth comb ty c = do rcalls <- iterOverFields rcall id c
 --  * @mod.modAbstractType.randoms(rand)@ if @s@ is a builtin, 
 --
 --  * @mod.types.s.makeRandom(rand,depth)@ otherwise
-randomRecCall :: SortId -> Gen Doc
+randomRecCall :: SortId -> HGen Doc
 randomRecCall s = do
   qs <- qualifiedSort s
   at <- qualifiedAbstractType
@@ -839,7 +840,7 @@ randomRecCall s = do
 -- >                       ...,
 -- >                       mod.types.Tn.makeRandom(rand,depth));
 -- > }
-compMakeRandomConstructor :: CtorId -> Gen Doc
+compMakeRandomConstructor :: CtorId -> HGen Doc
 compMakeRandomConstructor c = do
   qc  <- qualifiedCtor c
   co  <- askSt (codomainOf c)
@@ -864,7 +865,7 @@ compMakeRandomConstructor c = do
 -- >   if (cd > max) max = cd;
 -- >   return max + 1;
 -- > }
-compDepthConstructor :: CtorId -> Gen Doc
+compDepthConstructor :: CtorId -> HGen Doc
 compDepthConstructor c = do
   fis <- askSt (fieldsOf c)
   return .wrap $ if null fis then text "return 0;" else pack fis
@@ -881,7 +882,7 @@ compDepthConstructor c = do
 -- > final public static int size() {
 -- >   return x1.size() + ... + xn.size();
 -- > }
-compSizeConstructor :: CtorId -> Gen Doc
+compSizeConstructor :: CtorId -> HGen Doc
 compSizeConstructor c = do
   fis <- askSt (fieldsOf c)
   return . pack $ if null fis then one else add (map call fis)

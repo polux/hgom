@@ -19,10 +19,10 @@ module Common.Random () where
 import Common.Sig
 import Test.QuickCheck
 
-genId :: Gen String
+genId :: Gen conf String
 genId = resize 10 . listOf1 $ oneof [choose ('a','z'), choose ('A','Z')]
 
-genUId :: Gen String
+genUId :: Gen conf String
 genUId = resize 10 $ do c  <- choose ('A','Z') ; cs <- genId ; return $ c:cs
 
 builtins :: [SortId]
@@ -51,7 +51,7 @@ instance Arbitrary Module where
     d' <- shrink d
     return $ Module m i d'
 
-genTypedFields :: [SortId] -> Gen [(FieldId,SortId)]
+genTypedFields :: [SortId] -> Gen conf [(FieldId,SortId)]
 genTypedFields sorts = do
   flds <- listOf1 arbitrary `suchThat` allDiff
   doms <- listOf1 (elements $ sorts ++ builtins)
@@ -62,7 +62,7 @@ instance Arbitrary SortDef where
     l' <- shrink l
     return $ SortDef s c l' 
 
-genSortDef :: [SortId] -> (SortId, [CtorId]) -> Gen SortDef
+genSortDef :: [SortId] -> (SortId, [CtorId]) -> Gen conf SortDef
 genSortDef sorts (sid,cids) = do
   flds   <- genTypedFields sorts
   ctrs   <- mapM (genCtor sorts flds) cids
@@ -72,16 +72,16 @@ instance Arbitrary Ctor where
   shrink (Simple c l) = do l' <- shrink l ; return $ Simple c l' 
   shrink x            = return x 
 
-genCtor :: [SortId] -> [(FieldId, SortId)] -> CtorId -> Gen Ctor
+genCtor :: [SortId] -> [(FieldId, SortId)] -> CtorId -> Gen conf Ctor
 genCtor sorts flds cname =
   oneof [genSCtor flds cname, genVCtor sorts cname]
 
-genSCtor :: [(FieldId, SortId)] -> CtorId -> Gen Ctor
+genSCtor :: [(FieldId, SortId)] -> CtorId -> Gen conf Ctor
 genSCtor flds cname = do
   fis <- listOf (elements flds) `suchThat` allDiff
   return $ Simple cname fis
 
-genVCtor :: [SortId] -> CtorId -> Gen Ctor
+genVCtor :: [SortId] -> CtorId -> Gen conf Ctor
 genVCtor sorts cname = do
   sort <- elements sorts
   return $ Variadic cname sort

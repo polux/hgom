@@ -16,15 +16,16 @@ module HGom.CodeGen.Abstract (
 ) where
 
 import Common.SymbolTable
-import Common.Config
 import Common.FileGen
 import Common.CodeGen
+import HGom.Config
+import HGom.CodeGen.Common
 
 import Control.Applicative
 import Text.PrettyPrint.Leijen hiding ((<$>))
 
 -- | Generates the @ModAbstractType@ abstract java class for module @Mod@.
-compAbstract :: Gen FileHierarchy
+compAbstract :: HGen FileHierarchy
 compAbstract = do at <- abstractType
                   -- if haskell option is enabled, generate abstract toHaskell
                   hs <- ifConf haskell hask []

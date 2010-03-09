@@ -17,9 +17,10 @@ module OOMappings.CodeGen (st2oomapping) where
 
 import Common.Sig
 import Common.SymbolTable
-import Common.Config
 import Common.FileGen
 import Common.CodeGen
+import OOMappings.CodeGen.Common
+import OOMappings.Config
 
 import Text.PrettyPrint.Leijen
 import Control.Arrow((***))
@@ -31,7 +32,7 @@ st2oomapping =  runGen compOOMapping
 
 -- | Generates the @Mod.tom@ tom mapping file for module @Mod@ based
 -- on OO mappings and the OOMapping interface class
-compOOMapping :: Gen FileHierarchy
+compOOMapping :: OGen FileHierarchy
 compOOMapping = do m <- askSt modName
                    let mn = map toLower m 
                    pr <- askConf package
@@ -58,7 +59,7 @@ compOOMapping = do m <- askSt modName
 --
 -- generats @$t1.equals($t2)@ if @--noSharing@ has been
 -- toggled
-compTypeTerm :: SortId -> Gen Doc
+compTypeTerm :: SortId -> OGen Doc
 compTypeTerm s = do 
   cs <- askSt (concreteTypeOf s)
   return $ rTypeterm (pretty s) (text (getClassName cs)) False 
@@ -73,7 +74,7 @@ compTypeTerm s = do
 -- >   get_slot(xn,t) { getSignature().getMapping_f().getn($t) }
 -- >   make (t1,..,tn) { (getSignature().getMapping_f().make($s1, $s2)) }
 -- > }
-compOp :: CtorId -> Gen Doc
+compOp :: CtorId -> OGen Doc
 compOp c = do pfields <- map (pretty *** pretty) `fmap` askSt (fieldsOf c)
               co <- askSt (codomainOf c)
               let pfs = map fst pfields
@@ -99,7 +100,7 @@ compOp c = do pfields <- map (pretty *** pretty) `fmap` askSt (fieldsOf c)
 --  get_tail(l)      { getSignature().getMapping_L().getTail($l) }
 --  is_empty(l)      { getSignature().getMapping_L().isEmpty($l) }
 --}
-compVOp :: CtorId -> Gen Doc
+compVOp :: CtorId -> OGen Doc
 compVOp c = do 
   codom  <- askSt (codomainOf c)
   dom  <- askSt (fieldOf c)
@@ -116,7 +117,7 @@ compVOp c = do
 
 -- | Given a list of constructors @cs@ and a list of var constructors
 -- @vcs@, generates the ISignature of new oo mappings.
-compISignature :: [CtorId] -> [CtorId] -> Gen FileHierarchy
+compISignature :: [CtorId] -> [CtorId] -> OGen FileHierarchy
 compISignature cs vcs = do 
   methDecls  <- mapM compMDecl cs
   vmethDecls <- mapM compMVDecl vcs
@@ -124,7 +125,7 @@ compISignature cs vcs = do
                         (rBody (methDecls ++ vmethDecls))
   return $ Class "ISignature" code 
 
-compMDecl :: CtorId -> Gen Doc
+compMDecl :: CtorId -> OGen Doc
 compMDecl c = do 
   cfields <- askSt (fieldsOf c)
   s       <- askSt (codomainOf c)
@@ -138,7 +139,7 @@ compMDecl c = do
         prettyConcreteType s = do cs <- askSt (concreteTypeOf s)
                                   return $ pretty cs
 
-compMVDecl :: CtorId -> Gen Doc
+compMVDecl :: CtorId -> OGen Doc
 compMVDecl c = do 
   dom    <- askSt (fieldOf c)
   codom  <- askSt (codomainOf c)

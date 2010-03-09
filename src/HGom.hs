@@ -11,33 +11,23 @@
 -- Portability : non-portable (requires GeneralizedNewtypeDeriving)
 --
 -- Entry point of hgom. 
---
--- The call graph is:
---
--- > main -> entryPoint -> go1 -> go2 -> go3 --> hgomChain
--- >                                         '-> ooChain
 --------------------------------------------------------------------
 
 {-# LANGUAGE PatternGuards #-}
 
-module Main (main,entryPoint) where
+module Main (main) where
 
 import Common.Sig
 import Common.Parser
 import Common.Pretty ()
 import Common.Checker
 import Common.SymbolTable
-import HGom.CodeGen
-import Common.Config
 import Common.FileGen
+import HGom.CodeGen
+import HGom.Config
 
 import System.Environment (getArgs)
 import Text.PrettyPrint.Leijen (pretty)
-
-#if TEST
-import qualified HGom.UnitTests as T
-import Test.Framework (defaultMainWithArgs)
-#endif
 
 hgomVersion :: String
 hgomVersion = "Version 0.6 - March 2009"
@@ -87,6 +77,7 @@ go3 f c sig | prprint c = print $ pretty sig
                 Just d  -> error (f ++ " contains errors:\n" ++ show d)
             | otherwise = gomain
   where gomain = chain c sig
+
 
 -- | compilation chain for hgom
 chain :: Config -> Module -> IO ()

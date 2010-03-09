@@ -16,10 +16,11 @@ module HGom.CodeGen.Sorts (
 ) where
 
 import Common.Sig
-import Common.Config
 import Common.FileGen
 import Common.SymbolTable
 import Common.CodeGen
+import HGom.Config
+import HGom.CodeGen.Common
 import HGom.CodeGen.Constructors
 
 import Text.PrettyPrint.Leijen
@@ -34,7 +35,7 @@ import Control.Monad(foldM)
 --
 --     - a concrete class @C.java@ for every non-variadic constructor @C@ of
 --     @Sort@
-compSort :: SortId -> Gen [FileHierarchy]
+compSort :: SortId -> HGen [FileHierarchy]
 compSort s = do ac    <- compAbstractSort s
                 vctrs <- askSt (vCtorsOf s)
                 ctrs  <- askSt (sCtorsOf s)
@@ -43,7 +44,7 @@ compSort s = do ac    <- compAbstractSort s
                 return [ac, Package (show $ lowerId s) (avs ++ ccs)] 
 
 -- | Given a sort @S@, generates an abstract class @S.java@.
-compAbstractSort :: SortId -> Gen FileHierarchy
+compAbstractSort :: SortId -> HGen FileHierarchy
 compAbstractSort s = do eg <- compEmptyGettersOfSort s
                         es <- compEmptySettersOfSort s
                         ei <- compEmptyIsX s
@@ -74,7 +75,7 @@ hasNotError s f = throw <+> new <+> text "UnsupportedOperationException" <>
 -- > }
 --
 -- for each of its fields @x:T@
-compEmptyGettersOfSort :: SortId -> Gen Doc
+compEmptyGettersOfSort :: SortId -> HGen Doc
 compEmptyGettersOfSort = iterOverSortFields getter vcat
   where getter co f t = do qt <- qualifiedSort t
                            let fun = text "get" <> pretty f
@@ -88,7 +89,7 @@ compEmptyGettersOfSort = iterOverSortFields getter vcat
 -- > }
 --
 -- for each of its fields @x:T@
-compEmptySettersOfSort :: SortId -> Gen Doc
+compEmptySettersOfSort :: SortId -> HGen Doc
 compEmptySettersOfSort = iterOverSortFields setter vcat
   where setter co f t = do qt <- qualifiedSort t
                            let fun = text "set" <> pretty f
@@ -103,7 +104,7 @@ compEmptySettersOfSort = iterOverSortFields setter vcat
 -- > }
 --
 -- for each of its fields @x@
-compEmptyIsX :: SortId -> Gen Doc
+compEmptyIsX :: SortId -> HGen Doc
 compEmptyIsX s = do cs  <- askSt (sCtorsOf s) 
                     return . vcat $ map isx cs
   where isx f = let fun = text "is" <> pretty f
@@ -119,7 +120,7 @@ compEmptyIsX s = do cs  <- askSt (sCtorsOf s)
 -- >   else if(id.equals("fn")) return mod.types.t.fn.parse(par);
 -- >   else throw new RuntimeException();
 -- > }
-compParseSort :: SortId -> Gen Doc
+compParseSort :: SortId -> HGen Doc
 compParseSort s = do
   qs  <- qualifiedSort s
   scs <- askSt (sCtorsOf s)
@@ -143,7 +144,7 @@ compParseSort s = do
 -- > public static mod.types.S fromString(String __s) {
 -- >   return mod.types.S.parse(new mod.Parser(__s));
 -- > }
-compFromStringSort :: SortId -> Gen Doc
+compFromStringSort :: SortId -> HGen Doc
 compFromStringSort s = do
   qs <- qualifiedSort s
   pr <- packagePrefix
@@ -174,7 +175,7 @@ compFromStringSort s = do
 -- > }
 --
 -- Where @g1 ... gm@ are the constructors with arity 0 among @f1 ... fn@.
-compMakeRandomSort :: SortId -> Gen Doc
+compMakeRandomSort :: SortId -> HGen Doc
 compMakeRandomSort s = do
   qs         <- qualifiedSort s
   cs         <- askSt (sCtorsOf s)
@@ -204,7 +205,7 @@ compMakeRandomSort s = do
 -- > static public sig.types.T makeRandom(int depth) {
 -- >   sig.types.T.makeRandom(new java.util.Random(), depth);
 -- > }
-compMakeRandomSortInit :: SortId -> Gen Doc
+compMakeRandomSortInit :: SortId -> HGen Doc
 compMakeRandomSortInit s = do
   qs <- qualifiedSort s
   return $ rMethodDef (static <+> public) qs (text "makeRandom") 

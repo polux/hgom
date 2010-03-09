@@ -19,13 +19,14 @@ import Common.Sig
 import Common.FileGen
 import Common.SymbolTable
 import Common.CodeGen
+import HGom.CodeGen.Common
 
 import Text.PrettyPrint.Leijen
 
 -- | Given a sort @S@ of constructors @Ci@, 
 -- generates the package @s@ containing the
 -- @_Ci@ congruence classes.
-compStrategy :: SortId -> Gen FileHierarchy
+compStrategy :: SortId -> HGen FileHierarchy
 compStrategy s = do ctrs  <- askSt (sCtorsOf s)
                     cs <- mapM compCongruence ctrs
                     ms <- mapM compMake ctrs
@@ -34,7 +35,7 @@ compStrategy s = do ctrs  <- askSt (sCtorsOf s)
 
 -- | Given a non-variadic constructor @C@, 
 -- generates a congruence strategy class @_C@.
-compCongruence :: CtorId -> Gen FileHierarchy
+compCongruence :: CtorId -> HGen FileHierarchy
 compCongruence c = 
   do body <- vcat `fmap` sequence 
                [compStratConstructor (text "_") c,
@@ -46,7 +47,7 @@ compCongruence c =
 
 -- | Given a non-variadic constructor @C@,
 -- generates the creation strategy class @Make_C@.
-compMake :: CtorId -> Gen FileHierarchy
+compMake :: CtorId -> HGen FileHierarchy
 compMake c = do
   body <- vcat `fmap` sequence 
             [compStratConstructor (text "Make_") c,
@@ -58,7 +59,7 @@ compMake c = do
 
 -- | Given a non-variadic constructor @C@,
 -- generates the test strategy class @Is_C@.
-compIs :: CtorId -> Gen FileHierarchy
+compIs :: CtorId -> HGen FileHierarchy
 compIs c = do
   qc <- qualifiedCtor c
   return $ Class classname (wrap $ body qc)
@@ -89,7 +90,7 @@ compIs c = do
 -- | Given a non-variadic constructor @C@, generates
 -- the method @public int visit(Introspector introspector) { ... }@
 -- for class @_C@.
-compVisitCongr :: CtorId -> Gen Doc
+compVisitCongr :: CtorId -> HGen Doc
 compVisitCongr c = body `fmap` qualifiedCtor c
   where body qc = vcat $ map text 
           ["public int visit(tom.library.sl.Introspector __i) {",
@@ -129,7 +130,7 @@ compVisitCongr c = body `fmap` qualifiedCtor c
 -- | Given a non-variadic constructor @C@, generates
 -- the method @public int visitLight(Introspector introspector) { ... }@
 -- for class @_C@.
-compVisitLightCongr :: CtorId -> Gen Doc
+compVisitLightCongr :: CtorId -> HGen Doc
 compVisitLightCongr c = do 
   n <- length `fmap` askSt (fieldsOf c)
   qc <- qualifiedCtor c
@@ -183,7 +184,7 @@ compVisitLightCongr c = do
 -- >   getEnvironment().setSubject(m.types.co.C.make(new_t0, ..., new_tn));
 -- >   return tom.library.sl.Environment.SUCCESS;
 -- > }
-compVisitMake :: CtorId -> Gen Doc
+compVisitMake :: CtorId -> HGen Doc
 compVisitMake c = do
   qc  <- qualifiedCtor c
   ss  <- map snd `fmap` askSt (fieldsOf c)
@@ -232,7 +233,7 @@ compVisitMake c = do
 -- > 
 -- >   return (T) m.types.co.C.make(new_t0, ..., new_tn);
 -- > }
-compVisitLightMake :: CtorId -> Gen Doc
+compVisitLightMake :: CtorId -> HGen Doc
 compVisitLightMake c = do
   qc  <- qualifiedCtor c
   ss  <- map snd `fmap` askSt (fieldsOf c)
@@ -273,7 +274,7 @@ compVisitLightMake c = do
 -- >    this.initSubterm(
 -- >      new tom.library.sl.Strategy[] { s_x1, ..., s_xn });
 -- >  }
-compStratConstructor :: Doc -> CtorId -> Gen Doc
+compStratConstructor :: Doc -> CtorId -> HGen Doc
 compStratConstructor pr c = do
   fs <- map convert `fmap` askSt (fieldsOf c)
   return $ rMethodDef public empty (pr <> pretty c)

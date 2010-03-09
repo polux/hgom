@@ -18,21 +18,22 @@ module HGom.CodeGen (st2java) where
 import Data.Char(toLower)
 
 import Common.SymbolTable
-import Common.Config
 import Common.FileGen
 import Common.CodeGen.Constants
 import Common.CodeGen.GenMonad
+import HGom.CodeGen.Common
 import HGom.CodeGen.Abstract
 import HGom.CodeGen.Mappings
 import HGom.CodeGen.Strategies
 import HGom.CodeGen.Sorts
+import HGom.Config
 
 -- | Compiles a symbol table into a Java hierarchy
 st2java :: SymbolTable -> Config -> FileHierarchy
 st2java =  runGen  compSt
 
 -- | Generates the whole file hierarchy of the \"global\" symbol table.
-compSt :: Gen FileHierarchy
+compSt :: HGen FileHierarchy
 compSt = do mn <- map toLower `fmap` askSt modName
             ds <- askSt definedSortsIds
             hs <- mapM compSort ds

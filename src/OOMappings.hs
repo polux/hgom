@@ -27,9 +27,9 @@ import Common.Parser
 import Common.Pretty ()
 import Common.Checker
 import Common.SymbolTable
-import OOMappings.CodeGen
-import Common.Config
 import Common.FileGen
+import OOMappings.CodeGen
+import OOMappings.Config
 
 import System.Environment (getArgs)
 import Text.PrettyPrint.Leijen (pretty)

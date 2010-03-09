@@ -16,17 +16,18 @@ module HGom.CodeGen.Mappings (
 ) where
 
 import Common.Sig
-import Common.Config
 import Common.FileGen
 import Common.SymbolTable
 import Common.CodeGen
+import HGom.Config
+import HGom.CodeGen.Common
 
 import Text.PrettyPrint.Leijen
 import Control.Arrow((***))
 
 -- | Generates the @Mod.tom@ and @_Mod.tom@ tom mappings files for
 -- module @Mod@
-compTomFiles :: Gen [FileHierarchy]
+compTomFiles :: HGen [FileHierarchy]
 compTomFiles = do mn    <- askSt modName
                   srts  <- askSt definedSortsIds
                   ctrs  <- askSt simpleConstructorsIds
@@ -49,7 +50,7 @@ compTomFiles = do mn    <- askSt modName
                                       Tom ('_':mn) (vsep $ includeSl:sops)]
 
 -- | Generates @%include { x.tom }@ for every imported sort @x@
-compIncludes :: Gen Doc
+compIncludes :: HGen Doc
 compIncludes = do is <- askSt importedSorts
                   return $ vcat (map rdr is)
   where rdr s = text "%include" <+> 
@@ -65,7 +66,7 @@ compIncludes = do is <- askSt importedSorts
 --
 -- generats @$t1.equals($t2)@ if @--noSharing@ has been
 -- toggled
-compTypeTerm :: SortId -> Gen Doc
+compTypeTerm :: SortId -> HGen Doc
 compTypeTerm s = do qs <- qualifiedSort s
                     sh <- askConf sharing 
                     return $ rTypeterm (pretty s) qs sh
@@ -80,7 +81,7 @@ compTypeTerm s = do qs <- qualifiedSort s
 -- >   get_slot(xn,t) { $t.getxn() }
 -- >   make (t1,..,tn) { (m.types.co.c.make($t1,..,$tn)) }
 -- > }
-compOp :: CtorId -> Gen Doc
+compOp :: CtorId -> HGen Doc
 compOp c = do isfsym <- compIsFsym
               slots  <- iterOverFields compSlot vcat c
               s      <- askSt (codomainOf c)
@@ -107,7 +108,7 @@ compOp c = do isfsym <- compIsFsym
 -- >   get_tail(l) { $l.getTailVC() }
 -- >   is_empty(l) { $l.isEmptyVC() }
 -- > }
-compOpList :: CtorId -> Gen Doc
+compOpList :: CtorId -> HGen Doc
 compOpList c = do co     <- askSt (codomainOf c)
                   dom    <- askSt (fieldOf c)
                   consc  <- qualifiedCtor (prependCons c)
@@ -125,7 +126,7 @@ compOpList c = do co     <- askSt (codomainOf c)
 -- >   get_slot(sn,t) { (tom.library.sl.Strategy) $t.getChildAt(n-1) }
 -- >   make (t1,..,tn) { new m.strategy.co.prefix_C($t1,..,$tn) }
 -- > }
-compSOp :: Doc -> CtorId -> Gen Doc
+compSOp :: Doc -> CtorId -> HGen Doc
 compSOp pr c = do sc <- compStratClass
                   n  <- length `fmap` askSt (fieldsOf c)
                   return $ rOp strat cln (rArgs n)
@@ -144,7 +145,7 @@ compSOp pr c = do sc <- compStratClass
 -- >  %op Strategy Is_C() {
 -- >    make() { new m.strategy.co.Is_C()}
 -- >  }
-compIsOp :: CtorId -> Gen Doc
+compIsOp :: CtorId -> HGen Doc
 compIsOp c = do 
   sc <- compStratClass
   return $ rOp (text "Strategy") cln [] (rMakeStrat 0 sc)
