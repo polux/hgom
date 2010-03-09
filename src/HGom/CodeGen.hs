@@ -20,7 +20,6 @@ import Data.Char(toLower)
 import Common.SymbolTable
 import Common.FileGen
 import Common.CodeGen
-import Common.CodeGen
 import HGom.CodeGen.HGenMonad
 import HGom.CodeGen.Abstract
 import HGom.CodeGen.Mappings
