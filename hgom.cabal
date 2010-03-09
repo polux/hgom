@@ -40,7 +40,7 @@ executable hgom
   other-modules: HGom.Config
                  HGom.Checker
                  HGom.CodeGen
-                 HGom.CodeGen.Common
+                 HGom.CodeGen.HGenMonad
                  HGom.CodeGen.Abstract
                  HGom.CodeGen.Constructors
                  HGom.CodeGen.Mappings
@@ -81,7 +81,7 @@ executable oomappings
   other-modules: OOMappings.Config
                  OOMappings.Checker
                  OOMappings.CodeGen
-                 OOMappings.CodeGen.Common
+                 OOMappings.CodeGen.OGenMonad
                  Common.Config
                  Common.FileGen
                  Common.Parser
