@@ -1,0 +1,10 @@
+%include { ../modpol/query.tom }
+%include { int.tom }
+
+%op Query queryTemps(h:int,t:int,sub:Query){
+  is_fsym(c)      { c instanceof QueryTemps }
+	get_slot(h,c)   { ((QueryTemps)c).hour }
+	get_slot(t,c)   { ((QueryTemps)c).type }
+	get_slot(sub,c) { ((QueryTemps)c).subquery }
+  make(h,t,sub)  { new QueryTemps(sub,h) }
+}

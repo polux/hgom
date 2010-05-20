@@ -1,0 +1,7 @@
+%include { query.tom }
+
+%op Query permit(){
+        is_fsym(c)      { c instanceof Permit }
+        make()          { Permit.instance }
+}
+

@@ -1,0 +1,12 @@
+%include { ../modpol/query.tom }
+
+%typeterm QueryEndSession{                                       
+        implement { QueryEndSession }
+        is_sort(c) { c instanceof QueryEndSession }
+        equals(c1,c2) { c1.equals(c2) }
+}
+ 
+%op Query queryEndSession(){
+        is_fsym(c)      { c instanceof QueryEndSession }
+        make()          { new QueryEndSession() }
+}

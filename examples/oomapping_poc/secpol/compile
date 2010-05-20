@@ -1,0 +1,17 @@
+#!/bin/bash
+
+#for f in modpol poltemps polrbac
+#do
+#	tom -gi $f/*.t 
+#	javac $f/*.java
+#done
+
+tom -gi --pretty modpol/*.t polrbac/*.t poltemps/*.t 
+javac modpol/*.java polrbac/*.java poltemps/*.java
+
+#tom -gi modpol/*.t 
+#javac modpol/*.java
+#tom -gi polrbac/*.t 
+#javac polrbac/*.java
+#tom -gi poltemps/*.t 
+#javac poltemps/*.java

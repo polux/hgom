@@ -1,0 +1,7 @@
+%include { query.tom }
+
+%op Query deny(){
+        is_fsym(c)      { c instanceof Deny }
+        make()          { Deny.instance }
+}
+

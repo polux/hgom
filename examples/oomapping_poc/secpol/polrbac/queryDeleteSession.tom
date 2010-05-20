@@ -1,0 +1,6 @@
+%include { ../modpol/query.tom }
+
+%op Query queryDeleteSession(){
+        is_fsym(c)      { c instanceof QueryDeleteSession }
+        make()          { new QueryDeleteSession() }
+}

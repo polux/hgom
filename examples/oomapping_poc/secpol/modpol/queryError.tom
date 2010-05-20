@@ -1,0 +1,6 @@
+%include { query.tom }
+ 
+%op Query queryError(){
+        is_fsym(c)      { c instanceof QueryError }
+        make()          { QueryError.instance }
+}

@@ -1,0 +1,6 @@
+%include { ../modpol/query.tom }
+
+%op Query queryCreateSession(){
+	is_fsym(c)	{ c instanceof QueryCreateSession }
+	make()		{ new QueryCreateSession() }
+}
