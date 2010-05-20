@@ -10,7 +10,7 @@ class PolTemps extends Policy{
   %include { queryTemps.tom }
   %include { ../modpol/deny.tom }
   %include { ../modpol/notApplicable.tom }
-  %include { sl.tom }
+  %include { ../sl.tom }
 
 //  %strategy Default() extends Identity(){
 //    visit Query{

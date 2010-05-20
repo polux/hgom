@@ -8,7 +8,7 @@ class PolicyRBAC extends Policy{
   %include { ../modpol/notApplicable.tom }
   %include { queryCreateSession.tom }
   %include { queryDeleteSession.tom }
-  %include { sl.tom }
+  %include { ../sl.tom }
 
 //  %include { sl.tom }
 //

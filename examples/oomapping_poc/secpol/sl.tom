@@ -1,0 +1,24 @@
+%typeterm Strategy {
+  implement { tom.library.sl.Strategy }
+  is_sort(t) { ($t instanceof tom.library.sl.Strategy) }
+  equals(t1,t2) { ($t1.equals($t2)) }
+}
+
+%op Strategy Identity() {
+  is_fsym(t) {( ($t instanceof tom.library.sl.Identity) )}
+  make() {( new tom.library.sl.Identity() )}
+}
+
+%op Strategy Fail() {
+  is_fsym(t) {( ($t instanceof tom.library.sl.Fail) )}
+  make() {( new tom.library.sl.Fail() )}
+}
+
+%oplist Strategy Sequence(Strategy*) {
+  is_fsym(t) {( ($t instanceof tom.library.sl.Sequence) )}
+  make_empty() {( null )}
+  make_insert(head,tail) {( ($tail==null)?$head:new tom.library.sl.Sequence($head,$tail) )}
+  get_head(t) {( (tom.library.sl.Strategy)$t.getChildAt(tom.library.sl.Sequence.FIRST) )}
+  get_tail(t) {( (tom.library.sl.Strategy)$t.getChildAt(tom.library.sl.Sequence.THEN) )}
+  is_empty(t) {( $t == null )}
+}
