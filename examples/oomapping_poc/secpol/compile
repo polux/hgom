@@ -7,8 +7,8 @@
 #done
 
 tom -gi --pretty modpol/*.t polrbac/*.t poltemps/*.t 
-javac modpol/*.java polrbac/*.java poltemps/*.java
-
+#javac modpol/*.java polrbac/*.java poltemps/*.java tom/library/sl/*.java tom/library/sl/oomapping/*.java
+javac tom/library/sl/*.java tom/library/sl/oomapping/*.java
 #tom -gi modpol/*.t 
 #javac modpol/*.java
 #tom -gi polrbac/*.t 
