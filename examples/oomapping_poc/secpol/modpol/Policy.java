@@ -1,7 +1,7 @@
 package modpol;
 import tom.library.sl.*;
 
-abstract public class Policy extends AbstractStrategyBasic{
+abstract public class Policy extends AbstractStrategyBasic {
 
 
 private static boolean tom_equal_term_Strategy(Object t1, Object t2) {

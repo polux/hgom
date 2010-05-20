@@ -47,13 +47,13 @@ public class Sequence extends AbstractStrategyCombinator {
   }
 
   public <T> T visitLight(T visitable, Introspector introspector) throws VisitFailure {
-    return arguments[THEN].visitLight(arguments[FIRST].visitLight(visitable,introspector),introspector);
+    return arguments[THEN].visitLight(arguments[FIRST].visitLight(visitable,arguments[FIRST].getIntrospector()),arguments[THEN].getIntrospector());
   }
 
   public int visit(Introspector introspector) {
-    int status = arguments[FIRST].visit(introspector);
+    int status = arguments[FIRST].visit(arguments[FIRST].getIntrospector());
     if(status == Environment.SUCCESS) {
-      return arguments[THEN].visit(introspector);
+      return arguments[THEN].visit(arguments[THEN].getIntrospector());
     }
     return status;
   }

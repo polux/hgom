@@ -49,6 +49,11 @@ public abstract class AbstractStrategy implements Strategy {
    * Environment of the strategy application
    */
   protected Environment environment;
+  /**
+   * Introspector of the strategy application
+   */
+  protected Introspector introspector;
+
 
   /** 
    * Executes the strategy in the given environment (on its current subject).
@@ -142,6 +147,30 @@ public abstract class AbstractStrategy implements Strategy {
   public void setEnvironment(Environment env) {
     this.environment = env;
   }
+
+  /** 
+   * Get a reference to the current introspector.
+   *
+   * @return the current introspector
+   * @throws RuntimeException if the introspector is not initialized
+   */
+  public Introspector getIntrospector() {
+    if(introspector!=null) {
+      return introspector;
+    } else {
+      throw new RuntimeException("introspector not initialized");
+    }
+  }
+
+  /** 
+   * Set up a new introspector.
+   *
+   * @param i the introspector to set up.
+   */
+  public void setIntrospector(Introspector i) {
+    this.introspector = i;
+  }
+
 
   /** 
    * Get the current root.

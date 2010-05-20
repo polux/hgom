@@ -47,6 +47,21 @@ public interface Strategy extends Visitable {
   public Environment getEnvironment();
 
   /**
+   * Set up a new intropsector
+   *
+   * @param i the introspector to set up
+   */
+  public void setIntrospector(Introspector i);
+
+  /**
+   * Get a reference to the current introspector.
+   *
+   * @return the current introspector
+   */
+  public Introspector getIntrospector();
+
+
+  /**
    *  Visit the subject any by providing the environment
    *  
    *  @param any the subject to visit.

@@ -23,17 +23,24 @@ public class SequencePolicy extends Policy{
 
 
   public Query compute(Query q){
-    //    return `Sequence(pol1,pol2).visit(q);
+    //TODO: should be set in the classes of pol1 and pol2
+    pol1.setIntrospector(pol1.getPolicyIntrospector());
+    pol2.setIntrospector(pol2.getPolicyIntrospector());
+
     try {
-      Query q1 = pol1.visit(q,pol1.getPolicyIntrospector());
-      if (q1 instanceof Permit) {
-          return q1;
-      } else {
-          return pol2.visit(q,pol2.getPolicyIntrospector());
-      }
+      return `Sequence(pol1,pol2).visit(q, null);
+      /**    
+        Query q1 = pol1.visit(q,pol1.getPolicyIntrospector());
+        if (q1 instanceof Permit) {
+        return q1;
+        } else {
+        return pol2.visit(q,pol2.getPolicyIntrospector());
+        }
+       */
     } catch (tom.library.sl.VisitFailure e) {
-      return q;
+      throw new RuntimeException("unexpected visitfailure "+e);
     }
+
   }
 
   public tom.library.sl.Introspector getPolicyIntrospector() {

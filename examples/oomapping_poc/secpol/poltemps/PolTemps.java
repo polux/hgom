@@ -228,9 +228,8 @@ System.out.println(pt.compute(qt3));
 System.out.println("");
 
 Policy po = new SequencePolicy(pt,pt);
-System.out.println(po.compute(qt0)); // Denied
-System.out.println(po.compute(qt1)); // Permitted
-System.out.println(po.compute(new Permit())); // Permitted
+System.out.println(po.compute(qt0) + " should be denied"); // Denied
+System.out.println(po.compute(qt1) + " should be permitted"); // Permitted
 }
 
 public static class LocalIntrospector implements tom.library.sl.Introspector {@SuppressWarnings("unchecked")

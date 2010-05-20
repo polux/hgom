@@ -1,7 +1,7 @@
 package modpol;
 import tom.library.sl.*;
 
-abstract public class Policy extends AbstractStrategyBasic{
+abstract public class Policy extends AbstractStrategyBasic {
 
   %include{ sl.tom }
   %include{ query.tom }
