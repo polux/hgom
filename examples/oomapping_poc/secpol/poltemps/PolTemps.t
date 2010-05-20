@@ -28,6 +28,7 @@ class PolTemps extends Policy{
   }
   public Query compute(Query q){
     %match(q){
+      x -> { System.out.println("in PolTemps: "+`x); }
       queryTemps(h,_,s) && (9 <= h && h <= 18) -> { return `s; } // pas besoin de savoir que c'est par dessus RBAC!
       queryTemps(h,t,s) && (t == 1 && (h < 9 || 18 < h)) -> { return `s; }
       queryTemps(h,t,_) && (t == 0 && (h < 9 || 18 < h)) -> { return `deny(); }

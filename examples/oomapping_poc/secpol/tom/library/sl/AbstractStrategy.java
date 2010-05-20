@@ -155,11 +155,7 @@ public abstract class AbstractStrategy implements Strategy {
    * @throws RuntimeException if the introspector is not initialized
    */
   public Introspector getIntrospector() {
-    if(introspector!=null) {
       return introspector;
-    } else {
-      throw new RuntimeException("introspector not initialized");
-    }
   }
 
   /** 

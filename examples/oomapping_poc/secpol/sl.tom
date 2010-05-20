@@ -22,3 +22,20 @@
   get_tail(t) {( (tom.library.sl.Strategy)$t.getChildAt(tom.library.sl.Sequence.THEN) )}
   is_empty(t) {( $t == null )}
 }
+
+%op Strategy IfThenElse(s1:Strategy, s2:Strategy, s3:Strategy) {
+  is_fsym(t) {( ($t instanceof tom.library.sl.IfThenElse) )}
+  make(condition,trueCase,falseCase) {( new tom.library.sl.IfThenElse($condition,$trueCase,$falseCase) )}
+  get_slot(s1, t) {( (tom.library.sl.Strategy)$t.getChildAt(tom.library.sl.IfThenElse.CONDITION) )}
+  get_slot(s2, t) {( (tom.library.sl.Strategy)$t.getChildAt(tom.library.sl.IfThenElse.TRUE_CASE) )}
+  get_slot(s3, t) {( (tom.library.sl.Strategy)$t.getChildAt(tom.library.sl.IfThenElse.FALSE_CASE) )}
+}
+
+%oplist Strategy Choice(Strategy*) {
+  is_fsym(t) {( ($t instanceof tom.library.sl.Choice) )}
+  make_empty() {( null )}
+  make_insert(head,tail) {( ($tail==null)?$head:new tom.library.sl.Choice($head,$tail) )}
+  get_head(t) {( (tom.library.sl.Strategy)$t.getChildAt(tom.library.sl.Choice.FIRST) )}
+  get_tail(t) {( (tom.library.sl.Strategy)$t.getChildAt(tom.library.sl.Choice.THEN) )}
+  is_empty(t) {( $t ==null )}
+}

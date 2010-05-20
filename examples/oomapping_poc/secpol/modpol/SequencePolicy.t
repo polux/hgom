@@ -6,9 +6,10 @@ import poltemps.*;
 
 public class SequencePolicy extends Policy{
 
-  %include { query.tom } 
+  %include { query.tom }
+  %include { permit.tom }
   // includes description of strategy operators for tom 
-  %include { sl.tom } 
+  %include { ../sl.tom } 
 
   private Policy pol1;
   private Policy pol2;
@@ -21,6 +22,12 @@ public class SequencePolicy extends Policy{
 //    }
 //  }
 
+  %strategy IsPermit() extends Fail() {
+    visit Query {
+      x@permit() -> x
+    }
+  }
+
 
   public Query compute(Query q){
     //TODO: should be set in the classes of pol1 and pol2
@@ -28,15 +35,7 @@ public class SequencePolicy extends Policy{
     pol2.setIntrospector(pol2.getPolicyIntrospector());
 
     try {
-      return `Sequence(pol1,pol2).visit(q, null);
-      /**    
-        Query q1 = pol1.visit(q,pol1.getPolicyIntrospector());
-        if (q1 instanceof Permit) {
-        return q1;
-        } else {
-        return pol2.visit(q,pol2.getPolicyIntrospector());
-        }
-       */
+      return `Choice(Sequence(pol1,IsPermit()),pol2).visit(q, null);
     } catch (tom.library.sl.VisitFailure e) {
       throw new RuntimeException("unexpected visitfailure "+e);
     }
