@@ -2,4 +2,4 @@
 
 hgom -p simple --oomapping simple/Signature.gom
 tom simple/Test.t
-javac -cp ../../test/data/tom-runtime-full.jar: simple/Test.java
+javac -cp ../../test/data/tom_runtime.jar:../../test/data/junit.jar: simple/Test.java

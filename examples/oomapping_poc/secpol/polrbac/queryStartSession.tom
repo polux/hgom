@@ -1,0 +1,12 @@
+%include { ../modpol/query.tom }
+
+%typeterm QueryStartSession{
+	implement { QueryStartSession }
+	is_sort(c) { c instanceof QueryStartSession }
+	equals(c1,c2) { c1.equals(c2) }
+}
+
+%op Query queryStartSession(){
+	is_fsym(c)	{ c instanceof QueryStartSession }
+	make()		{ new QueryStartSession() }
+}

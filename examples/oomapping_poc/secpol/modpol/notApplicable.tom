@@ -1,0 +1,6 @@
+%include { query.tom }
+ 
+%op Query notApplicable(){
+        is_fsym(c)      { c instanceof NotApplicable }
+        make()          { NotApplicable.instance }
+}

@@ -1,0 +1,5 @@
+%typeterm Query{                                       
+	implement { Query }
+        is_sort(c) { c instanceof Query }
+        equals(c1,c2) { c1.equals(c2) }
+}
