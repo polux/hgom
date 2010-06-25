@@ -14,7 +14,7 @@ description:
 category:          Compiler
 license:           GPL
 license-file:      COPYING
-cabal-version:     >= 1.6.0
+cabal-version:     >= 1.8.0
 build-type:        Simple
 tested-with:       GHC >= 6.10
 
@@ -26,7 +26,6 @@ extra-source-files: examples/*.gom
                     README.markdown
                     CHANGELOG.markdown
 
-
 data-files: test/data/*.gom
             test/data/*.jar
 
@@ -34,7 +33,36 @@ Flag test
   Description: enable test support
   Default:     False
 
-executable hgom
+library
+  hs-source-dirs: src
+  exposed-modules: Common.Config
+                   Common.FileGen
+                   Common.Parser
+                   Common.Checkers
+                   Common.Pretty
+                   Common.CodeGen
+                   Common.CodeGen.Builtins
+                   Common.CodeGen.Helpers
+                   Common.CodeGen.Constants
+                   Common.CodeGen.GenMonad
+                   Common.SymbolTable
+                   Common.Sig
+  build-depends: base >= 4 && < 5, containers >= 0.2,
+                 parsec >= 3.0.0, wl-pprint >= 1.0,
+                 mtl >= 1.1.0.2, directory >= 1.0.0.2,
+                 filepath >= 1.1.0.2
+  extensions:    CPP
+  ghc-options:   -Wall -fno-warn-orphans
+
+  if flag(test)
+    cpp-options:   -DTEST
+    build-depends: QuickCheck >= 2, test-framework >= 0.2.4, 
+                   test-framework-quickcheck2 >= 0.2.5,
+                   test-framework-hunit >= 0.2.4, Glob >= 0.5,
+                   HUnit >= 1.2.2.1, process >= 1.0.1.1
+    other-modules: Common.Random
+
+executable hgomapp
   hs-source-dirs: src
   main-is:       HGom.hs
   other-modules: HGom.Config
@@ -46,23 +74,11 @@ executable hgom
                  HGom.CodeGen.Mappings
                  HGom.CodeGen.Strategies
                  HGom.CodeGen.Sorts
-                 Common.Config
-                 Common.FileGen
-                 Common.Parser
-                 Common.Checkers
-                 Common.Pretty
-                 Common.CodeGen
-                 Common.CodeGen.Builtins
-                 Common.CodeGen.Helpers
-                 Common.CodeGen.Constants
-                 Common.CodeGen.GenMonad
-                 Common.SymbolTable
-                 Common.Sig
                  Paths_hgom
   build-depends: base >= 4 && < 5, containers >= 0.2,
                  parsec >= 3.0.0, wl-pprint >= 1.0,
                  mtl >= 1.1.0.2, directory >= 1.0.0.2,
-                 filepath >= 1.1.0.2
+                 filepath >= 1.1.0.2, hgom
   extensions:    CPP
   ghc-options:   -Wall -fno-warn-orphans
 
@@ -71,9 +87,9 @@ executable hgom
     build-depends: QuickCheck >= 2, test-framework >= 0.2.4, 
                    test-framework-quickcheck2 >= 0.2.5,
                    test-framework-hunit >= 0.2.4, Glob >= 0.5,
-                   HUnit >= 1.2.2.1, process >= 1.0.1.1
+                   HUnit >= 1.2.2.1, process >= 1.0.1.1, hgom
                    
-    other-modules: HGom.UnitTests, Common.Random
+    other-modules: HGom.UnitTests
 
 executable oomappings
   hs-source-dirs: src
@@ -82,23 +98,11 @@ executable oomappings
                  OOMappings.Checker
                  OOMappings.CodeGen
                  OOMappings.CodeGen.OGenMonad
-                 Common.Config
-                 Common.FileGen
-                 Common.Parser
-                 Common.Checkers
-                 Common.Pretty
-                 Common.CodeGen
-                 Common.CodeGen.Builtins
-                 Common.CodeGen.Helpers
-                 Common.CodeGen.Constants
-                 Common.CodeGen.GenMonad
-                 Common.SymbolTable
-                 Common.Sig
                  Paths_hgom
   build-depends: base >= 4 && < 5, containers >= 0.2,
                  parsec >= 3.0.0, wl-pprint >= 1.0,
                  mtl >= 1.1.0.2, directory >= 1.0.0.2,
-                 filepath >= 1.1.0.2
+                 filepath >= 1.1.0.2, hgom
   extensions:    CPP
   ghc-options:   -Wall -fno-warn-orphans
 
@@ -107,7 +111,7 @@ executable oomappings
     build-depends: QuickCheck >= 2, test-framework >= 0.2.4, 
                    test-framework-quickcheck2 >= 0.2.5,
                    test-framework-hunit >= 0.2.4, Glob >= 0.5,
-                   HUnit >= 1.2.2.1, process >= 1.0.1.1
+                   HUnit >= 1.2.2.1, process >= 1.0.1.1, hgom
                    
-    other-modules: OOMappings.UnitTests, Common.Random
+    other-modules: OOMappings.UnitTests
 
