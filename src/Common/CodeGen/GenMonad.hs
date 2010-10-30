@@ -8,12 +8,10 @@
 --
 -- Maintainer  : paul.brauner@inria.fr
 -- Stability   : provisional
--- Portability : non-portable (requires generalized newtype deriving)
+-- Portability : portable
 --
 -- Defines the 'Gen' monad, a context containing a read-only symbol table.
 --------------------------------------------------------------------
-
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Common.CodeGen.GenMonad (
   -- * Definition
@@ -40,19 +38,26 @@ import Common.SymbolTable
 import Common.CodeGen.Builtins
 import Common.Config
 import Text.PrettyPrint.Leijen
-import Control.Monad.Reader
+import Control.Monad.Trans.Reader
 import Control.Applicative
 import Data.Char(toLower)
 import Data.List(nub, intersperse)
 
 -- | A computation inside a context containing a read-only symbol table
 -- and a configuration of type @c@.
-newtype Gen c a = Gen (Reader (SymbolTable,c) a)
-  deriving (Functor, Monad, MonadReader (SymbolTable,c))
+newtype Gen c a = Gen { unGen :: Reader (SymbolTable, c) a }
+
+-- we redifine the instances to keep hgon h98 compatible
+instance Functor (Gen c) where
+  fmap f = Gen . fmap f . unGen
 
 instance Applicative (Gen c) where
-  (<*>) = ap
-  pure  = return
+  f <*> x = Gen (unGen f <*> unGen x)
+  pure = Gen . pure
+
+instance Monad (Gen c) where
+  return        = Gen . return
+  (Gen m) >>= f = Gen (m >>= unGen . f)
 
 -- | Run the Gen monad
 runGen :: Gen c a -> SymbolTable -> c -> a
@@ -60,11 +65,11 @@ runGen (Gen comp) st c = runReader comp (st,c)
 
 -- | Query symbol table.
 askSt :: (SymbolTable -> a) -> Gen c a
-askSt f = asks (f . fst)
+askSt f = Gen $ asks (f . fst)
 
 -- | Query configuration.
 askConf :: (c -> a) -> Gen c a
-askConf f = asks (f . snd)
+askConf f = Gen $ asks (f . snd)
 
 -- | @ifConf f e d@ is @return e@ if @f config@ holds, else @return d@ .
 --

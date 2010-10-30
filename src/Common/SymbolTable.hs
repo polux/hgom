@@ -41,7 +41,7 @@ module Common.SymbolTable (
 ) where
 
 import Common.Sig
-import Control.Monad.State
+import Control.Monad.Trans.State
 import qualified Data.Map as M
 import Data.Either(partitionEithers)
 import Data.List(foldl',nub)

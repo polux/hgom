@@ -22,10 +22,11 @@ import qualified Text.Parsec.Token as P
 import Control.Applicative((<$>),(<*),(*>),(<*>))
 
 import Common.Sig
+---import Data.Functor.Identity(Identity)
 import Control.Monad.Identity(Identity)
 import Data.List
 
-defs :: ParsecT String u Identity Char-> LanguageDef u
+defs :: ParsecT String u Identity Char -> LanguageDef u
 defs start = javaStyle { 
   P.reservedOpNames = ["=","|",":"],
   P.reservedNames = ["module","abstract","syntax","imports","implemented by"],

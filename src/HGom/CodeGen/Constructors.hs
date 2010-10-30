@@ -24,8 +24,8 @@ import HGom.Config
 import HGom.CodeGen.HGenMonad
 
 import Text.PrettyPrint.Leijen
-import Control.Monad.Reader
 import Data.List(intersperse)
+import Control.Monad
 
 -- | Given a variadic constructor @VC@, generates an abstract class @VC.java@.
 compAbstractVariadic :: CtorId -> HGen FileHierarchy

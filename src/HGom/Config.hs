@@ -21,11 +21,14 @@ module HGom.Config (
   paramsError
 ) where
 
-import Control.Monad.Error
 import Data.Foldable(foldlM)
 import System.Console.GetOpt
-
+import Control.Monad.Trans.Error
+import Data.Functor.Identity
 import qualified Common.Config as CC
+
+-- | An error monad with String messages.
+type E a = ErrorT String Identity a
 
 -- | Datatype representing the parameters passed to hgom by the user.
 data Config =
@@ -89,7 +92,7 @@ split c (x:xs)
                 in xs1:split c xs2
 
 -- | Options description for 'getOpt'.
-options :: [OptDescr (Config -> Either String Config)]
+options :: [OptDescr (Config -> E Config)]
 options =
   [Option [] ["help"] (NoArg  chelp) 
           "show this message and exit"
@@ -144,7 +147,7 @@ options =
 
         ccongr "same" c = return $ c { congr = SameFile }
         ccongr "sep"  c = return $ c { congr = SeparateFile }
-        ccongr _      _ = throwError 
+        ccongr _      _ = throwError
           "'--congruence' argument must be 'same' or 'sep'.\n"
 
 -- | Usage info message header : @Usage: hgom [OPTION...] file@.
@@ -158,7 +161,7 @@ usage = usageInfo header options
 -- | Parse user args. Returns either an error message, 
 -- either a configuration along with unparsed arguments.
 gomOpts :: [String] -> Either String (Config,[String])
-gomOpts argv = 
+gomOpts argv = runIdentity . runErrorT $
   case getOpt Permute options argv of
     (o,n,[]  ) -> do conf <- foldlM (\c f -> f c) defaultConfig o
                      return (conf,n)
