@@ -16,7 +16,7 @@ license:           GPL
 license-file:      COPYING
 cabal-version:     >= 1.6.0
 build-type:        Simple
-tested-with:       GHC >= 6.10
+tested-with:       GHC >= 6.10 && <= 7.4.2
 
 extra-source-files: examples/*.gom
                     test/coverage/coverage.sh

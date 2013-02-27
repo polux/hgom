@@ -23,7 +23,7 @@ import Gom.SymbolTable
 import Gom.CodeGen.Common
 
 import Text.PrettyPrint.Leijen
-import Control.Monad.Reader
+import Control.Monad.Reader hiding (void)
 import Data.List(intersperse)
 
 -- | Given a variadic constructor @VC@, generates an abstract class @VC.java@.
