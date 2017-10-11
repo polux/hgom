@@ -20,7 +20,6 @@ import Gom.SymbolTable
 import Gom.Config
 import Gom.FileGen
 
-import Control.Applicative
 import Text.PrettyPrint.Leijen hiding ((<$>))
 
 -- | Generates the @ModAbstractType@ abstract java class for module @Mod@.

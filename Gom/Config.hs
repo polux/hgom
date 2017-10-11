@@ -13,6 +13,8 @@
 -- Handle user args.
 --------------------------------------------------------------------
 
+{-# LANGUAGE FlexibleContexts #-}
+
 module Gom.Config (
   Config(..),
   CongrOpt(..),

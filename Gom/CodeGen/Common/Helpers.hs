@@ -46,6 +46,7 @@ module Gom.CodeGen.Common.Helpers (
   inline
 ) where
 
+import Prelude hiding ((<$>))
 import Text.PrettyPrint.Leijen
 
 -- | Adds an underscore in front of an id

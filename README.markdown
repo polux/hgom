@@ -5,32 +5,16 @@ generator.
 
 ## Compilation ##
 
-To compile hgom, install 
-[cabal-install](http://hackage.haskell.org/trac/hackage/wiki/CabalInstall)
-and type the following.
+To compile hgom, install [stack](https://www.haskellstack.org/). Then run:
 
-    cabal configure
-    cabal build
+    stack build
 
-The `hgom` binary is generated in `dist/build/hgom`.
+The `hgom` binary is generated in a directory displayed by stack. You can run
+it from there. Alternatively you can run it using `stack exec hgom`.
 
 ## Installation ##
 
-    cabal install
-
-## Generate developer documentation ##
-
-By default, cabal generates no documentation since only the executable is
-exported. Developers still can generate the modules' documentation as follows.
-
-    cabal haddock --executables \
-    --html-location='http://hackage.haskell.org/packages/archive/$pkg/latest/doc/html' \
-    --hyperlink-source 
-
-Only exported symbols are documented. Add `--internal` for unexported symbols
-documentation.
-
-The documentation index is then `dist/doc/html/hgom/hgom/index.html`.
+    stack install
 
 ## Running hgom ##
 
@@ -46,30 +30,17 @@ are valid files, other ones demonstrate `hgom` error messages.
 ## Test ##
 
 The test suite is compiled only if the `test` flag is
-set. For instance, run
+set:
 
-    cabal configure -ftest
-    cabal build
-    ./dist/build/hgom/hgom --test "-a n"
+    stack build --flag hgom:test
+    
+You can then run the tests with:
 
-or
-
-    cabal install -ftest
     hgom --test "-a n"
 
 where `n` is the number of generated random inputs for each test case.
 
 For other arguments to the `--test` option, try `hgom --test "--help"`.
-
-### Code Coverage ###
-
-Code coverage can be tested as follows.
-
-    cabal build --ghc-options "-fhpc -fforce-recomp"
-    cd test/coverage
-    ./coverage.sh
-
-The documentation is generated in `test/coverage/html`.
 
 ### Benchmark ###
 
@@ -88,7 +59,7 @@ It takes some time. The generated files can be plotted using
 
 ### Better ###
 
- * faster !
+ * faster!
  * a far less permissive checker
  * smaller code, compiles much faster
  * almost 100% code coverage,
@@ -109,7 +80,7 @@ It takes some time. The generated files can be plotted using
 
 ### Worse ###
 
- * no hooks!
+ * no hooks
  * no ant task
  * imports only builtins
  * generates no comments

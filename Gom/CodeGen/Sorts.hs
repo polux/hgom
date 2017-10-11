@@ -22,6 +22,7 @@ import Gom.SymbolTable
 import Gom.CodeGen.Common
 import Gom.CodeGen.Constructors
 
+import Prelude hiding ((<$>))
 import Text.PrettyPrint.Leijen
 import Control.Monad(foldM)
 

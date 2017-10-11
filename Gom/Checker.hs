@@ -36,6 +36,7 @@ module Gom.Checker (
 import Gom.Sig
 import Gom.Pretty()
 
+import Prelude hiding ((<$>))
 import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Data.List as L

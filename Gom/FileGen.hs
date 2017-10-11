@@ -20,6 +20,7 @@ module Gom.FileGen (
   generateFileHierarchy
 ) where
 
+import Prelude hiding ((<$>))
 import Text.PrettyPrint.Leijen
 import Data.List(intercalate)
 import System.FilePath hiding ((</>))
