@@ -24,7 +24,7 @@ module Gom.Config (
 ) where
 
 
-import Control.Monad.Error
+import Control.Monad.Except
 import Data.Foldable(foldlM)
 import System.Console.GetOpt
 
@@ -35,9 +35,6 @@ data Config =
     version :: Bool, -- ^ display version information ?
     package :: Maybe [String], -- ^ optional package prefix
     prprint :: Bool,  -- ^ pretty-print module and exit ?
-#if TEST
-    utests  :: Maybe [String], -- ^ run unit tests ? 
-#endif
     haskell :: Bool, -- ^ generate @toHaskell@ methods ?
     visit   :: Bool, -- ^ implement @Visitable@ ? 
     checker :: Bool, -- ^ perform checks ?
@@ -59,9 +56,6 @@ defaultConfig =
     version = False,
     package = Nothing,
     prprint = False,
-#if TEST
-    utests  = Nothing,
-#endif
     haskell = False,
     visit   = True,
     checker = True,
@@ -96,10 +90,6 @@ options =
           "show version number and exit"
   ,Option ['P'] ["pretty"] (NoArg  cpretty)
           "pretty-print the module and exit"
-#if TEST
-  ,Option [] ["test"] (ReqArg cutests "args")
-          (unlines ["run test suite with args"])
-#endif
   ,Option ['p'] ["package"] (ReqArg cpackage "packageName") 
           "specify package name"
   ,Option ['c'] ["congruence"] (ReqArg ccongr "(same|sep)")
@@ -139,9 +129,6 @@ options =
         coomapping c = return $ c { oomapping = True  }
         cdepth     c = return $ c { depth   = True  }
         csize      c = return $ c { size    = True  }
-#if TEST
-        cutests  s c = return $ c { utests = Just (words s) }
-#endif
         cpackage p c = return $ c { package = Just (split '.' p) }
 
         ccongr "same" c = return $ c { congr = SameFile }

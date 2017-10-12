@@ -1,5 +1,5 @@
 name:           hgom
-version:        0.6
+version:        0.7
 author:         Paul Brauner and Emilie Balland
 maintainer:     Paul Brauner <paul.brauner@inria.fr>
 copyright:      (c) Paul Brauner 2009
@@ -14,60 +14,86 @@ description:
 category:          Compiler
 license:           GPL
 license-file:      COPYING
-cabal-version:     >= 1.6.0
+cabal-version:     >= 1.10
 build-type:        Simple
 tested-with:       GHC >= 6.10 && <= 7.4.2
 
 extra-source-files: examples/*.gom
-                    test/coverage/coverage.sh
                     test/bench/bench.sh 
                     test/bench/Gen.hs
                     test/bench/Makefile
                     README.markdown
                     CHANGELOG.markdown
+                    test/data/*.gom
+                    test/data/*.jar
 
-data-files: test/data/*.gom
-            test/data/*.jar
-
-Flag test
-  Description: enable test support
-  Default:     False
+library
+  hs-source-dirs:      src
+  exposed-modules:     Gom.Config
+                       Gom.Parser
+                       Gom.Checker
+                       Gom.Pretty
+                       Gom.FileGen
+                       Gom.CodeGen
+                       Gom.OOMappingGen
+                       Gom.CodeGen.Common
+                       Gom.CodeGen.Common.Constants
+                       Gom.CodeGen.Common.Builtins
+                       Gom.CodeGen.Common.Helpers
+                       Gom.CodeGen.Common.GenMonad
+                       Gom.CodeGen.Abstract
+                       Gom.CodeGen.Constructors
+                       Gom.CodeGen.Mappings
+                       Gom.CodeGen.Strategies
+                       Gom.CodeGen.Sorts
+                       Gom.SymbolTable
+                       Gom.Sig
+  build-depends:       base >= 4.7 && < 5,
+                       containers,
+                       parsec,
+                       wl-pprint,
+                       mtl,
+                       directory,
+                       filepath
+  default-language:    Haskell2010
+  ghc-options: -Wall
+               -fno-warn-orphans 
+               -O2
 
 executable hgom
+  hs-source-dirs:      app
   main-is:       Gom.hs
-  other-modules: Gom.Config,
-                 Gom.Parser,
-                 Gom.Checker,
-                 Gom.Pretty,
-                 Gom.FileGen,
-                 Gom.CodeGen,
-                 Gom.OOMappingGen,
-                 Gom.CodeGen.Common,
-                 Gom.CodeGen.Common.Constants,
-                 Gom.CodeGen.Common.Builtins,
-                 Gom.CodeGen.Common.Helpers,
-                 Gom.CodeGen.Common.GenMonad,
-                 Gom.CodeGen.Abstract,
-                 Gom.CodeGen.Constructors,
-                 Gom.CodeGen.Mappings,
-                 Gom.CodeGen.Strategies,
-                 Gom.CodeGen.Sorts,
-                 Gom.SymbolTable,
-                 Gom.Sig, 
-                 Paths_hgom
-  build-depends: base >= 4 && < 5, containers >= 0.2,
-                 parsec >= 3.0.0, wl-pprint >= 1.0,
-                 mtl >= 1.1.0.2, directory >= 1.0.0.2,
-                 filepath >= 1.1.0.2
-  extensions:    CPP
-  ghc-options:   -Wall -fno-warn-orphans
+  build-depends: base >= 4.7 && < 5,
+                 wl-pprint,
+                 hgom               
+  ghc-options: -Wall
+               -fno-warn-orphans
+               -O2
+               -threaded
+               -rtsopts
+               -with-rtsopts=-N
+  default-language:    Haskell2010
 
-  if flag(test)
-    cpp-options:   -DTEST
-    build-depends: QuickCheck >= 2, test-framework >= 0.2.4, 
-                   test-framework-quickcheck2 >= 0.2.5,
-                   test-framework-hunit >= 0.2.4, Glob >= 0.5,
-                   HUnit >= 1.2.2.1, process >= 1.0.1.1
-                   
-    other-modules: Gom.UnitTests, Gom.Random
+test-suite hgom-test
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      test
+  main-is:             Tests.hs
+  other-modules:       Gom.Random
+                       Gom.SymbolTableTests
+                       Paths_hgom
+  build-depends:       base,
+                       hgom,
+                       test-framework,
+                       QuickCheck,
+                       test-framework-quickcheck2,
+                       test-framework-hunit,
+                       Glob,
+                       HUnit,
+                       process,
+                       directory,
+                       filepath
+  ghc-options:         -Wall
+                       -fno-warn-orphans
+                       -O2 
+  default-language:    Haskell2010
 

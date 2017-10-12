@@ -34,29 +34,28 @@ module Gom.SymbolTable (
   addCtor,
   -- ** Table completion
   completeVariadics,
-#if TEST
-  -- * Tests
-  testSuite
-#endif
+  -- * Sanity checks (used by tests)
+  propCodomConsistent,
+  propBaseConsistent,
+  propDomainsConsistent,
+  propCtorsAllDiff,
+  propFieldsSortConsistent,
 ) where
 
 import Gom.Sig
+import Gom.CodeGen.Common.Builtins
+
 import Control.Monad.State
 import qualified Data.Map as M
 import Data.Either(partitionEithers)
 import Data.List(foldl',nub)
-import Gom.CodeGen.Common.Builtins
-
-#if TEST
-import Gom.Random ()
-import Test.Framework (Test, testGroup)
-import Test.Framework.Providers.QuickCheck2 (testProperty)
 import qualified Data.Set as S
 import qualified Data.List as L
-import Gom.Pretty ()
 import Data.Maybe(mapMaybe)
 import Data.List(sort)
-#endif
+
+-- Imports for tests.
+
 
 -- | A private datatype implemented by maps from sorts to constructors, from
 -- constructors to codomains, etc.
@@ -284,7 +283,7 @@ completeVariadics st = foldl' add st res
         add st' (co,ci,l) = 
           (insertGeneratedCtors (map ctorName l) ci . addCtors co l) st'
 
-#if TEST
+-- Tests
 
 -- | tests for list inclusion modulo AC
 subset ::  (Ord a) => [a] -> [a] -> Bool
@@ -331,15 +330,3 @@ propFieldsSortConsistent :: SymbolTable -> Bool
 propFieldsSortConsistent st =  all sortOk $ M.elems (sctors st)
   where sortOk = isFun . concat . mapMaybe (`M.lookup` sfields st) 
 
--- | test suite for the module
-testSuite :: Test
-testSuite = testGroup "symbol table consistency after completion" 
-  [testProperty "codomain consistency"   $ go propCodomConsistent
-  ,testProperty "base ctors consistency" $ go propBaseConsistent
-  ,testProperty "domains consistency"    $ go propDomainsConsistent
-  ,testProperty "no ctor duplicates"     $ go propCtorsAllDiff
-  ,testProperty "same fields same sorts" $ go propFieldsSortConsistent]
-
-  where go f = f . ast2st
-
-#endif

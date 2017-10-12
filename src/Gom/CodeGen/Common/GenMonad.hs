@@ -42,7 +42,6 @@ import Gom.Config
 
 import Text.PrettyPrint.Leijen
 import Control.Monad.Reader
-import Control.Applicative
 import Data.Char(toLower)
 import Data.List(nub, intersperse)
 

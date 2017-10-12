@@ -35,13 +35,8 @@ import Gom.FileGen
 import System.Environment (getArgs)
 import Text.PrettyPrint.Leijen (pretty)
 
-#if TEST
-import qualified Gom.UnitTests as T
-import Test.Framework (defaultMainWithArgs)
-#endif
-
 hgomVersion :: String
-hgomVersion = "Version 0.6 - March 2009"
+hgomVersion = "Version 0.7 - October 2017"
 
 -- | @main = getArgs >>= entryPoint@
 main ::  IO ()
@@ -60,9 +55,6 @@ entryPoint args =
 go1 :: Config -> [String] -> IO ()
 go1 c n | help c              = putStrLn usage
         | version c           = putStrLn hgomVersion
-#if TEST
-        | Just as <- utests c = defaultMainWithArgs T.testSuite as
-#endif
         | otherwise           = case n of
             [f] -> go2 f c 
             []  -> paramsError "No input file specified.\n"

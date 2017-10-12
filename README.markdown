@@ -29,18 +29,14 @@ are valid files, other ones demonstrate `hgom` error messages.
 
 ## Test ##
 
-The test suite is compiled only if the `test` flag is
-set:
+Run the tests with:
 
-    stack build --flag hgom:test
-    
-You can then run the tests with:
+    stack test --test-arguments "-a N"
 
-    hgom --test "-a n"
+where `N` is the number of generated random inputs for each test case.
 
-where `n` is the number of generated random inputs for each test case.
-
-For other arguments to the `--test` option, try `hgom --test "--help"`.
+For a list of all possible test arguments check 
+`stack test --test-arguments "--test"`.
 
 ### Benchmark ###
 
