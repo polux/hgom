@@ -19,9 +19,9 @@ build-type:        Simple
 tested-with:       GHC >= 6.10 && <= 7.4.2
 
 extra-source-files: examples/*.gom
-                    test/bench/bench.sh 
-                    test/bench/Gen.hs
-                    test/bench/Makefile
+                    bench/bench.sh 
+                    bench/Gen.hs
+                    bench/Makefile
                     README.markdown
                     CHANGELOG.markdown
                     test/data/*.gom

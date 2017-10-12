@@ -45,7 +45,7 @@ files and runs `hgom` and `gom` on them, measuring the gom/hgom ratio
 concerning the number of generated lines (using
 [sloccount](http://www.dwheeler.com/sloccount)) and the elapsed time.
 
-    cd test/bench
+    cd bench
     make
 
 It takes some time. The generated files can be plotted using
