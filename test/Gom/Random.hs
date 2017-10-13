@@ -58,6 +58,8 @@ genTypedFields sorts = do
   return $ zip flds doms
 
 instance Arbitrary SortDef where
+  arbitrary = error "not implemented"
+
   shrink (SortDef s c l) = do
     l' <- shrink l
     return $ SortDef s c l' 
@@ -69,6 +71,8 @@ genSortDef sorts (sid,cids) = do
   return $ SortDef sid (Just $ makeClassId "Object" "") ctrs
 
 instance Arbitrary Ctor where
+  arbitrary = error "not implemented"
+
   shrink (Simple c l) = do l' <- shrink l ; return $ Simple c l' 
   shrink x            = return x 
 
