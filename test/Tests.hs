@@ -183,7 +183,9 @@ testChecker classpath opts = monadicIO $ do
 crossModuleSuite :: String -> Test
 crossModuleSuite classpath = testGroup "cross module properties" 
   [ testProperty "parse . pretty = id" propParsePretty
-  , check flags1, check flags2, check flags3
+  , check flags1
+  , check flags2
+  -- , check flags3 -- TODO(polux): add more oomapping.MappingN classes
   , testProperty 
       "generated parse . generated pretty = id" 
        (propGenParsePretty classpath)
