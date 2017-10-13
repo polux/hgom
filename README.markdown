@@ -1,5 +1,7 @@
 # HGom #
 
+[![Build Status](https://travis-ci.org/polux/hgom.svg?branch=master)](https://travis-ci.org/polux/hgom)
+
 An haskell clone of the original [java Gom](http://tom.loria.fr) code
 generator.
 
